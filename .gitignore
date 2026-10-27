@@ -6,6 +6,10 @@ __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
+*.egg-info/
+.coverage
+htmlcov/
+.ruff_cache/
 # Data that must not be committed
 data/raw/
 data/cache/

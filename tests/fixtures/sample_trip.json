@@ -1,0 +1,22 @@
+{
+  "schema": "verity.trip.v1",
+  "trip_id": "3f0c2a52-8d6e-4c1b-9a47-0a1b2c3d4e5f",
+  "vehicle": {"make": "Generic", "model": "compact e-SUV (synthetic fixture)", "variant": "", "nominal_kwh": 45, "type": "car"},
+  "driver_id": "anon-01",
+  "passengers": 2,
+  "cargo_kg": 10,
+  "ac_on": true,
+  "started_at": "2026-10-27T10:00:00+05:30",
+  "ended_at": "2026-10-27T10:20:00+05:30",
+  "points": [
+    {"t": "2026-10-27T10:00:00+05:30", "lat": 28.5355, "lon": 77.3910, "acc_m": 5.0, "speed_mps": 0.0},
+    {"t": "2026-10-27T10:10:00+05:30", "lat": 28.4500, "lon": 77.4500, "acc_m": 5.0, "speed_mps": 22.0},
+    {"t": "2026-10-27T10:20:00+05:30", "lat": 28.3600, "lon": 77.5200, "acc_m": 6.0, "speed_mps": null}
+  ],
+  "soc": [
+    {"t": "2026-10-27T10:00:00+05:30", "pct": 80, "source": "tap"},
+    {"t": "2026-10-27T10:20:00+05:30", "pct": 74, "source": "tap"}
+  ],
+  "notes": "synthetic test fixture, not a real trip",
+  "is_simulated": true
+}

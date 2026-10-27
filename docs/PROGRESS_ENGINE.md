@@ -16,7 +16,7 @@ Commit message per milestone: `A<n>: <summary>`.
 ## Milestones
 
 - [x] A0 Pre-flight
-- [ ] A1 Scaffold
+- [x] A1 Scaffold
 - [ ] A2 Physics and vehicle priors
 - [ ] A3 Truth simulator
 - [ ] A4 Calibration and E1
@@ -40,6 +40,20 @@ Commit message per milestone: `A<n>: <summary>`.
 - `git init -b main` done (identity already configured). Nothing is ever pushed.
 - CLAUDE.md updated for the engine/frontend split (see DECISIONS.md).
 - Plan content: `docs/PLAN.md` is a placeholder, so the PDF was text-extracted to read it.
+
+### A1 Scaffold (done)
+- `pyproject.toml` (uv, hatchling, Python >= 3.11, only the CLAUDE.md dependency list; pytest in the
+  dev group). `engine/verity` and `api` install editable, so `import verity` / `import api` work
+  from anywhere.
+- Docstring stubs for every module in the CLAUDE.md layout (`physics`, `vehicles`, `routing`,
+  `calibrate`, `forecast`, `dispatch`, `trust/*`, `api/main.py`); they are filled in A2-A9.
+- `engine/verity/schemas.py`: pydantic v2 models for `verity.trip.v1`, charger record and report.
+  Timestamps must be timezone-aware, a trip needs >= 2 GPS points and >= 2 SoC readings, and
+  `is_simulated` is mandatory so nothing can be forgotten to be labelled.
+- `tests/test_schemas.py`: 18 tests (valid sample, alias round-trip, 13 malformed variants, charger,
+  report). `uv run pytest` -> 18 passed.
+- `README.md`, `docs/AI_USAGE.md`, `docs/DECISIONS.md`, `data/trips/README.md` created.
+- NOT created, by instruction: `logger/`, `web/`, `design/`.
 
 ## Blocked items
 
