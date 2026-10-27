@@ -47,8 +47,8 @@ NAMESPACE = uuid.UUID("5d7c1a26-2f8e-4b0a-9c55-6f1b3a9e0d11")  # fixed, so trip 
 # (highway cruise range, arterial cruise range, congested peak range) in m/s per vehicle type.
 # Simulation settings, not claims about real traffic.
 SPEED_TABLE = {
-    "car": ((21.0, 31.0), (11.0, 17.0), (5.0, 12.0)),
-    "2w": ((9.0, 13.0), (6.0, 10.0), (3.0, 7.0)),
+    "car": ((21.0, 31.0), (11.0, 17.0), (8.0, 15.0)),
+    "2w": ((9.0, 13.0), (6.0, 10.0), (4.0, 8.0)),
 }
 ACC_LIMITS = {"car": (1.3, 2.0), "2w": (0.9, 1.6)}  # (accelerate, brake) m/s^2 before driver scaling
 
@@ -216,8 +216,8 @@ def _build_blocks(rng: np.random.Generator, spec: TripSpec, vtype: str) -> dict[
     probs = [spec.highway_frac, max(0.0, 1.0 - spec.highway_frac - spec.congested_frac), spec.congested_frac]
     probs = np.array(probs) / sum(probs)
     while pos < dist_m + 1000.0:
-        pos += float(rng.uniform(1500, 8000))
         kind = int(rng.choice(3, p=probs))
+        pos += float(rng.uniform(500, 2500) if kind == 2 else rng.uniform(1500, 8000))
         lo, hi = (hwy, art, cong)[kind]
         ends.append(pos)
         kinds.append(kind)
@@ -250,7 +250,7 @@ def _kinematics(rng: np.random.Generator, spec: TripSpec, vtype: str, blocks: di
         remaining = dist_m - s
         if kinds[b] == 2:
             phase = 2 * math.pi * (step * STEP_S) / periods[b] + phases[b]
-            target = speeds[b] * min(1.0, max(0.0, 1.3 * math.sin(phase) + 0.25))
+            target = speeds[b] * min(1.0, max(0.0, 1.3 * math.sin(phase) + 0.45))
         else:
             target = speeds[b] * cruise_scale * (1.0 + wob)
         if remaining < 150.0:

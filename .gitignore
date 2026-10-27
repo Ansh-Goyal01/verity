@@ -19,3 +19,5 @@ web/dist/
 # OS / editor
 .DS_Store
 .vscode/settings.json
+data/sim/dev/
+results/dev/

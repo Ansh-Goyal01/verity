@@ -61,3 +61,22 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
 - 2026-10-27 (A3): Truth-side invented structure (sinusoidal terrain, regime mix, I^2R loss form, efficiency
   knee, 1.15 compressor overhead, 0.0004/trip capacity fade) is simulation machinery to make the truth
   differ from the planner. It is not a claim about real vehicles and appears in no UI or result as fact.
+- 2026-10-27 (A4): Calibration method = Laplace approximation (MAP by Levenberg-Marquardt on whitened
+  residuals in the unconstrained parameter space; posterior N(u_MAP, (J^T J)^-1) with the prior included).
+  Chosen over MCMC because the model is smooth, fits take ~0.1-1 s (fleet experiments and the live API
+  stay fast) and the covariance is explicit. Known weakness: skewed posteriors at 1-2 trips.
+- 2026-10-27 (A4): Likelihood uses one observation per trip (SoC drop first->last reading): variance =
+  1/6 pp^2 (rounding of two whole-percent readings) + (rho_rel x observed drop)^2; rho_rel = 0.06 is a
+  relative model-discrepancy allowance chosen on the DEV seed only. It under-covered on held-out vehicles
+  (72-81 % inside the nominal 90 % band) and is reported as a known weakness, not re-tuned.
+- 2026-10-27 (A4): Fleet pooling = empirical Bayes in the eigenbasis of the average data information; the
+  between-vehicle variance is floored at 0.30 x class prior variance (0.05 was overconfident on dev). It did
+  not beat the plain class prior with only 2 peer vehicles; both curves are reported.
+- 2026-10-27 (A4): E1 baselines: nominal-spec = physics at class prior medians; flat rule = claimed range
+  x 0.75; regression = numpy lstsq on 5 trip features. Baseline bands = +/-1.645 x RMS training error
+  (floor 0.5 pp). Test trips use the realised speed trace, so E1 measures energy-model + calibration error,
+  not traffic forecasting (that is E2/E4).
+- 2026-10-27 (A4): Planner treats a segment as stationary when the reported GPS speed is < 0.5 m/s, because
+  10 s GPS jitter otherwise adds phantom distance while parked (+4 % distance on a congested trip).
+- 2026-10-27 (A4): `uv run` uses Python 3.13.14 here, whereas the bare `python` is 3.12.10 (A0 table);
+  the project only requires >= 3.11.
