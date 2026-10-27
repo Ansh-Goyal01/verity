@@ -1,0 +1,199 @@
+{
+ "dataset": "main",
+ "dataset_seed": 20261027,
+ "is_simulated": true,
+ "note": "Ids only. Fixed before any fitting. Test trips are never used for tuning or inspection.",
+ "split_seed": 31,
+ "test_frac": 0.3,
+ "vehicles": {
+  "compact_esuv-1": {
+   "class_key": "compact_esuv",
+   "test": [
+    "3aa775f5-cfcd-5a3f-a58f-84375b02da6a",
+    "c8478230-92ac-5218-94d6-aed1632108da",
+    "66621365-a30d-5e43-b1a9-30c4dee41d96",
+    "08194dad-41f6-5fd4-881b-c0122adb5507"
+   ],
+   "train": [
+    "4eba0fcb-1f21-560a-b091-0aa82591f881",
+    "d78e6abd-7ad1-5a52-ba05-21759fdc71aa",
+    "406d72b2-a69a-58db-9c58-5a0d49e71c05",
+    "daf59647-c1fc-5ded-8e82-dcc608fad60e",
+    "fae809ce-1c67-5965-a051-d0e6152c3c4a",
+    "faa27411-9b40-569c-896b-10e77fcc1024",
+    "1fe944f6-09bb-5740-b036-917fd08393ee",
+    "0d646f5b-0d52-5220-85be-b1402a78751f",
+    "b1d3ba54-588a-5ca4-8ff2-bed19a83e201",
+    "c340ffef-be48-5e75-99e1-6701e441ec35"
+   ]
+  },
+  "compact_esuv-2": {
+   "class_key": "compact_esuv",
+   "test": [
+    "217e7c84-0658-59c9-9435-21e336417213",
+    "9163ab36-aa66-5d3b-9fa4-be2828be2be0",
+    "6b13569a-1ceb-501b-8278-5ffc31ed427b",
+    "06dbf52f-ad9f-58ff-a960-0737795399c1"
+   ],
+   "train": [
+    "66d6ac98-2f16-5e15-8449-84e6ae8032ec",
+    "3d3d65ac-3076-5996-9986-4834922b277e",
+    "be9c7bfa-ef6f-523d-a36e-5b910e7e2c0f",
+    "373811ba-eee4-54d7-bb8c-0386021fea41",
+    "0d9e2458-787a-56b8-bde8-697edc67edc7",
+    "cfe0a415-792d-5fa1-935f-4063d3b15c2f",
+    "0bac82ae-c929-5480-b876-c849feeb9037",
+    "1c1cdf00-19fd-522e-aaf4-827ad14114fc",
+    "5b208405-f25e-539b-b7ff-cd0e3cc2e05b",
+    "ede46d85-fb21-59d4-93f5-acfc9b33e749"
+   ]
+  },
+  "compact_esuv-3": {
+   "class_key": "compact_esuv",
+   "test": [
+    "c8925c20-75db-594d-9316-fd559ab3677b",
+    "5c809315-459e-5db2-bfa9-1a6b4b0e8a1b",
+    "3b221092-f5f0-533e-95fc-bb37520daf1a",
+    "32301d6e-230f-5457-ba99-4438eca660bd"
+   ],
+   "train": [
+    "fa9d37d6-9bfc-57c5-850b-5ab0b437fc22",
+    "71fe86ea-ac1c-5d2f-86f6-66057c08767d",
+    "c949d9c0-1edc-51b6-91aa-2e8d21f299b5",
+    "7c80924e-f738-57af-ad28-0e8809045a93",
+    "4ebc65ba-8ac1-5b87-9b11-76e89b6d7d60",
+    "d5d8040d-c0fb-536f-89de-0115e6fa5ac8",
+    "10e04d29-d8f7-5742-9cc7-2607f78e0a1c",
+    "40ed0637-a53a-5d6e-9406-070f740d2c4a",
+    "6a73f2b7-aa91-56af-94d3-d02a1a37ea28",
+    "1570fdc3-941b-5fc3-8401-e0bb690e0703"
+   ]
+  },
+  "e_scooter-1": {
+   "class_key": "e_scooter",
+   "test": [
+    "a2159ef7-6f6e-51b5-abe3-1f34c6b12199",
+    "331d6cf2-56ac-5a54-b7da-ef3b1cd7b622",
+    "8d45b545-d207-5115-bd74-01e284244112",
+    "16bedf38-cd24-5a88-aef1-e7cbf79ff71a"
+   ],
+   "train": [
+    "831bc305-cad9-58ac-9f08-11782fff8f07",
+    "2eecb946-19b1-5d38-b7ef-a04f42984a67",
+    "bba625d5-1a48-5ce2-a2bf-3271b0998316",
+    "0f2350c7-3ee8-541d-8350-59d344851fe9",
+    "988208c9-0d9d-5474-bdaa-3423611296fb",
+    "8c3dce35-cd8a-59cc-a6b8-1c49b6a035e5",
+    "b52230d7-6b2c-522b-a2c7-61a607cf164b",
+    "a578637c-3b6f-560a-a16a-e23f88acecc5",
+    "95a6581a-03d7-5b02-8ff6-da408c7ea05b",
+    "c05d3ada-7d17-53bc-9b7b-6743f380b751"
+   ]
+  },
+  "e_scooter-2": {
+   "class_key": "e_scooter",
+   "test": [
+    "2954f338-6083-5bec-8e3b-3b505fbe47a3",
+    "d7c2ec98-ab06-5f30-96d7-b4042d6c5122",
+    "93d01d00-0e3e-5eb1-9846-78477fa6c352",
+    "4476b9ba-44b9-5914-a520-4a556e63e67d"
+   ],
+   "train": [
+    "5670bf0f-21dd-5c48-8c9f-68374b6923bc",
+    "e0800191-db47-5610-921d-c3fb76dee9e6",
+    "7cba2cf3-4a0c-5726-bc83-851c6fa7b00d",
+    "1a91972f-85fd-5bf0-8352-e023f22cbca0",
+    "6186a0b9-6b00-5cb8-8992-96b356b3a18b",
+    "347590e0-df47-57eb-96f7-137036e3077b",
+    "a5f174f3-a109-5962-979e-78a1aaf0c1b0",
+    "59981708-e7cf-50fb-b1a2-1485d4144e88",
+    "e883fcdb-086b-5797-9967-5289b8fc468e",
+    "b8b1a2b8-4fc0-5ace-a38b-bd8b7fb0a963"
+   ]
+  },
+  "e_scooter-3": {
+   "class_key": "e_scooter",
+   "test": [
+    "cbb52974-d8c6-53b5-8758-9569c97ec791",
+    "89325bdf-ffc6-5546-88d0-8a1589bf7aae",
+    "b2d8969d-cd8b-545a-8f05-aa8286d94e68",
+    "b5cfa9f9-e3d0-5268-9d13-aec97a123861"
+   ],
+   "train": [
+    "15352265-6937-58da-b4ac-cea8c7fe2817",
+    "91a5d484-4f4b-5006-b645-8c3be434c60a",
+    "dfe8516b-1554-5fcc-974c-64470945128d",
+    "fab67624-40eb-5256-af8d-40c23e89fcf6",
+    "c1bbbeba-4edc-5e64-b642-927ce140011b",
+    "7d5ca28e-e9b1-5b9b-a7d3-7846feeeff7a",
+    "ab6e02c3-f929-593a-a238-c06314135781",
+    "7eac5481-8a79-52e8-8d66-27a273cff297",
+    "5e47daed-2b41-577f-8f86-8464103a48eb",
+    "e74ec4b4-c1bb-530e-ba06-a7249577f3d7"
+   ]
+  },
+  "small_ecar-1": {
+   "class_key": "small_ecar",
+   "test": [
+    "43308f96-4551-5f6e-85f0-d3a2b5254724",
+    "501dedf0-4d9f-59e9-9553-e3ffd1954f61",
+    "bb0dc7ba-c535-599f-a89c-8be061bc5afe",
+    "01364f84-74c1-510a-abe3-aef01602d255"
+   ],
+   "train": [
+    "102b3118-7404-5630-89bd-1c37a1c8acb1",
+    "6c85a45b-2828-5c7b-a090-d9a129aec5db",
+    "9ab38d82-fb7b-51fc-adc4-95147eea5e24",
+    "6af8fef8-a0ff-5d0f-a2cd-5333f8203bfc",
+    "b331d8a3-eb9d-5ec4-9351-7ce2e800e63d",
+    "8efda833-7396-5414-a996-91268bfb6750",
+    "c0b32597-c0b8-5891-b641-3b8a0aff22f4",
+    "b7def4f5-6790-547d-ae87-ada5b86952e6",
+    "8fd6a411-4ac4-5314-9e59-5c973393d1ec",
+    "d918df20-50f6-5aea-bec9-fe3ad87a588d"
+   ]
+  },
+  "small_ecar-2": {
+   "class_key": "small_ecar",
+   "test": [
+    "ad5f6194-e9a1-5748-afb8-3cc898ee6a38",
+    "6f3ef162-2a50-53a5-9c07-a2c9876b54da",
+    "5c5955d8-3ff7-5e80-bf92-c6f7313f49fb",
+    "c1296a1a-e72b-5b38-8eb6-a37001126d0a"
+   ],
+   "train": [
+    "ff1559d5-da44-59ad-9dd0-cb994270befa",
+    "a67cabbf-0876-5108-bd28-b81a16b6287f",
+    "a450c89a-e3e9-5047-8073-e61dbe1f0152",
+    "8ac75ac0-f3fa-5571-b5a0-38abf364d7ab",
+    "333185fb-e2da-5e19-a639-99d93df111b4",
+    "55cc4380-4516-5d21-901e-5509c8b6a8cd",
+    "44213567-83d3-594e-a904-ccd7d1c76d2c",
+    "768e7554-f3a1-5202-b975-28d170d2a2bf",
+    "ab85dd3f-8a2f-5e87-a08a-c7c8fec7ae3b",
+    "2f55e79a-7cb8-59f7-82a3-7f4d6c4e20d8"
+   ]
+  },
+  "small_ecar-3": {
+   "class_key": "small_ecar",
+   "test": [
+    "174bafe4-ae98-595b-bc67-232ae319bc61",
+    "16b8ecbb-fc81-5eba-94bc-524556fb09c8",
+    "55bed854-d2ee-549a-a4d1-9749396b6778",
+    "46983c37-a736-587c-85e0-f2131639139b"
+   ],
+   "train": [
+    "4dd06073-5585-5112-96ef-1ca8830033a8",
+    "f0c17c48-0cb1-5e5d-9975-c1dcea1b4b6d",
+    "8c78dd64-9556-595e-beb0-58ea0ba666c7",
+    "d6a6a720-5274-59ce-b4a4-650c7106cf13",
+    "6ae63169-73e1-5f22-9daa-833b73b24b4f",
+    "8139e621-8c32-51a8-9c19-ac36a481c71a",
+    "e142b36a-0e89-5dee-b4da-e33ef0c9ddae",
+    "11cbfd90-6440-55fc-8a58-ad38a3945773",
+    "e0c510cf-145a-564a-af8c-11b4dea970ee",
+    "2d9f742e-6b6b-5547-9984-ab14d6abb3a5"
+   ]
+  }
+ }
+}
