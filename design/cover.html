@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verity · Dispatch Release Cover</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+:root { color-scheme:dark; --bg:#14161A; --surface:#1E2126; --text:#F2EFE8; --muted:#A9A498; --amber:#F5A524; --go:#3DD68C; --rule:#414349; --mono:'IBM Plex Mono','Courier New',monospace; --sans:'IBM Plex Sans',Arial,sans-serif; }
+* { box-sizing:border-box; }
+body { margin:0; min-height:100vh; display:grid; place-items:center; background:#0C0E11; color:var(--text); font-family:var(--sans); }
+.viewport { width:min(100vw,177.7778vh); aspect-ratio:16/9; position:relative; overflow:hidden; }
+.slide { width:1600px; height:900px; padding:44px 64px 32px; background:var(--bg); transform:scale(var(--scale,1)); transform-origin:top left; display:flex; flex-direction:column; }
+.mono { font-family:var(--mono); }
+.masthead { display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid var(--rule); padding-bottom:22px; }
+.brand { font:700 26px var(--mono); letter-spacing:.09em; }
+.brand span { color:var(--amber); }
+.illustrative { color:var(--amber); border:2px solid var(--amber); border-radius:30px; padding:10px 18px; font:600 17px var(--mono); letter-spacing:.08em; }
+.hero { display:grid; grid-template-columns:1fr 340px; gap:48px; padding:32px 0 30px; align-items:center; }
+.eyebrow { margin:0 0 14px; color:var(--muted); font:500 16px var(--mono); letter-spacing:.12em; }
+h1 { margin:0; font:600 57px/1.1 var(--sans); letter-spacing:-.025em; }
+h1 span { color:var(--amber); }
+.stamp { justify-self:center; width:300px; border:6px solid var(--go); color:var(--go); text-align:center; padding:12px 12px 14px; transform:rotate(-4deg); }
+.stamp strong { display:block; font:700 104px/1.1 var(--mono); letter-spacing:.03em; }
+.stamp span { display:block; font:600 15px var(--mono); letter-spacing:.13em; }
+.form { border:1px solid var(--rule); background:var(--surface); }
+.form-title { padding:13px 22px; display:flex; justify-content:space-between; border-bottom:1px solid var(--rule); font:500 16px var(--mono); letter-spacing:.08em; color:var(--muted); }
+.row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+.row + .row { border-top:1px solid var(--rule); }
+.field { padding:19px 22px; min-height:105px; }
+.field + .field { border-left:1px solid var(--rule); }
+.label { margin:0 0 9px; color:var(--muted); font:500 14px var(--mono); letter-spacing:.1em; }
+.value { margin:0; font:600 27px/1.25 var(--mono); }
+.note { margin:7px 0 0; color:var(--muted); font:400 16px/1.3 var(--sans); }
+.amber { color:var(--amber); }
+.green { color:var(--go); }
+.booking { font-size:24px; }
+.alternate { font:600 25px/1.25 var(--sans); }
+footer { margin-top:auto; padding-top:22px; display:flex; justify-content:space-between; align-items:center; font:500 17px var(--mono); color:var(--muted); }
+footer strong { color:var(--text); font-weight:600; }
+@media print { @page { size:1600px 900px; margin:0; } body { display:block; background:var(--bg); } .viewport { width:1600px; height:900px; } .slide { transform:none; print-color-adjust:exact; -webkit-print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+<main class="viewport" aria-label="Verity pitch cover slide, illustrative dispatch release">
+  <article class="slide">
+    <header class="masthead">
+      <div class="brand">VERITY <span>·</span> DISPATCH RELEASE</div>
+      <div class="illustrative">ILLUSTRATIVE · NOT RESULTS</div>
+    </header>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">AUTOMOBILE &amp; EV · WILL I MAKE IT</p>
+        <h1><span>Verity:</span> Dispatch-Grade<br>Honesty for Every EV Trip</h1>
+      </div>
+      <div class="stamp" aria-label="Decision: GO"><strong>GO</strong><span>DISPATCH RELEASE</span></div>
+    </section>
+    <section class="form" aria-label="Illustrative booking release">
+      <div class="form-title"><span>BOOKING RELEASE · V12</span><span>SIMULATED DATA</span></div>
+      <div class="row">
+        <div class="field"><p class="label">BOOKING</p><p class="value">BK-001</p><p class="note">4 passengers · AC on</p></div>
+        <div class="field"><p class="label">VEHICLE</p><p class="value">V12</p><p class="note">Healthy battery · starting battery 82%</p></div>
+        <div class="field"><p class="label">ROUTE</p><p class="value booking">NOIDA → AGRA</p><p class="note">231.4 km · planned charging included</p></div>
+      </div>
+      <div class="row">
+        <div class="field"><p class="label">DECISION</p><p class="value green">GO</p><p class="note">Target confidence: 90%</p></div>
+        <div class="field"><p class="label">CONFIDENCE</p><p class="value amber">ABOUT 90%</p><p class="note">Illustrative engine output</p></div>
+        <div class="field"><p class="label">RESERVE · ARRIVAL BATTERY</p><p class="value">30–41%</p><p class="note">Expected arrival range · p10 to p90</p></div>
+      </div>
+      <div class="row">
+        <div class="field"><p class="label">PLANNED CHARGER</p><p class="value alternate">Yamuna Expressway Hub</p><p class="note">Stop at 120.5 km · 22 minutes charging</p></div>
+        <div class="field"><p class="label">ALTERNATE</p><p class="value alternate">Mathura Backup Charge</p><p class="note">Backup for the planned charging stop</p></div>
+        <div class="field"><p class="label">POINT OF NO RETURN</p><p class="value">104 KM</p><p class="note">Last route point with a reachable alternate</p></div>
+      </div>
+    </section>
+    <footer><span>TEAM <strong>LOW CORTISOL</strong></span><span>hackFront India 2026 · illustrative</span></footer>
+  </article>
+</main>
+<script>
+(function () {
+  const viewport = document.querySelector('.viewport');
+  function fit() { viewport.style.setProperty('--scale', viewport.clientWidth / 1600); }
+  window.addEventListener('resize', fit);
+  fit();
+})();
+</script>
+</body>
+</html>
