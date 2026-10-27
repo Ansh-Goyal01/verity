@@ -1,0 +1,4 @@
+{
+ "error": "voice_unavailable",
+ "message": "Voice is not configured on this server (no SARVAM_API_KEY); use browser speech and the keypad."
+}

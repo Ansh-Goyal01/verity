@@ -1,0 +1,61 @@
+{
+ "booking": {
+  "booking_id": "BK-001",
+  "origin": {
+   "name": "Noida",
+   "lat": 28.5355,
+   "lon": 77.391
+  },
+  "destination": {
+   "name": "Agra",
+   "lat": 27.1767,
+   "lon": 78.0081
+  },
+  "departure_time": "2026-10-28T14:00:00+05:30",
+  "passengers": 4,
+  "ac_on": true,
+  "target_confidence": 0.9
+ },
+ "vehicles": [
+  {
+   "vehicle_id": "V07",
+   "label": "Vehicle 7",
+   "model_class": "compact_esuv",
+   "soc_pct": 82,
+   "usable_kwh_estimate": {
+    "p10": 33.1,
+    "p50": 37.1,
+    "p90": 40.5
+   },
+   "health_note": "Usable capacity estimated at 37.1 kWh, 11% below the class typical (41.9 kWh)",
+   "trips_calibrated": 6
+  },
+  {
+   "vehicle_id": "V12",
+   "label": "Vehicle 12",
+   "model_class": "compact_esuv",
+   "soc_pct": 62,
+   "usable_kwh_estimate": {
+    "p10": 37.7,
+    "p50": 41.4,
+    "p90": 43.9
+   },
+   "health_note": "Usable capacity estimated at 41.4 kWh, 1% below the class typical (41.9 kWh)",
+   "trips_calibrated": 8
+  },
+  {
+   "vehicle_id": "V19",
+   "label": "Vehicle 19",
+   "model_class": "compact_esuv",
+   "soc_pct": 40,
+   "usable_kwh_estimate": {
+    "p10": 37.8,
+    "p50": 41.5,
+    "p90": 44.0
+   },
+   "health_note": "Usable capacity estimated at 41.5 kWh, 1% below the class typical (41.9 kWh)",
+   "trips_calibrated": 4
+  }
+ ],
+ "is_simulated": true
+}

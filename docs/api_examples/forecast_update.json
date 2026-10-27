@@ -1,0 +1,15 @@
+{
+ "plan_id": "PL-9b91",
+ "km_along_route": 57.9,
+ "confidence": 1.0,
+ "arrival_soc": {
+  "p10": 21,
+  "p50": 22,
+  "p90": 23
+ },
+ "bingo_soc_pct_here": 40,
+ "action": "CONTINUE",
+ "divert_to": null,
+ "message": "On plan: still above the Bingo Line.",
+ "is_simulated": true
+}

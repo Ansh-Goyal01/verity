@@ -1,0 +1,162 @@
+{
+ "is_simulated": true,
+ "note": "Real engine output for the demo scenario; see docs/API_CONTRACT.md.",
+ "examples": [
+  {
+   "file": "health.json",
+   "method": "GET",
+   "path": "/api/health",
+   "request_body": null,
+   "status": 200
+  },
+  {
+   "file": "demo_scenario.json",
+   "method": "GET",
+   "path": "/api/demo/scenario",
+   "request_body": null,
+   "status": 200
+  },
+  {
+   "file": "dispatch_V07.json",
+   "method": "POST",
+   "path": "/api/dispatch",
+   "request_body": {
+    "origin": {
+     "lat": 28.5355,
+     "lon": 77.391
+    },
+    "destination": {
+     "lat": 27.1767,
+     "lon": 78.0081
+    },
+    "departure_time": "2026-10-28T14:00:00+05:30",
+    "passengers": 4,
+    "ac_on": true,
+    "target_confidence": 0.9,
+    "vehicle_id": "V07",
+    "start_soc_pct": 82
+   },
+   "status": 200
+  },
+  {
+   "file": "dispatch_V12.json",
+   "method": "POST",
+   "path": "/api/dispatch",
+   "request_body": {
+    "origin": {
+     "lat": 28.5355,
+     "lon": 77.391
+    },
+    "destination": {
+     "lat": 27.1767,
+     "lon": 78.0081
+    },
+    "departure_time": "2026-10-28T14:00:00+05:30",
+    "passengers": 4,
+    "ac_on": true,
+    "target_confidence": 0.9,
+    "vehicle_id": "V12",
+    "start_soc_pct": 62
+   },
+   "status": 200
+  },
+  {
+   "file": "dispatch_V19.json",
+   "method": "POST",
+   "path": "/api/dispatch",
+   "request_body": {
+    "origin": {
+     "lat": 28.5355,
+     "lon": 77.391
+    },
+    "destination": {
+     "lat": 27.1767,
+     "lon": 78.0081
+    },
+    "departure_time": "2026-10-28T14:00:00+05:30",
+    "passengers": 4,
+    "ac_on": true,
+    "target_confidence": 0.9,
+    "vehicle_id": "V19",
+    "start_soc_pct": 40
+   },
+   "status": 200
+  },
+  {
+   "file": "forecast_update.json",
+   "method": "POST",
+   "path": "/api/forecast/update",
+   "request_body": {
+    "plan_id": "PL-9b91",
+    "t": "2026-10-28T14:55:00+05:30",
+    "lat": 28.1,
+    "lon": 77.6,
+    "soc_pct": 45
+   },
+   "status": 200
+  },
+  {
+   "file": "chargers.json",
+   "method": "GET",
+   "path": "/api/chargers",
+   "request_body": {
+    "min_lat": 27.0,
+    "min_lon": 77.0,
+    "max_lat": 29.5,
+    "max_lon": 78.5
+   },
+   "status": 200
+  },
+  {
+   "file": "replay.json",
+   "method": "GET",
+   "path": "/api/demo/replay/PL-9b91",
+   "request_body": null,
+   "status": 200
+  },
+  {
+   "file": "voice_tts_503.json",
+   "method": "POST",
+   "path": "/api/voice/tts",
+   "request_body": {
+    "text": "Divert now",
+    "language": "hi-IN"
+   },
+   "status": 503
+  },
+  {
+   "file": "voice_stt_503.json",
+   "method": "POST",
+   "path": "/api/voice/stt",
+   "request_body": {
+    "multipart": {
+     "audio": "<audio file>",
+     "language": "hi-IN"
+    }
+   },
+   "status": 503
+  },
+  {
+   "file": "error_unknown_vehicle.json",
+   "method": "POST",
+   "path": "/api/dispatch",
+   "request_body": {
+    "origin": {
+     "lat": 28.5355,
+     "lon": 77.391
+    },
+    "destination": {
+     "lat": 27.1767,
+     "lon": 78.0081
+    },
+    "departure_time": "2026-10-28T14:00:00+05:30",
+    "passengers": 4,
+    "ac_on": true,
+    "target_confidence": 0.9,
+    "vehicle_id": "V99",
+    "start_soc_pct": 50
+   },
+   "status": 404
+  }
+ ]
+}

@@ -1,0 +1,4 @@
+{
+ "error": "unknown_vehicle",
+ "message": "Unknown vehicle 'V99'; known: ['V07', 'V12', 'V19']"
+}

@@ -1,0 +1,6 @@
+{
+ "status": "ok",
+ "version": "0.1.0",
+ "neo4j": "in_memory",
+ "is_simulated": true
+}
