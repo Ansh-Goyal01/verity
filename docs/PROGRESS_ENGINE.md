@@ -216,5 +216,7 @@ Commit message per milestone: `A<n>: <summary>`.
 - KNOWN WEAKNESSES of the import: only 1 of 141 chargers has a tagged connector power (OSM rarely tags kW; untagged
   connectors are dropped, not guessed), all site types are "unknown" (keyword heuristic matched nothing), 90 have
   no operator. Dispatch needs connector power for charge times: A8 must treat missing power as unknown.
-- TODO for A7: write `tests/test_routing.py` (cache replay, request budget, back-off via httpx.MockTransport,
-  fallback labelling, segment building, charger parsing/merging); it currently holds only a docstring.
+- `tests/test_routing.py` (14 tests, offline via httpx.MockTransport): cache replay, persisted 300-request
+  budget, exponential back-off, no retry on 4xx, API keys never cached, route parsing, synthetic fallback
+  labelling, segment building, OSM/OCM parsing, 50 m merge, near-route lookup, committed-data checks.
+  `uv run pytest` -> 107 passed.
