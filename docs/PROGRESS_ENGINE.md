@@ -18,7 +18,7 @@ Commit message per milestone: `A<n>: <summary>`.
 - [x] A0 Pre-flight
 - [x] A1 Scaffold
 - [x] A2 Physics and vehicle priors
-- [ ] A3 Truth simulator
+- [x] A3 Truth simulator
 - [ ] A4 Calibration and E1
 - [ ] A5 Forecast and E2
 - [ ] A6 Trust engine and E5
@@ -71,6 +71,25 @@ Commit message per milestone: `A<n>: <summary>`.
   plausibility. A real bug found by the tests and fixed: summing energy to (N,) then dividing by an
   (N, 1) capacity gave an (N, N) matrix that would have mixed Monte Carlo runs.
 - `uv run pytest` -> 37 passed.
+
+### A3 Truth simulator (done)
+- `engine/verity/sim.py`: 1 s truth physics, deliberately richer than `physics.py`: AR(1) wind gusts,
+  per-trip driver aggressiveness, state-of-health + capacity fade + I^2R loss growing with age,
+  stop-and-go / arterial / highway blocks, rough-surface blocks, AC compressor duty cycling,
+  occupant/cargo mass errors, power-dependent drive efficiency.
+- Exports only what a logger / lookup service would see: `data/sim/<name>/trips/` (verity.trip.v1, 10 s
+  GPS, whole-percent SoC every ~10 min), `context/` (100 m elevation profile with 0.8 m noise + a
+  noisy weather forecast), and hidden `truth/` (never read by planning code). Seeded: same seed ->
+  byte-identical files (tested).
+- Official dataset: `uv run python -m verity.sim --name main --seed 20261027` -> 126 SIMULATED trips,
+  9 vehicles (3 per class), 14 trips each, 8.2 MB in `data/sim/main/`. Per-trip numbers of `main` were
+  deliberately NOT inspected (held-out discipline); plausibility was checked on a throwaway `dev`
+  dataset (seed 777): median Wh/km ~125 (small e-car), ~145 (e-SUV), ~22 (scooter).
+- `tests/test_sim.py`: 8 tests (reproducible, seed-sensitive, contract + labels, no truth leakage,
+  phone-log realism, physical plausibility, forced SoH, manifest). Bug found and fixed by the
+  plausibility test: a grade computed with `np.gradient` given spacing instead of coordinates produced
+  834 Wh/km; replaced by the exact analytic terrain slope.
+- `uv run pytest` -> 45 passed.
 
 ## Blocked items
 

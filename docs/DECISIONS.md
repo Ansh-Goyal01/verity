@@ -55,3 +55,9 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
   "regen" term. Terms therefore sum exactly to the battery energy (the UI breakdown cannot drift).
 - 2026-10-27 (A2): Climate load = aux_w_per_k x |T - 22 C| when AC is on (heating and cooling share one
   term, as the plan says). 22 C neutral point and all coefficients are approximate - verify.
+- 2026-10-27 (A3): Simulated dataset sizes: 9 vehicles (3 per class) x 14 trips, GPS every 10 s. Trips are
+  shortened/start SoC re-picked so every simulated trip ends with 8-45 % left (a trip log never records a
+  stranding). Elevation is a smooth synthetic profile; real Indian terrain is NOT represented.
+- 2026-10-27 (A3): Truth-side invented structure (sinusoidal terrain, regime mix, I^2R loss form, efficiency
+  knee, 1.15 compressor overhead, 0.0004/trip capacity fade) is simulation machinery to make the truth
+  differ from the planner. It is not a claim about real vehicles and appears in no UI or result as fact.
