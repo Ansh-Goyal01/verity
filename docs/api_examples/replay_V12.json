@@ -1,0 +1,32 @@
+{
+ "plan_id": "PL-9b91",
+ "events": [
+  {
+   "t_offset_s": 0,
+   "type": "soc_reading",
+   "km": 0.0,
+   "soc_pct": 62
+  },
+  {
+   "t_offset_s": 1239,
+   "type": "soc_reading",
+   "km": 21.9,
+   "soc_pct": 54
+  },
+  {
+   "t_offset_s": 1249,
+   "type": "charger_report",
+   "charger_id": "CH-0004",
+   "status": "broken",
+   "source_trust": "high"
+  },
+  {
+   "t_offset_s": 1259,
+   "type": "forecast",
+   "action": "SLOW_DOWN",
+   "message": "Planned charger reported broken and no other charger is reachable with confidence: slow down and save energy.",
+   "divert_to": null
+  }
+ ],
+ "is_simulated": true
+}

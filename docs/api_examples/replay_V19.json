@@ -1,0 +1,38 @@
+{
+ "plan_id": "PL-47be",
+ "events": [
+  {
+   "t_offset_s": 0,
+   "type": "soc_reading",
+   "km": 0.0,
+   "soc_pct": 40
+  },
+  {
+   "t_offset_s": 686,
+   "type": "soc_reading",
+   "km": 9.6,
+   "soc_pct": 37
+  },
+  {
+   "t_offset_s": 696,
+   "type": "charger_report",
+   "charger_id": "CH-0006",
+   "status": "broken",
+   "source_trust": "high"
+  },
+  {
+   "t_offset_s": 706,
+   "type": "forecast",
+   "action": "DIVERT",
+   "message": "Planned charger reported broken. Divert to the alternate ahead.",
+   "divert_to": {
+    "charger_id": "CH-0004",
+    "name": "Tata",
+    "lat": 28.3190968,
+    "lon": 77.5517525,
+    "p_works": 0.85
+   }
+  }
+ ],
+ "is_simulated": true
+}

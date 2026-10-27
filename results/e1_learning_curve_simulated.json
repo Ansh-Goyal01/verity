@@ -199,7 +199,7 @@
  },
  "test_trips": 36,
  "vehicles": 9,
- "runtime_s": 57.8,
+ "runtime_s": 61.0,
  "bmw_i3": {
   "status": "blocked",
   "reason": "D:\\hackfront-verity\\data\\raw\\bmw_i3 is missing or empty; download the dataset (free login)"

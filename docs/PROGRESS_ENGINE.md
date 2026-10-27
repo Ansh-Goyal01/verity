@@ -22,16 +22,11 @@ Commit message per milestone: `A<n>: <summary>`.
 - [x] A4 Calibration and E1 (BMW i3 part BLOCKED: dataset not downloaded)
 - [x] A5 Forecast and E2
 - [x] A6 Trust engine and E5 (Neo4j live test BLOCKED: no credentials)
-- [~] A7 Routing and chargers (PARTIAL: real data fetched, tests NOT written; OCM blocked, no API key)
-
-> **RUN STOPPED EARLY: usage limit reached.** Done and committed: A0-A6. A7 is partial. NOT started:
-> A8 (dispatch, E3, E4), A9 (API + export script), A10 (scripts/run_all.py, README/CLAUDE.md commands),
-> A11 (docs/MORNING_REPORT_ENGINE.md, final AI_USAGE.md entry). Resume with: "Read docs/TASKS_ANSH.md and
-> docs/PROGRESS_ENGINE.md; finish A7 (tests/test_routing.py is only a placeholder), then A8-A11."
-- [ ] A8 Dispatch, E3 and E4
-- [ ] A9 API per docs/API_CONTRACT.md
-- [ ] A10 Quality pass
-- [ ] A11 Morning report
+- [x] A7 Routing and chargers (Open Charge Map BLOCKED: no API key; OSM only)
+- [x] A8 Dispatch, E3 and E4
+- [x] A9 API per docs/API_CONTRACT.md (voice and Neo4j untested against real services)
+- [x] A10 Quality pass
+- [x] A11 Morning report (`docs/MORNING_REPORT_ENGINE.md`)
 
 ## Notes per milestone
 
@@ -220,3 +215,43 @@ Commit message per milestone: `A<n>: <summary>`.
   budget, exponential back-off, no retry on 4xx, API keys never cached, route parsing, synthetic fallback
   labelling, segment building, OSM/OCM parsing, 50 m merge, near-route lookup, committed-data checks.
   `uv run pytest` -> 107 passed.
+
+### A8 Dispatch, E3 and E4 (done)
+- `engine/verity/dispatch.py`: `build_leg_graph` (LEG per 10-point battery band into `InMemoryGraph`), Yen k=6
+  shortest paths propose chains, `evaluate_plan` scores each with the Monte Carlo WITH backups (planned charger ->
+  working alternate within 60 km ahead -> carry on -> stranded), `bingo_line` (per km), `point_of_no_return_km`,
+  levers (cruise 80 km/h, +10 min at stop 1, other vehicle, "verify charger X"), refusal
+  (`INSUFFICIENT_EVIDENCE`), `live_update_plan` (CONTINUE / DIVERT / SLOW_DOWN), `execute_trip` for the simulated
+  worlds. 18 tests (Yen vs brute force, bands, rounding to 5 %, exact breakdown sum, alternates raise confidence,
+  trust-aware plan avoids a 30 % charger, bingo higher on a long gap, refusal rules, levers, live update).
+- Design findings from the tests and the demo: (1) a broken-charger penalty was missing from the minutes model, so
+  "try the 30 % charger and fall back" beat "go to the 99 % charger"; (2) the decision must follow the DISPLAYED
+  (5 %-rounded) confidence; (3) with no plan meeting the target the planner added pointless stops on Monte Carlo
+  noise, now compared at 2-point resolution; (4) the "verify" lever is offered when it restores the target.
+- E3/E4 (SIMULATED): see the tables in `docs/MORNING_REPORT_ENGINE.md`; files `results/e3_*.png|json`, `results/e4_*.png|json`.
+- Compute: one 2000-run forecast ~104 ms (E2); one plan (no Bingo/levers, 800 runs) ~250-270 ms (E3/E4); a full
+  dispatch with levers 3.0 s on the real route (E4 timing, 2000 runs) and ~5-9 s through the API demo (1500 runs,
+  levers incl. other vehicles).
+
+### A9 API (done)
+- `api/main.py` (FastAPI, strict `response_model`s, contract error shape, CORS for null / localhost:5500 /
+  127.0.0.1:5500 / https://ansh-goyal01.github.io), `api/service.py` (real route + OSM chargers + simulated demo
+  fleet calibrated through the real pipeline + simulated reports), `api/models.py` (mirrors the contract),
+  `engine/verity/voice.py` (Sarvam client, UNVERIFIED endpoints, mock-tested; stdlib multipart parser; battery %
+  parsing incl. Devanagari digits). `docs/API_CONTRACT.md` untouched; proposals in `docs/API_CONTRACT_CHANGES.md`.
+- 38 tests (`test_api.py` 20, `test_voice.py` 18): every endpoint validated, rules the UI relies on (5 % rounding,
+  breakdown sum, ordered bingo line, refusal reason exactly when INSUFFICIENT_EVIDENCE), CORS for each origin and a
+  refused foreign origin, error shapes, voice 503 without a key, idempotent plan ids.
+- `scripts/export_api_examples.py` -> `docs/api_examples/` (14 real responses + `index.json`; voice forced to "no key").
+- Demo outcome (engine output for the scenario inputs in DECISIONS.md): V07 NO_GO, V12 GO, V19 INSUFFICIENT_EVIDENCE
+  (depends on chargers with stale or no reports); replay for V19's plan ends in a DIVERT.
+- Real-data finding: OSM lists only 4 chargers within 3 km of the expressway route (km 22, 34, 126, 175).
+
+### A10 Quality pass (done)
+- `scripts/run_all.py`: one command, clean state, 8 steps, logs in `results/logs/`, summary JSON. Full run from clean:
+  ALL STEPS OK in ~20 min (tests 86 s, E1 65 s, E2 196 s, E3 254 s, E4 516 s, E5 53 s, smoke 1 s, examples 30 s).
+- README and the CLAUDE.md layout/Commands sections updated; `.env.example` lists `OCM_API_KEY`.
+- `uv run pytest` -> 163 passed.
+
+### A11 Morning report (done)
+- `docs/MORNING_REPORT_ENGINE.md` written; `docs/AI_USAGE.md` completed. Network requests tonight: see the report.

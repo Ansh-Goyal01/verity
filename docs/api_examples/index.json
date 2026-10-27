@@ -108,9 +108,30 @@
    "status": 200
   },
   {
-   "file": "replay.json",
+   "file": "replay_V07.json",
+   "method": "GET",
+   "path": "/api/demo/replay/PL-5796",
+   "request_body": null,
+   "status": 200
+  },
+  {
+   "file": "replay_V12.json",
    "method": "GET",
    "path": "/api/demo/replay/PL-9b91",
+   "request_body": null,
+   "status": 200
+  },
+  {
+   "file": "replay_V19.json",
+   "method": "GET",
+   "path": "/api/demo/replay/PL-47be",
+   "request_body": null,
+   "status": 200
+  },
+  {
+   "file": "replay.json",
+   "method": "GET",
+   "path": "/api/demo/replay/PL-47be",
    "request_body": null,
    "status": 200
   },

@@ -51,7 +51,12 @@ def main() -> int:
         save("forecast_update", "POST", "/api/forecast/update", c.post("/api/forecast/update", json=upd), upd)
         box = {"min_lat": 27.0, "min_lon": 77.0, "max_lat": 29.5, "max_lon": 78.5}
         save("chargers", "GET", "/api/chargers", c.get("/api/chargers", params=box), box)
-        save("replay", "GET", f"/api/demo/replay/{pid}", c.get(f"/api/demo/replay/{pid}"))
+        replays = {vid: c.get(f"/api/demo/replay/{p}") for vid, p in plan_ids.items()}
+        for vid, p in plan_ids.items():
+            save(f"replay_{vid}", "GET", f"/api/demo/replay/{p}", replays[vid])
+        # replay.json: the first demo plan whose scripted trip ends in a DIVERT (a reachable alternate exists)
+        best = next((v for v, r in replays.items() if r.json()["events"][-1]["action"] == "DIVERT"), "V12")
+        save("replay", "GET", f"/api/demo/replay/{plan_ids[best]}", replays[best])
         tts = {"text": "Divert now", "language": "hi-IN"}
         save("voice_tts_503", "POST", "/api/voice/tts", c.post("/api/voice/tts", json=tts), tts)
         save("voice_stt_503", "POST", "/api/voice/stt",

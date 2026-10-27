@@ -2,7 +2,12 @@
 
 | Date | Tool | What it was used for |
 |---|---|---|
-| 2026-10-27 | Claude Code (model: Claude Sonnet 5.5) | Overnight autonomous engine build driven by `docs/TASKS_ANSH.md`: repo layout fix, scaffold (A0-A1). Later milestones are added below as they are completed. |
+| 2026-10-27 | Claude Code (model: Claude Sonnet 5.5) | Overnight autonomous engine build driven by `docs/TASKS_ANSH.md`, milestones A0-A11: repo layout fix and scaffold; physics energy model and generic vehicle priors; truth simulator; Bayesian calibration and E1; Monte Carlo forecast and E2; trust engine (priors, Dawid-Skene, ring detection), graph interface with in-memory and Neo4j implementations, and E5; routing, real route fetch and OpenStreetMap charger import; dispatch (candidate chains, Bingo Line, levers, refusal), E3 and E4; FastAPI service exactly per `docs/API_CONTRACT.md`, voice client (mock-tested only), API examples export; test suite, `scripts/run_all.py`, README, this disclosure and the morning report. |
+| 2026-10-27 | Third-party services (no AI) | Open-Meteo (elevation, weather forecast), an OSRM-compatible public router, OpenStreetMap via Overpass: fetched once, cached in `data/cache/`, request count logged. Open Charge Map, Sarvam and Neo4j were NOT called (no keys/credentials tonight). |
+| 2026-10-27 | Python libraries | numpy, scipy, pandas, pydantic, FastAPI, uvicorn, httpx, neo4j driver, matplotlib, pytest (as listed in `pyproject.toml`); `pypdf` was run once, outside the project, to read the plan PDF. |
 
-All AI-written code is reviewed by running the tests and the experiment scripts; no number in the
-docs or charts was typed by hand, every one is produced by a script in this repo.
+How the AI work was checked: every module has tests (`uv run pytest`), every experiment is a script that
+writes its own numbers and charts, and the tests caught and fixed real bugs during the build (listed in
+`docs/PROGRESS_ENGINE.md`). No number in the docs or charts was typed by hand; every one is produced by a
+script in this repo. All trip, report and fleet data in this repo is SIMULATED and labelled; the route and
+charger locations are real public data.

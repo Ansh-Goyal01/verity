@@ -106,3 +106,40 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
   JSON string property; the LEG soc_band is a "lo-hi" string; only ids starting with TEST- can be deleted.
   The Neo4j class takes an injectable driver so its query shapes can be tested without a server.
 - 2026-10-27 (A6): No networkx / python-dotenv: ring detection and the .env parser are written in numpy/stdlib.
+- 2026-10-27 (A8): Dispatch = graph proposes, Monte Carlo decides. LEG edges are stored per 10-point battery band
+  in `InMemoryGraph` (p_reach per band, never one number); Yen's k=6 shortest paths over drive + stop + charge
+  minutes (+ a 45-min expected-failure penalty x (1 - p_works) for the trust-aware planner) propose chains; every
+  chain plus the no-stop plan is scored by the vectorised Monte Carlo with backups (planned charger -> reachable
+  working alternate within 60 km ahead -> carry on if the next stop is reachable -> stranded).
+- 2026-10-27 (A8): Planning assumptions, all approximate - verify: 5 % SoC on arrival at a charger, 10 % at the
+  destination, charge only up to 80 %, +3 pp margin on the 90th-percentile leg energy, 6 min per stop, 20 min
+  wasted on a broken charger, 3 alternates max, charger power assumed 25 kW when unlisted, vehicle max charge power
+  by class (30 / 50 / 3 kW), average-power factor 0.85, heat slows charging up to 20 % above 30 C.
+- 2026-10-27 (A8): GO / NO_GO follow the DISPLAYED (5 %-rounded) confidence so the UI never shows "90 % / NO_GO";
+  2.5 points is below the Monte Carlo's own resolution. When nothing meets the target the most reliable plan is
+  chosen comparing confidence at 2-point resolution (ties -> fewer minutes), so noise cannot add pointless stops.
+- 2026-10-27 (A8): INSUFFICIENT_EVIDENCE = vehicle with no calibrated trips, OR a plan that meets the target only
+  when chargers with stale/unknown evidence work (re-scored with those chargers at the 10th percentile of their
+  Beta posterior). The "verify charger X" lever re-scores with the 90th percentile and is offered when it would
+  restore the target.
+- 2026-10-27 (A8): Bingo Line per segment end from the same runs (sub-sample of 1000): lowest SoC with
+  P(1 - prod(1 - p_works) over reachable candidates) >= target, candidates = next planned stop, chargers within
+  60 km ahead, and the destination. Point of no return = first km where returning to the last charger/origin is
+  below target. Breakdown from the central 40-60 % of runs, rounded so start + sum(terms) = arrival p50 exactly.
+- 2026-10-27 (A8): E3/E4 world: truth energy from verity.sim, 12 simulated chargers per 190 km trip, reliabilities
+  from a failure-rate scenario (20 % ~ PLAN s3 national non-operational share, 40 % ~ DC fast-charger downtime;
+  both approximate - verify), reports from 20 noisy users -> trust engine. 200 trips per scenario (not thousands:
+  runtime), Wilson 95 % intervals. The 0 % row in E4 is the control (forecast error only).
+- 2026-10-27 (A9): python-multipart is NOT added: the STT multipart body is parsed with the stdlib email parser
+  (`verity.voice.parse_multipart`, tested). Sarvam endpoint paths, header and model ids are UNVERIFIED (mock-tested).
+- 2026-10-27 (A9): Real route, real OSM chargers (only 4 within 3 km of the expressway route, 92 km gap between the
+  second and third) and a SIMULATED fleet/reports. The demo does not pad the corridor with invented chargers. The
+  vehicles' SoH (0.78 / 0.98 / 0.95), start SoC (82 / 62 / 40 %) and the report scenarios (well evidenced, thin,
+  stale, none) are scenario inputs chosen to illustrate the three decision types; every decision, probability,
+  plan and message is computed by the engine. Vehicle health notes are generated from the calibrated posterior.
+- 2026-10-27 (A9): API uses 1500 Monte Carlo runs per forecast (CLAUDE.md default is 2000) to keep a full dispatch
+  (plan + Bingo + levers, 4 plan evaluations) near 5 s; `VERITY_N_RUNS` overrides. Plans are cached in memory,
+  keyed by a hash of the request (identical request -> identical plan_id and response).
+- 2026-10-27 (A10): `scripts/run_all.py` deletes only its own named outputs, never data/, the cache or the fixed
+  split, and runs every step as a subprocess with a log in results/logs/. `--fast` shrinks the experiments for a
+  plumbing check and says its numbers are not results.

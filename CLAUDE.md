@@ -39,9 +39,13 @@ engine/verity/
   calibrate.py    Bayesian calibration, fleet pooling
   forecast.py     Monte Carlo with shared trip-level factors; live updates
   dispatch.py     candidate plans, backup evaluation, Bingo Line, levers
-  trust/          priors.py, source_trust.py (Dawid–Skene), graph.py (Neo4j)
+  trust/          priors.py, source_trust.py (Dawid–Skene), rings.py, engine.py, reports_sim.py, graph.py (in-memory + Neo4j)
+  sim.py          truth simulator (richer than the planner; SIMULATED data)
+  trips.py        trip log + context -> physics segments; splits.py fixed held-out split
+  chargers.py     OSM/OCM parsing, 50 m merge, near-route lookup; voice.py Sarvam client
   schemas.py      pydantic models for every data contract below
-api/main.py     FastAPI app serving the engine
+api/            main.py (FastAPI app), service.py (engine composition), models.py (mirrors the contract)
+scripts/        import_chargers.py, neo4j_smoke_test.py, export_api_examples.py, run_all.py
 logger/         frontend teammate's: static trip logger, plain HTML/CSS/JS, no build step
 web/            frontend teammate's: fleet console + driver view, plain HTML/CSS/JS (js/api.js)
 design/         frontend teammate's: design pages, plain HTML/CSS/JS
@@ -138,8 +142,11 @@ LEG is stored per battery band, never as one fixed probability.
 
 - Setup: `uv sync`
 - Tests: `uv run pytest`
-- API: `uv run uvicorn api.main:app --reload`
-- Experiments: `uv run python experiments/<name>.py`
+- API: `uv run uvicorn api.main:app --reload` (check: http://localhost:8000/api/health)
+- Everything from a clean state: `uv run python scripts/run_all.py` (add `--fast` for a plumbing check)
+- Experiments: `uv run python experiments/e1_learning_curve.py` ... `e5_trust_recovery.py` -> `results/`
+- Data: `uv run python -m verity.sim`, `-m verity.splits` (written once), `-m verity.routing`,
+  `uv run python scripts/import_chargers.py`, `scripts/export_api_examples.py`, `scripts/neo4j_smoke_test.py`
 
 ## How to work in this repo
 

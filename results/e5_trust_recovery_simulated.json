@@ -184,7 +184,7 @@
    }
   }
  },
- "runtime_s": 8.9,
+ "runtime_s": 49.2,
  "notes": [
   "All reports, reliabilities and attacks are SIMULATED (verity.trust.reports_sim).",
   "Each report is one noisy sample of an intermittent charger: a ~0.15 error floor applies to every method."

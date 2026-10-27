@@ -63,6 +63,7 @@ CRUISE_LEVER_MPS = 80.0 / 3.6
 EXTRA_CHARGE_MIN = 10.0
 BINGO_SUBSAMPLE = 1000
 MIN_CALIBRATED_TRIPS = 1
+MIN_STOP_MINUTES = 4.0  # a stop that adds less charging than this is not worth its 6-minute overhead
 
 BREAKDOWN_LABELS = {"rolling": "Rolling resistance", "aero": "Air drag", "grade": "Climbs", "inertia": "Stop-and-go",
                     "regen": "Regenerative braking", "aux": "AC and electronics", "charging": "Charging stops"}
@@ -444,7 +445,13 @@ def _choose(ctx: Ctx, nodes: Sequence[Node], rng: np.random.Generator, *, trust_
     scored = []
     for path in paths:
         stops = make_stops(ctx, path, nodes)
-        scored.append((stops, evaluate_plan(ctx, stops, rng, use_alts=use_alts)))
+        ev = evaluate_plan(ctx, stops, rng, use_alts=use_alts)
+        scored.append((stops, ev))
+        trivial = {s.node.id for s, g in zip(stops, ev.gains) if float(g.mean()) * ctx.min_per_pp(s.node) < MIN_STOP_MINUTES}
+        if trivial:  # also score the plan without the pointless top-ups
+            kept = [s.node for s in stops if s.node.id not in trivial]
+            pruned = make_stops(ctx, kept, nodes)
+            scored.append((pruned, evaluate_plan(ctx, pruned, rng, use_alts=use_alts)))
     meeting = [s for s in scored if s[1].confidence >= ctx.target]
     # With nothing meeting the target, prefer the most reliable plan, but compare confidence at the Monte
     # Carlo's own resolution (2 points) so a 3-stop plan does not beat a 1-stop plan on noise alone.
@@ -669,7 +676,11 @@ def live_update_plan(state: PlanState, km_now: float, soc_now: float, *, broken:
             message = ("Planned charger reported broken. Divert to the alternate ahead." if next_broken
                        else "Battery is below the Bingo Line. Divert to the nearest working charger now.")
         else:
-            action, message = "SLOW_DOWN", "Battery is low and no alternate is reachable with confidence: slow down and save energy."
+            action = "SLOW_DOWN"
+            message = ("Planned charger reported broken and no other charger is reachable with confidence: slow down "
+                       "and save energy." if next_broken else
+                       "Battery is below the Bingo Line and no alternate is reachable with confidence: slow down "
+                       "and save energy.")
     elif conf < ctx.target:
         action = "SLOW_DOWN"
         message = "Battery is draining faster than planned; confidence is below target. Slow down to save energy."

@@ -21,3 +21,4 @@ web/dist/
 .vscode/settings.json
 data/sim/dev/
 results/dev/
+results/logs/

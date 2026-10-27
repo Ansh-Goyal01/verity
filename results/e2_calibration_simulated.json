@@ -182,8 +182,8 @@
   "compact_esuv": -0.0303,
   "e_scooter": -0.0869
  },
- "compute_ms_per_shared_forecast_mean": 110.4,
- "runtime_s": 206.2,
+ "compute_ms_per_shared_forecast_mean": 103.9,
+ "runtime_s": 193.2,
  "notes": [
   "Truth trips come from verity.sim (SIMULATED); vehicles calibrated on training-split trips only.",
   "Success = arrival SoC >= reserve in the truth run."

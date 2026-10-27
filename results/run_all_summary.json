@@ -1,0 +1,70 @@
+{
+ "fast_mode": false,
+ "all_ok": true,
+ "steps": [
+  {
+   "step": "tests",
+   "ok": true,
+   "seconds": 86.5,
+   "returncode": 0,
+   "missing_outputs": [],
+   "last_line": "======================= 163 passed in 85.25s (0:01:25) ========================"
+  },
+  {
+   "step": "E1",
+   "ok": true,
+   "seconds": 64.7,
+   "returncode": 0,
+   "missing_outputs": [],
+   "last_line": "Plain regression (no physics)          n=1: MAE 6.56 cov 0.07  n=2: MAE 6.98 cov 0.06  n=3: MAE 25.23 cov 0.05  n=5: MAE 39.69 cov 0.18  n=10: MAE 6.66 cov 0.50"
+  },
+  {
+   "step": "E2",
+   "ok": true,
+   "seconds": 196.4,
+   "returncode": 0,
+   "missing_outputs": [],
+   "last_line": "median-forecast relative energy error by class: {'small_ecar': -0.0264, 'compact_esuv': -0.0303, 'e_scooter': -0.0869}"
+  },
+  {
+   "step": "E3",
+   "ok": true,
+   "seconds": 254.3,
+   "returncode": 0,
+   "missing_outputs": [],
+   "last_line": "40% chargers down: first stop changed 75% | stranded blind 19.0% vs trust-aware 6.0% (only-blind 27, only-aware 1) | minutes lost 0.6 | plan ms 273.0/254.0"
+  },
+  {
+   "step": "E4",
+   "ok": true,
+   "seconds": 516.2,
+   "returncode": 0,
+   "missing_outputs": [],
+   "last_line": "40% chargers down: stranded fixed 33.0% [0.269, 0.398] vs dispatch 6.0% [0.035, 0.102] (only-fixed 55, only-dispatch 1) | minutes 213.8 vs 215.6"
+  },
+  {
+   "step": "E5",
+   "ok": true,
+   "seconds": 52.9,
+   "returncode": 0,
+   "missing_outputs": [],
+   "last_line": "                           ring detection: {'precision': None, 'recall': 0.0, 'worlds_with_any_flag': 0}"
+  },
+  {
+   "step": "neo4j_smoke",
+   "ok": true,
+   "seconds": 1.0,
+   "returncode": 0,
+   "missing_outputs": [],
+   "last_line": "SKIPPED: NEO4J_URI, NEO4J_USERNAME and NEO4J_PASSWORD are not all set in .env (copy .env.example to .env and fill them in)"
+  },
+  {
+   "step": "api_examples",
+   "ok": true,
+   "seconds": 29.9,
+   "returncode": 0,
+   "missing_outputs": [],
+   "last_line": "wrote 14 examples to D:\\hackfront-verity\\docs\\api_examples"
+  }
+ ]
+}
