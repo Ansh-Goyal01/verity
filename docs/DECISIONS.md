@@ -47,3 +47,11 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
   the engine rejecting trips, requires tz-aware timestamps (the browser logger emits ISO strings with a
   zone), and makes `is_simulated` mandatory. The JSON field `schema` is exposed as `schema_id` in Python
   (to avoid shadowing a pydantic method) and `to_json_dict()` restores the contract name.
+- 2026-10-27 (A2): "passengers" in a trip log counts every occupant including the driver; mass =
+  curb + passengers x PASSENGER_MASS_KG (70 kg, assumption, approximate - verify) + cargo. The e-scooter
+  curb mass excludes the rider, who is counted through passengers.
+- 2026-10-27 (A2): Energy-term attribution is by operating mode: driving steps split into rolling /
+  grade / aero / inertia at p_i / eta_drive; regeneration steps are credited wholly to one negative
+  "regen" term. Terms therefore sum exactly to the battery energy (the UI breakdown cannot drift).
+- 2026-10-27 (A2): Climate load = aux_w_per_k x |T - 22 C| when AC is on (heating and cooling share one
+  term, as the plan says). 22 C neutral point and all coefficients are approximate - verify.

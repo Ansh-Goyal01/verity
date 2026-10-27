@@ -17,7 +17,7 @@ Commit message per milestone: `A<n>: <summary>`.
 
 - [x] A0 Pre-flight
 - [x] A1 Scaffold
-- [ ] A2 Physics and vehicle priors
+- [x] A2 Physics and vehicle priors
 - [ ] A3 Truth simulator
 - [ ] A4 Calibration and E1
 - [ ] A5 Forecast and E2
@@ -54,6 +54,23 @@ Commit message per milestone: `A<n>: <summary>`.
   report). `uv run pytest` -> 18 passed.
 - `README.md`, `docs/AI_USAGE.md`, `docs/DECISIONS.md`, `data/trips/README.md` created.
 - NOT created, by instruction: `logger/`, `web/`, `design/`.
+
+### A2 Physics and vehicle priors (done)
+- `physics.py`: `VehicleParams`, `Segments`, `energy_terms()` returning joules for each of
+  rolling/grade/aero/inertia/regen/aux/base; helpers to convert to SoC points, per term and
+  cumulative. Everything broadcasts, so N Monte Carlo runs evaluate as one (N, S) array.
+- Energy attribution is exact: terms sum to the integral of P_total (tested against an explicit scalar
+  re-implementation of the CLAUDE.md formulas).
+- `vehicles.py`: three generic classes (small e-car ~25 kWh, compact e-SUV ~45 kWh, e-scooter ~3 kWh).
+  Every number is commented "approximate - verify". Calibrated parameters (CdA mult, Crr mult,
+  eta_drive, aux mult, usable fraction, k) live in an unconstrained vector with a Gaussian prior, so
+  priors stay inside physical bounds.
+- `tests/test_physics.py`: 19 tests. Sanity: zero distance -> zero energy, more payload -> more energy,
+  AC on -> more aux energy, regen <= eta_regen x braking energy and <= the cap. Plus hand calculation
+  on flat ground, energy/km rising with speed above 30 km/h, grade/wind direction, bounds, class
+  plausibility. A real bug found by the tests and fixed: summing energy to (N,) then dividing by an
+  (N, 1) capacity gave an (N, N) matrix that would have mixed Monte Carlo runs.
+- `uv run pytest` -> 37 passed.
 
 ## Blocked items
 
