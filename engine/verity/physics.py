@@ -81,19 +81,17 @@ class Segments:
     headwind_mps: Array  # positive = wind against the direction of travel
 
     def __post_init__(self) -> None:
-        fields = {
-            name: np.asarray(getattr(self, name), dtype=float)
-            for name in (
-                "length_m", "v_mps", "accel_mps2", "grade_rad", "dt_s", "temp_c", "surface", "headwind_mps",
-            )
-        }
-        sizes = {a.shape for a in fields.values()}
-        if len(sizes) != 1 or len(next(iter(sizes))) != 1:
-            raise ValueError(f"all segment arrays must be 1-D and equal length, got shapes {sizes}")
-        for name, arr in fields.items():
+        names = ("length_m", "v_mps", "accel_mps2", "grade_rad", "dt_s", "temp_c", "surface", "headwind_mps")
+        try:
+            arrays = np.broadcast_arrays(*[np.asarray(getattr(self, n), dtype=float) for n in names])
+        except ValueError as exc:
+            raise ValueError(f"segment arrays must share one shape (1-D, or 2-D (runs, segments)): {exc}") from exc
+        if arrays[0].ndim not in (1, 2):
+            raise ValueError(f"segment arrays must be 1-D or 2-D, got {arrays[0].ndim}-D")
+        for name, arr in zip(names, arrays):
             if not np.all(np.isfinite(arr)):
                 raise ValueError(f"segment field {name} contains non-finite values")
-            object.__setattr__(self, name, arr)
+            object.__setattr__(self, name, np.array(arr))
         if np.any(self.length_m < 0) or np.any(self.dt_s < 0) or np.any(self.v_mps < 0):
             raise ValueError("length, duration and speed must be non-negative")
         if np.any(self.surface < 1.0):
@@ -128,11 +126,11 @@ class Segments:
 
     @property
     def n(self) -> int:
-        return int(self.length_m.shape[0])
+        return int(self.length_m.shape[-1])
 
     @property
     def distance_km(self) -> float:
-        return float(self.length_m.sum() / 1000.0)
+        return float(np.atleast_2d(self.length_m)[0].sum() / 1000.0)
 
     def cumulative_km(self) -> Array:
         """Distance at the END of each segment, in km."""

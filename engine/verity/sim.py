@@ -117,6 +117,7 @@ class TripRun:
     z_fn_params: tuple
     gust_rms_mps: float
     mean_temp_c: float
+    blocks: dict
 
 
 # --- sampling ---------------------------------------------------------------------------------
@@ -335,6 +336,7 @@ def run_trip(rng: np.random.Generator, vt: VehicleTruth, spec: TripSpec) -> Trip
         t_s=t, s_m=s, v_mps=v, soc_true_pct=soc, distance_km=float(s[-1] / 1000.0), duration_s=float(t[-1]),
         energy_terms_soc_pct=terms, mass_true_kg=float(mass), capacity_kwh=float(capacity_kwh),
         z_fn_params=terr, gust_rms_mps=float(np.sqrt(np.mean(gust**2))), mean_temp_c=float(temp.mean()),
+        blocks=blocks,
     )
 
 
@@ -357,6 +359,26 @@ def _latlon_at(spec: TripSpec, s_m: np.ndarray, rng: np.random.Generator) -> tup
     lat = spec.origin_lat + np.degrees(north / EARTH_R_M)
     lon = spec.origin_lon + np.degrees(east / (EARTH_R_M * math.cos(math.radians(spec.origin_lat))))
     return lat, lon
+
+
+def _lookup_context(rng: np.random.Generator, spec: TripSpec, run: TripRun) -> tuple[dict, dict]:
+    """What an elevation service and a weather forecast would return for this route (noisy)."""
+    grid = np.arange(0.0, run.s_m[-1] + 300.0, 100.0)
+    elevation = _terrain(grid, run.z_fn_params) + rng.normal(0, 0.8, size=grid.shape)
+    weather = {"temperature_c": round(float(spec.temp_c + rng.normal(0, 1.0)), 1),
+               "wind_speed_mps": round(float(max(0.0, spec.wind_mean_mps + rng.normal(0, 1.0))), 1),
+               "wind_from_deg": round(float((spec.wind_from_deg + rng.normal(0, 20.0)) % 360.0), 0)}
+    return {"step_m": 100.0, "z_m": [round(float(z), 1) for z in elevation]}, weather
+
+
+def planner_view(rng: np.random.Generator, spec: TripSpec, run: TripRun) -> dict:
+    """The planner-visible description of a trip BEFORE it is driven: route length and bearing, road class
+    per block (as OSM would give), the elevation profile and the weather forecast. No truth is included."""
+    elevation, weather = _lookup_context(rng, spec, run)
+    return {"is_simulated": True, "distance_km": spec.distance_km, "bearing_deg": spec.bearing_deg,
+            "block_end_m": run.blocks["end"].tolist(), "block_kind": run.blocks["kind"].tolist(),
+            "elevation": elevation, "weather": weather, "passengers": spec.passengers,
+            "cargo_kg": spec.cargo_logged_kg, "ac_on": spec.ac_on}
 
 
 def export_trip(
@@ -399,15 +421,8 @@ def export_trip(
         "points": points, "soc": soc, "notes": "SIMULATED trip from verity.sim (not real data)",
         "is_simulated": True,
     }
-    grid = np.arange(0.0, run.s_m[-1] + 300.0, 100.0)
-    elevation = _terrain(grid, run.z_fn_params) + rng.normal(0, 0.8, size=grid.shape)
-    context = {
-        "is_simulated": True, "trip_id": trip_id,
-        "elevation": {"step_m": 100.0, "z_m": [round(float(z), 1) for z in elevation]},
-        "weather": {"temperature_c": round(float(spec.temp_c + rng.normal(0, 1.0)), 1),
-                    "wind_speed_mps": round(float(max(0.0, spec.wind_mean_mps + rng.normal(0, 1.0))), 1),
-                    "wind_from_deg": round(float((spec.wind_from_deg + rng.normal(0, 20.0)) % 360.0), 0)},
-    }
+    elevation, weather = _lookup_context(rng, spec, run)
+    context = {"is_simulated": True, "trip_id": trip_id, "elevation": elevation, "weather": weather}
     truth = {
         "is_simulated": True, "trip_id": trip_id, "vehicle": asdict(vt),
         "trip": {**{k: v for k, v in asdict(spec).items() if k != "started_at"},

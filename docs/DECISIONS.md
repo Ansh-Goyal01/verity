@@ -80,3 +80,15 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
   10 s GPS jitter otherwise adds phantom distance while parked (+4 % distance on a congested trip).
 - 2026-10-27 (A4): `uv run` uses Python 3.13.14 here, whereas the bare `python` is 3.12.10 (A0 table);
   the project only requires >= 3.11.
+- 2026-10-27 (A5): Forecast shared factors and their spreads (assumptions, approximate - verify): wind error
+  sd 1.5 m/s, payload error sd 12 kg, aux multiplier lognormal sd 0.20, day-to-day capacity error 0.02,
+  traffic lognormal sd 0.12, segment noise 0.04; the calibration posterior (incl. driver k, usable
+  capacity) is also drawn once per run. Planned speeds per road class (car 26/14/6.5 m/s, scooter
+  11/8/4), stop-and-go peak and cycles per km are planning assumptions fixed on the DEV seed only.
+- 2026-10-27 (A5): Arrival reserve = 10 % SoC (assumption, approximate - verify; a driver-facing setting
+  in the API later). E2 success = arrival SoC >= reserve in the truth run.
+- 2026-10-27 (A5): Live update = importance weighting of the stored runs by the new SoC reading (sigma 0.8
+  pp, widened until >= 40 effective runs), exploiting that trip-level factors are shared so one reading is
+  informative about the rest of the trip.
+- 2026-10-27 (A5): E2 start SoC = reserve + the forecast's median energy use + U(-10, +14) pp, so predicted
+  probabilities spread over 0..1 (a calibration chart needs outcomes on both sides of the threshold).

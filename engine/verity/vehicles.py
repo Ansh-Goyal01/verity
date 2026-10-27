@@ -54,13 +54,15 @@ def to_physical(u: Array) -> dict[str, Array]:
 def to_params(base: VehicleParams, nominal_kwh: float, u: Array) -> VehicleParams:
     """Apply calibration parameters ``u`` to a class's base parameters.
 
-    ``u`` of shape (6,) gives scalar parameters; shape (N, 6) gives (N, 1) arrays for N Monte Carlo runs.
+    ``u`` of shape (6,) gives scalar parameters; shape (N, 6) gives (N, 1) arrays for N Monte Carlo runs
+    (one parameter set shared by the whole trip); shape (N, S, 6) gives (N, S) arrays, i.e. a separate
+    parameter draw for every segment (used only to test the independent-segments strawman in E2).
     """
     u = np.asarray(u, dtype=float)
     phys = to_physical(u)
 
     def col(x: Array) -> Array:
-        return x[..., None] if u.ndim > 1 else x
+        return x[..., None] if u.ndim == 2 else x
 
     return replace(
         base,

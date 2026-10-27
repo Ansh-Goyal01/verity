@@ -37,9 +37,8 @@ from verity.calibrate import (  # noqa: E402
     predictive_samples,
 )
 from verity.datasets import bmw_i3  # noqa: E402
-from verity.paths import RESULTS_DIR, SIM_DIR  # noqa: E402
-from verity.sim import generate_dataset, load_manifest  # noqa: E402
-from verity.splits import load_split, make_split  # noqa: E402
+from verity.paths import RESULTS_DIR  # noqa: E402
+from verity.splits import load_eval_dataset  # noqa: E402
 from verity.trips import TripObservation, load_sim_observation  # noqa: E402
 from verity.vehicles import get_prior  # noqa: E402
 
@@ -54,7 +53,6 @@ LABELS = {
 }
 Z90 = 1.6449
 BAND_FLOOR_PP = 0.5
-DEV_SEED = 777
 Y_CAP_PP = 12.0  # y-axis cap of the error panel; points above it are named in the chart
 
 
@@ -68,21 +66,10 @@ def _baseline_band(train_err: np.ndarray) -> float:
     return max(Z90 * float(np.sqrt(np.mean(train_err**2))), BAND_FLOOR_PP)
 
 
-def _load_dataset(dataset: str):
-    if dataset == "dev":
-        if not (SIM_DIR / "dev" / "manifest.json").exists():
-            generate_dataset("dev", DEV_SEED)
-        manifest = load_manifest("dev")
-        split = make_split(manifest)  # in memory only: dev is not a held-out set
-    else:
-        manifest, split = load_manifest(dataset), load_split(dataset)
-    return manifest, split
-
-
 def run_e1(dataset: str = "main", rho_rel: float = DEFAULT_RHO_REL, resamples: int = 3, seed: int = 11,
            n_draws: int = 400) -> dict:
     t0 = time.time()
-    manifest, split = _load_dataset(dataset)
+    manifest, split = load_eval_dataset(dataset)
     obs: dict[str, TripObservation] = {
         t["trip_id"]: load_sim_observation(dataset, t["trip_id"]) for t in manifest["trips"]
     }

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .paths import SPLITS_DIR
+from .paths import SIM_DIR, SPLITS_DIR
 from .sim import load_manifest
 
 SPLIT_SEED = 31
@@ -52,6 +52,22 @@ def save_split(split: dict, path: Path, *, overwrite: bool = False) -> None:
 
 def load_split(name: str, root: Path = SPLITS_DIR) -> dict:
     return json.loads(split_path(name, root).read_text(encoding="utf-8"))
+
+
+DEV_SEED = 777  # the only dataset used for choosing settings
+
+
+def load_eval_dataset(dataset: str) -> tuple[dict, dict]:
+    """(manifest, split) of a simulated dataset. ``dev`` is generated on demand and split in memory only
+    (it is for tuning); any other name is read from disk with its fixed, committed held-out split."""
+    from .sim import generate_dataset
+
+    if dataset == "dev":
+        if not (SIM_DIR / "dev" / "manifest.json").exists():
+            generate_dataset("dev", DEV_SEED)
+        manifest = load_manifest("dev")
+        return manifest, make_split(manifest)
+    return load_manifest(dataset), load_split(dataset)
 
 
 def main() -> None:

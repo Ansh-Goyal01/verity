@@ -20,7 +20,7 @@ Commit message per milestone: `A<n>: <summary>`.
 - [x] A2 Physics and vehicle priors
 - [x] A3 Truth simulator
 - [x] A4 Calibration and E1 (BMW i3 part BLOCKED: dataset not downloaded)
-- [ ] A5 Forecast and E2
+- [x] A5 Forecast and E2
 - [ ] A6 Trust engine and E5
 - [ ] A7 Routing and chargers
 - [ ] A8 Dispatch, E3 and E4
@@ -119,6 +119,36 @@ Commit message per milestone: `A<n>: <summary>`.
 - BLOCKED: BMW i3 real-data E1 (needs `data/raw/bmw_i3/`; the loader is deliberately not guessed,
   see `engine/verity/datasets/bmw_i3.py`). Exactly what to do is in the morning report.
 - `uv run pytest` -> 58 passed.
+
+### A5 Forecast and E2 (done)
+- `forecast.py`: `PlannedRoute` (1 km segments with road class, grade, forecast temperature/wind),
+  `simulate_runs` (N=2000 default, seeded, vectorised) with shared trip-level factors sampled once per
+  run (calibration draw incl. driver k and usable capacity, aux multiplier, payload error, wind error,
+  day-to-day capacity error, traffic regime) plus small independent segment noise; `shared=False` is the
+  E2 strawman. Stop-and-go energy in congestion-prone stretches is modelled explicitly. `live_update`
+  conditions the runs on a new mid-trip SoC reading (importance weights, noise widened until >= 40 runs
+  still count). `round_prob` rounds to the nearest 5 % (golden rule 5).
+- `physics.Segments` now accepts (runs, segments) arrays; `vehicles.to_params` accepts per-segment draws.
+- `sim.planner_view` exposes only what a planner could know; the `main` dataset stayed byte-identical.
+- Compute: ~110 ms per 2000-run forecast of a 60-180 km route on this laptop.
+- `tests/test_forecast.py`: 9 tests (reproducible; shared spread > 3x independent with equal per-segment
+  marginals; confidence monotone; terms sum; payload/heat/speed lever directions; stop-and-go only in
+  jams; interpolation; live update direction; 5 % rounding; route cutting).
+- E2 (SIMULATED, 540 new truth-simulator trips on the 9 `main` vehicles calibrated on train-split trips
+  only; planning constants chosen on DEV). Success = arrive with >= 10 % SoC:
+
+| | shared factors (Verity) | independent segments (strawman) |
+|---|---|---|
+| ECE (calibration error) | 0.061 | 0.117 |
+| Brier score | 0.107 | 0.122 |
+| 90 % arrival band covers truth | 0.92 | 0.28 |
+| mean 90 % band width (SoC points) | 17.9 | 2.6 |
+| trips with forecast >= 0.9: share that arrived | 0.965 (n=142, mean forecast 0.972) | 0.879 (n=272, mean forecast 0.996) |
+
+- Honest gaps: Verity's mid-range bins sit slightly below the diagonal (e.g. ~0.85 predicted vs ~0.76
+  observed), and the median energy forecast is biased low by 2.6 % / 3.0 % / 8.7 % for small e-car /
+  e-SUV / e-scooter. Files: `results/e2_calibration_simulated.png|json`.
+- `uv run pytest` -> 67 passed.
 
 ## Blocked items
 
