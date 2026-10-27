@@ -22,7 +22,12 @@ Commit message per milestone: `A<n>: <summary>`.
 - [x] A4 Calibration and E1 (BMW i3 part BLOCKED: dataset not downloaded)
 - [x] A5 Forecast and E2
 - [x] A6 Trust engine and E5 (Neo4j live test BLOCKED: no credentials)
-- [ ] A7 Routing and chargers
+- [~] A7 Routing and chargers (PARTIAL: real data fetched, tests NOT written; OCM blocked, no API key)
+
+> **RUN STOPPED EARLY: usage limit reached.** Done and committed: A0-A6. A7 is partial. NOT started:
+> A8 (dispatch, E3, E4), A9 (API + export script), A10 (scripts/run_all.py, README/CLAUDE.md commands),
+> A11 (docs/MORNING_REPORT_ENGINE.md, final AI_USAGE.md entry). Resume with: "Read docs/TASKS_ANSH.md and
+> docs/PROGRESS_ENGINE.md; finish A7 (tests/test_routing.py is only a placeholder), then A8-A11."
 - [ ] A8 Dispatch, E3 and E4
 - [ ] A9 API per docs/API_CONTRACT.md
 - [ ] A10 Quality pass
@@ -194,3 +199,22 @@ Commit message per milestone: `A<n>: <summary>`.
 ## Blocked items
 
 (none yet)
+
+### A7 Routing and chargers (PARTIAL, committed as-is)
+- `engine/verity/routing.py`: `CachedClient` (on-disk cache, persisted request counter with a hard 300 limit,
+  exponential back-off, API keys never cached), OSRM route, Open-Meteo elevation + forecast, `plan_segments`
+  (1 km segments: road class from router speed, grade, forecast temperature/headwind), labelled synthetic
+  fallback, `load_planned_route`. Run: `uv run python -m verity.routing`.
+- REAL data fetched and saved to `data/processed/route_noida_agra.json`: 190.77 km, 149.5 min, 191 segments
+  (167 highway / 24 arterial), elevation 157-204 m, forecast for 2026-10-28 14:00 IST 28.6-29.8 C, wind
+  0.4-1.2 m/s. Passes 2.4 km from Jewar and ends at Agra (consistent with the Yamuna Expressway; the router
+  chose it, it was not forced). 4 requests.
+- `engine/verity/chargers.py` + `scripts/import_chargers.py`: OSM Overpass import (195 OSM records, 54 merged
+  within 50 m -> 141 chargers in `data/processed/chargers_ncr.json`, 1 request; 5 requests in total so far).
+- BLOCKED: Open Charge Map needs a free API key (`OCM_API_KEY` in .env; not created tonight). Neo4j load skipped
+  (no credentials).
+- KNOWN WEAKNESSES of the import: only 1 of 141 chargers has a tagged connector power (OSM rarely tags kW; untagged
+  connectors are dropped, not guessed), all site types are "unknown" (keyword heuristic matched nothing), 90 have
+  no operator. Dispatch needs connector power for charge times: A8 must treat missing power as unknown.
+- TODO for A7: write `tests/test_routing.py` (cache replay, request budget, back-off via httpx.MockTransport,
+  fallback labelling, segment building, charger parsing/merging); it currently holds only a docstring.
