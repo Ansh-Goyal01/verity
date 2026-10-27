@@ -92,3 +92,17 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
   informative about the rest of the trip.
 - 2026-10-27 (A5): E2 start SoC = reserve + the forecast's median energy use + U(-10, +14) pp, so predicted
   probabilities spread over 0..1 (a calibration chart needs outcomes on both sides of the threshold).
+- 2026-10-27 (A6): Dawid-Skene variant with a per-report latent state (z_r ~ Bernoulli(r_charger)) instead of one
+  latent truth per charger, because chargers are intermittent; sens/spec per source with Beta(4,1) priors
+  (Beta(8,2) held a lying feed's learned spec too high), chargers start at the operator/site/region prior.
+- 2026-10-27 (A6): Source labels collapse to binary: working and occupied -> working; broken, blocked,
+  no_power -> not working. Reports decay with a 30-day half-life; ring members keep 5 % weight.
+- 2026-10-27 (A6): Usage traces enter as a fixed pseudo-source (P(session | works) = 0.95, P(bounce | broken)
+  = 0.70; assumptions, approximate - verify). The simulator generates traces from the same numbers, so E5's
+  usage benefit is optimistic by construction.
+- 2026-10-27 (A6): Prior evidence sources and strengths are listed in trust/priors.py; the Feb-2024 "ever
+  non-functional" figure is deliberately unused (it is not P(works now)). Region "delhi" = NCT bounding box.
+- 2026-10-27 (A6): Neo4j: Site nodes are keyed by site type (no site directory yet); connectors are stored as a
+  JSON string property; the LEG soc_band is a "lo-hi" string; only ids starting with TEST- can be deleted.
+  The Neo4j class takes an injectable driver so its query shapes can be tested without a server.
+- 2026-10-27 (A6): No networkx / python-dotenv: ring detection and the .env parser are written in numpy/stdlib.

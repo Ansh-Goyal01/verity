@@ -21,7 +21,7 @@ Commit message per milestone: `A<n>: <summary>`.
 - [x] A3 Truth simulator
 - [x] A4 Calibration and E1 (BMW i3 part BLOCKED: dataset not downloaded)
 - [x] A5 Forecast and E2
-- [ ] A6 Trust engine and E5
+- [x] A6 Trust engine and E5 (Neo4j live test BLOCKED: no credentials)
 - [ ] A7 Routing and chargers
 - [ ] A8 Dispatch, E3 and E4
 - [ ] A9 API per docs/API_CONTRACT.md
@@ -149,6 +149,47 @@ Commit message per milestone: `A<n>: <summary>`.
   observed), and the median energy forecast is biased low by 2.6 % / 3.0 % / 8.7 % for small e-car /
   e-SUV / e-scooter. Files: `results/e2_calibration_simulated.png|json`.
 - `uv run pytest` -> 67 passed.
+
+### A6 Trust engine and E5 (done; live Neo4j blocked)
+- `trust/priors.py`: Beta priors by operator / site type / region; every value cites the PLAN s3 row it
+  came from and is marked "approximate - verify" (national 0.82 Parliament data, BPCL 0.40, highway/DC
+  fast 0.60, Delhi IEEFA audit 0.16 with weight 1 because of its small sample). Strength-weighted,
+  total clipped to 2-8 pseudo-reports.
+- `trust/source_trust.py`: Dawid-Skene in numpy with a per-report latent state (an intermittent charger
+  is not a noisy reporter), Beta priors per source and charger, 30-day time decay, per-source weights,
+  and fixed-parameter usage-trace pseudo-source.
+- `trust/rings.py`: fake-report ring detection on the co-reporting graph (shared chargers, Jaccard, label
+  agreement, burst timing, connected components).
+- `trust/reports_sim.py`: SIMULATED worlds: noisy honest users, lying operator feed, fake ring, usage traces.
+- `trust/engine.py`: `TrustEngine.estimate()` -> per charger p_works, 10-90 % interval, n_reports in 60
+  days, days since last, trust level (high/medium/low/unknown).
+- `trust/graph.py`: `ChargerGraph` interface; `InMemoryGraph` (default) and `Neo4jGraph` with the CLAUDE.md
+  schema (constraints for all 7 labels, REPORTED / RUN_BY / AT / LEG per battery band / ALTERNATE /
+  WORKS_WITH, co-reporting query, prefix-scoped test-data delete). `scripts/neo4j_smoke_test.py` skips
+  cleanly without `.env` credentials (run: "SKIPPED ... exit 0").
+- BLOCKED: the Neo4j implementation has only been tested through an injected fake driver (query shape
+  and parsing); the Cypher has never run against a real server. Needs AuraDB credentials in `.env`.
+- Tests: `test_trust.py` (13) and `test_graph.py` (13). Settings (source prior Beta(4,1)) chosen on
+  simulator seeds 0-7; E5 on seeds 100-119.
+- E5 (SIMULATED; 20 worlds per scenario, 120 chargers, 100 honest users; mean absolute error of the recovered
+  reliability, lower is better):
+
+| scenario | avg star rating | Dawid-Skene | + usage | + ring detection |
+|---|---|---|---|---|
+| clean | 0.154 | 0.168 | 0.156 | 0.156 |
+| lying operator feed | 0.163 | 0.171 | 0.160 | 0.160 |
+| ring of 5 | 0.213 | 0.171 | 0.160 | 0.159 |
+| ring of 12 | 0.245 | 0.177 | 0.160 | 0.156 |
+| ring of 12 + lying feed | 0.254 | 0.180 | 0.165 | 0.160 |
+| evasive ring of 12 (10 days) | 0.245 | 0.177 | 0.160 | 0.160 |
+
+  On the chargers the ring attacks (ring of 12): average rating 0.543 vs 0.130 with the full engine.
+  Ring detection: precision 1.0 / recall 1.0 for the burst ring (all 20 worlds each); recall 0.0 for the
+  evasive ring (never flagged; Dawid-Skene + usage still limits the damage: 0.146 on attacked chargers).
+- Honest reading: no gain over average rating in a clean world (both sit on a ~0.15 floor because each
+  report is one noisy sample of an intermittent charger); large gain under attack; ring detection is
+  evadable by an adversary who spreads reports over days. Files: `results/e5_trust_recovery_simulated.*`.
+- `uv run pytest` -> 93 passed.
 
 ## Blocked items
 

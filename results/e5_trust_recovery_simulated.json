@@ -1,0 +1,192 @@
+{
+ "experiment": "E5 trust recovery",
+ "is_simulated": true,
+ "seeds": [
+  100,
+  119
+ ],
+ "worlds_per_scenario": 20,
+ "chargers_per_world": 120,
+ "world": {
+  "n_honest": 100,
+  "reports_per_honest": [
+   6,
+   24
+  ]
+ },
+ "scenarios": {
+  "clean": {
+   "mae": {
+    "avg_rating": {
+     "mean": 0.154,
+     "sd": 0.014
+    },
+    "ds": {
+     "mean": 0.1684,
+     "sd": 0.0123
+    },
+    "ds_usage": {
+     "mean": 0.1564,
+     "sd": 0.0131
+    },
+    "full": {
+     "mean": 0.1564,
+     "sd": 0.0131
+    }
+   },
+   "mae_on_attacked_chargers": null,
+   "ring_detection": null
+  },
+  "lying operator feed": {
+   "mae": {
+    "avg_rating": {
+     "mean": 0.1633,
+     "sd": 0.0143
+    },
+    "ds": {
+     "mean": 0.1713,
+     "sd": 0.0125
+    },
+    "ds_usage": {
+     "mean": 0.16,
+     "sd": 0.0116
+    },
+    "full": {
+     "mean": 0.16,
+     "sd": 0.0116
+    }
+   },
+   "mae_on_attacked_chargers": null,
+   "ring_detection": null
+  },
+  "ring of 5": {
+   "mae": {
+    "avg_rating": {
+     "mean": 0.2128,
+     "sd": 0.0171
+    },
+    "ds": {
+     "mean": 0.1709,
+     "sd": 0.0125
+    },
+    "ds_usage": {
+     "mean": 0.1601,
+     "sd": 0.0132
+    },
+    "full": {
+     "mean": 0.1587,
+     "sd": 0.0131
+    }
+   },
+   "mae_on_attacked_chargers": {
+    "avg_rating": 0.4138,
+    "ds": 0.1415,
+    "ds_usage": 0.1348,
+    "full": 0.1294
+   },
+   "ring_detection": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "worlds_with_any_flag": 20
+   }
+  },
+  "ring of 12": {
+   "mae": {
+    "avg_rating": {
+     "mean": 0.2451,
+     "sd": 0.0172
+    },
+    "ds": {
+     "mean": 0.1768,
+     "sd": 0.0134
+    },
+    "ds_usage": {
+     "mean": 0.1599,
+     "sd": 0.0122
+    },
+    "full": {
+     "mean": 0.156,
+     "sd": 0.0121
+    }
+   },
+   "mae_on_attacked_chargers": {
+    "avg_rating": 0.5429,
+    "ds": 0.1665,
+    "ds_usage": 0.1461,
+    "full": 0.1301
+   },
+   "ring_detection": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "worlds_with_any_flag": 20
+   }
+  },
+  "ring of 12 + lying feed": {
+   "mae": {
+    "avg_rating": {
+     "mean": 0.2542,
+     "sd": 0.0172
+    },
+    "ds": {
+     "mean": 0.1797,
+     "sd": 0.0137
+    },
+    "ds_usage": {
+     "mean": 0.1646,
+     "sd": 0.0112
+    },
+    "full": {
+     "mean": 0.1602,
+     "sd": 0.0105
+    }
+   },
+   "mae_on_attacked_chargers": {
+    "avg_rating": 0.5423,
+    "ds": 0.1665,
+    "ds_usage": 0.1527,
+    "full": 0.1348
+   },
+   "ring_detection": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "worlds_with_any_flag": 20
+   }
+  },
+  "evasive ring of 12 (10 days)": {
+   "mae": {
+    "avg_rating": {
+     "mean": 0.2451,
+     "sd": 0.0172
+    },
+    "ds": {
+     "mean": 0.1769,
+     "sd": 0.0133
+    },
+    "ds_usage": {
+     "mean": 0.1599,
+     "sd": 0.0122
+    },
+    "full": {
+     "mean": 0.1599,
+     "sd": 0.0122
+    }
+   },
+   "mae_on_attacked_chargers": {
+    "avg_rating": 0.5429,
+    "ds": 0.1665,
+    "ds_usage": 0.1462,
+    "full": 0.1462
+   },
+   "ring_detection": {
+    "precision": null,
+    "recall": 0.0,
+    "worlds_with_any_flag": 0
+   }
+  }
+ },
+ "runtime_s": 8.9,
+ "notes": [
+  "All reports, reliabilities and attacks are SIMULATED (verity.trust.reports_sim).",
+  "Each report is one noisy sample of an intermittent charger: a ~0.15 error floor applies to every method."
+ ]
+}
