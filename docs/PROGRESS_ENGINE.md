@@ -296,3 +296,39 @@ Commit message per milestone: `A<n>: <summary>`.
   and a hard-coded "no ring" claim in the insights script. Left as documented limits: no socket read timeout,
   unbounded `self.plans` and no rate limiting (pre-existing), permanent fallback until restart, live tests sharing
   the database with a running API (DECISIONS A12).
+
+### A13 Demo scenario pinned to named chargers (done)
+- Problem: the rebuilt charger directory (207 chargers, OSM + Open Charge Map) flipped the demo (V07 NO_GO ->
+  INSUFFICIENT_EVIDENCE, V19 INSUFFICIENT_EVIDENCE -> NO_GO) because the simulated reports were attached by km band.
+  Diagnosis (DECISIONS A13): two new real OCM stations at km 118.6 / 125.6 and three more at km 17-22 changed the
+  plans, ids were renumbered, and the planner's 6-chain cost-ranked shortlist stopped offering V19's 2-stop chain.
+- Now: `DEMO_REPORTS` is a tuple of `ScenarioPin` (charger id + stable OSM id + expected km + reports);
+  `demo_reports_for` raises `ValueError` at startup if a pin's charger left the corridor, was renumbered or moved,
+  instead of silently dropping or re-targeting reports. Only scenario inputs changed: the thinly evidenced charger's
+  record (3 working -> 1 working + 2 broken) and V07's start SoC (82 -> 70 %). Engine, trust model, thresholds,
+  experiments and the held-out split are untouched (`git diff` under `engine/`, `experiments/`, `data/splits/` is empty).
+- Demo outcomes now (engine output, SIMULATED fleet and reports, real route and chargers):
+
+  | vehicle (start SoC) | decision | confidence | what the engine did |
+  |---|---|---|---|
+  | V07, aged battery (70 %) | NO_GO | 80-85 % | stops at km 34 and 119; levers: cruise at 80 km/h, charge more, use V12, verify the stale charger |
+  | V12 (62 %) | GO | 95 % | one stop at km 119 with two backups 7 km on; replay: that charger reported broken -> DIVERT to km 126, not stranded |
+  | V19 (40 %) | INSUFFICIENT_EVIDENCE | 90 % raw plan | stops at km 18 (no reports) and 126 (well evidenced), backups at km 22 (no reports) and 34 (stale): refuses and offers "verify" levers |
+
+- Test: `tests/test_demo_scenario.py` (10 tests) asserts the three decisions and the DIVERT replay on the committed
+  directory (the replay's own drained run is re-driven through `execute_trip` with the planned charger down), that the
+  reports sit only on pinned chargers, and that a missing / renumbered / moved pin raises. A future directory change
+  fails the build, not the demo. `tests/test_routing.py` no longer pins `ocm_status` to BLOCKED (it checks the label
+  tells the truth about the data), which also clears the A12 known failure.
+- Honest limit: the three outcomes were found by trying inputs against the engine and sit near planner-shortlist
+  boundaries, so a new corridor charger can flip them again. Over 8 seeds each decision held (margins in DECISIONS A13).
+- E3 and E4 re-run after the rebuild: every result number is identical to `MORNING_REPORT_ENGINE.md` (E3 20 % down:
+  17.5 % blind vs 4.0 % aware stranded, 27 / 0, -0.3 min; 40 % down: 19.0 % vs 6.0 %, 27 / 1, +0.6 min; E4 0 / 10 / 20 /
+  40 % down: fixed 12.0 / 18.0 / 27.0 / 33.0 % vs dispatch 5.0 / 3.5 / 4.0 / 6.0 %, only-fixed / only-dispatch 14/0,
+  29/0, 46/0, 55/1, same intervals and minutes). Expected, not luck: both run in a SYNTHETIC world (12 simulated
+  chargers, fixed seeds) and never read the charger directory or the demo reports. The only things that moved are
+  wall-clock figures and the one E4 line that reads the real directory: near-route chargers 4 -> 10, full dispatch
+  (2000 runs) 3.0 s -> 3.7 s mean (max 3.2 -> 3.7 s), E4 plan ms fixed / dispatch 273 / 251, 273 / 249, 264 / 244,
+  263 / 248 -> 195 / 180, 255 / 234, 256 / 236, 186 / 172, runtime 512 s -> 431 s (machine state, not a model change).
+  The E4 result file was committed (it records the 10 chargers); E3 differs only in timings measured while other jobs
+  were running, so its committed file was kept.
