@@ -80,7 +80,9 @@ Every chart title says "(simulated)". Other scripts: `uv run python -m verity.si
   processed copy in `data/processed/`) and the OpenStreetMap charger directory.
 - **Simulated (labelled `is_simulated: true`):** all trips (`data/sim/`), the demo fleet, the charger reports,
   and every experiment. No real EV trips or charger audits are in this repo yet; real logs go in `data/trips/`.
-- **Blocked until you add them:** the BMW i3 dataset (`data/raw/bmw_i3/`), a Sarvam key and an Open Charge Map key.
+- **Needs a download (the raw files are not in git):** the BMW i3 dataset in `data/raw/bmw_i3/`. Its loader, notes
+  (`docs/BMW_I3_NOTES.md`) and fixed 70/30 split (`data/splits/bmw_i3_split.json`) are done; E1 on it is not.
+  **Blocked until you add them:** a Sarvam key and an Open Charge Map key.
   Neo4j credentials are optional: without them the in-memory graph is used. See `docs/MORNING_REPORT_ENGINE.md`.
 
 ## Layout

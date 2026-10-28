@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import numpy as np
@@ -52,6 +53,46 @@ def save_split(split: dict, path: Path, *, overwrite: bool = False) -> None:
 
 def load_split(name: str, root: Path = SPLITS_DIR) -> dict:
     return json.loads(split_path(name, root).read_text(encoding="utf-8"))
+
+
+def real_split_path(name: str, root: Path = SPLITS_DIR) -> Path:
+    """Split of a REAL dataset (``data/splits/<name>_split.json``); simulated ones keep the ``sim_`` prefix."""
+    return Path(root) / f"{name}_split.json"
+
+
+def load_real_split(name: str, root: Path = SPLITS_DIR) -> dict:
+    return json.loads(real_split_path(name, root).read_text(encoding="utf-8"))
+
+
+def make_trip_id_split(trip_ids: Sequence[str], group_of: Callable[[str], str], *, dataset: str,
+                       test_frac: float = 0.3, seed: int = SPLIT_SEED) -> dict:
+    """Hold out ``round(test_frac * n)`` trips per group (stratum), chosen from the trip ids alone.
+
+    The ids are sorted first, so the result depends only on the SET of ids, the strata and the seed; it never
+    looks at the trips' contents. Stratifying keeps every group (for BMW i3: summer and winter) in the test set.
+    """
+    ids = sorted(trip_ids)
+    if len(set(ids)) != len(ids):
+        raise ValueError("trip ids must be unique")
+    if not 0.0 < test_frac < 1.0:
+        raise ValueError("test_frac must be strictly between 0 and 1")
+    rng = np.random.default_rng(seed)
+    groups: dict[str, list[str]] = {}
+    for trip_id in ids:
+        groups.setdefault(group_of(trip_id), []).append(trip_id)
+    strata: dict[str, dict[str, list[str]]] = {}
+    for group in sorted(groups):
+        members = groups[group]
+        n_test = int(round(test_frac * len(members)))
+        test_idx = set(rng.choice(len(members), size=n_test, replace=False).tolist())
+        strata[group] = {"train": [t for i, t in enumerate(members) if i not in test_idx],
+                         "test": [t for i, t in enumerate(members) if i in test_idx]}
+    return {
+        "is_simulated": False, "dataset": dataset, "split_seed": seed, "test_frac": test_frac, "strata": strata,
+        "train": sorted(t for s in strata.values() for t in s["train"]),
+        "test": sorted(t for s in strata.values() for t in s["test"]),
+        "note": "Ids only. Fixed once, before any fitting. Test trips are used only in the final E1 evaluation.",
+    }
 
 
 DEV_SEED = 777  # the only dataset used for choosing settings

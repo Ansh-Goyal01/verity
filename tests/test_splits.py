@@ -60,5 +60,5 @@ def test_bmw_i3_reports_blocked_when_the_dataset_is_absent(monkeypatch: pytest.M
     monkeypatch.setattr(bmw_i3, "BMW_DIR", tmp_path / "missing")
     assert bmw_i3.available() is False
     assert bmw_i3.status()["status"] == "blocked"
-    with pytest.raises(NotImplementedError):
-        bmw_i3.load_all()
+    with pytest.raises(FileNotFoundError):
+        bmw_i3.trip_ids()

@@ -240,3 +240,24 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
   directory, so a data change fails the build instead of the demo. If it does, re-pin and record it here; do not
   loosen the test or touch the engine. Also: `tests/test_routing.py` no longer pins `ocm_status` to BLOCKED (a data
   state); it checks that the label tells the truth about the data.
+- 2026-10-28 (BMW i3): The download has no `readme.txt` (only `Overview.xlsx` and `readin.m`) and unpacked as `Measurement Data/`;
+  it was renamed to `data/raw/bmw_i3/` (gitignored, never committed). It holds 70 trips (A01-A32 summer, B01-B38 winter) at exactly
+  0.1 s, not the 72 the DataPort summary mentions. Everything known about the files, including 8 data-quality problems, is in
+  `docs/BMW_I3_NOTES.md`; nothing was fitted.
+- 2026-10-28 (BMW i3): The loader (`engine/verity/datasets/bmw_i3.py`) maps each trip to time, speed (m/s), elevation, ambient
+  temperature, battery voltage, current, SoC and heating power (W) and **cleans nothing**: no row is dropped, no value repaired, the
+  source sign is kept (discharge negative). Problems become flags (`soc_missing_tail`, `soc_jump`, `charging_session`, `heating_spike`,
+  `soc_copy_of:<id>`) whose thresholds are read off the files ("approximate - verify"); the caller decides what is unusable, the same
+  way for train and test. Heating power is the CAN channel (in all 70 trips; the LIN twin is in 50). `AirCon Power` and the Overview
+  metadata (dates, payload notes) are not in the common format yet. Columns are matched on the raw header line and selected by position
+  (TripB38's header says `Velocity [km/h]]]`); a missing or ambiguous signal, a non-numeric value or a non-increasing time axis raises.
+  No dependency was added: `Overview.xlsx` is not read by the loader (`openpyxl` stays out).
+- 2026-10-28 (BMW i3): Known defects are reported, not repaired: TripB07's SoC is a copy of TripB03's (a fixed table found by comparing
+  all trips before the split, so the flag does not depend on which trips are loaded together), TripB14's last sample has SoC 0.0,
+  TripB02 has a 40 kW heating peak, A-trip heating power is unreliable (use `AirCon Power`), and TripB04 and TripB09 are charging
+  sessions.
+- 2026-10-28 (BMW i3): ONE fixed split, `data/splits/bmw_i3_split.json`, seed 31 (`SPLIT_SEED`), 30 % held out by trip id and
+  stratified by season so both survive in the test set: A 22 train / 10 test, B 27 / 11, 49 / 21 in all. All 70 ids are in it
+  (unusable trips are filtered by flag later, equally on both sides). All 70 trips were profiled in aggregate (no model) BEFORE the
+  split was written; the split itself depends on the ids only. Never re-split: `tests/test_bmw_i3.py` regenerates it from its recorded
+  seed and fails if it differs, and `load_split_part("test")` raises unless `final_evaluation=True` (only the final E1 run passes it).
