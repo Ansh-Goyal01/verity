@@ -123,3 +123,4 @@ class Report(_Frozen):
     status: ReportStatus
     t: AwareDatetime
     evidence: str | None = None
+    is_simulated: bool = False  # demo/scenario inputs are tagged so the graph can tell them from real reports

@@ -19,7 +19,9 @@ All numbers marked "approximate - verify" are planning assumptions, not measurem
 from __future__ import annotations
 
 import heapq
+import logging
 import time
+import uuid
 from dataclasses import dataclass, field, replace
 from typing import Sequence
 
@@ -39,10 +41,11 @@ from .forecast import (
 from .physics import total_mass_kg
 from .schemas import ChargerRecord
 from .trust.engine import ChargerTrust
-from .trust.graph import InMemoryGraph, Leg
+from .trust.graph import ChargerGraph, InMemoryGraph, Leg
 from .vehicles import get_prior
 
 Array = np.ndarray
+log = logging.getLogger(__name__)
 
 RES_STOP = 5.0  # SoC that must remain on arrival at a charger (approximate - verify)
 CHARGE_CAP = 80.0  # fast charging is planned only up to this SoC (approximate - verify)
@@ -224,9 +227,12 @@ def k_shortest_paths(adj: dict[str, dict[str, float]], src: str, dst: str, k: in
     return found
 
 
-def build_leg_graph(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool) -> tuple[InMemoryGraph, dict[str, Array]]:
-    """LEG edges per battery band between START, chargers and END (only legs that are feasible)."""
-    graph = InMemoryGraph()
+def build_leg_graph(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool, graph: ChargerGraph | None = None,
+                    scope: str = "") -> tuple[ChargerGraph, dict[str, Array]]:
+    """LEG edges per battery band between START, chargers and END (only legs that are feasible). They are written
+    to ``graph`` (a fresh in-memory one by default) in ONE batch under ``scope``."""
+    graph = InMemoryGraph() if graph is None else graph
+    legs: list[Leg] = []
     kms = [0.0] + [n.km for n in nodes] + [ctx.total_km]
     ids = ["START"] + [n.id for n in nodes] + ["END"]
     used = {i: u for i, u in zip(ids, [np.zeros(ctx.runs.n_runs)] + [ctx.runs.used_at_km(n.km) for n in nodes]
@@ -252,12 +258,17 @@ def build_leg_graph(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool) -> tu
             for lo in range(0, MAX_BAND, 10):  # one LEG per battery band, never one fixed probability
                 mid = lo + 5.0
                 p_reach = float(np.mean(mid - energy >= need_after))
-                graph.add_leg(Leg(ids[a], ids[b], lo, lo + 10, p_reach, float(minutes)))
+                legs.append(Leg(ids[a], ids[b], lo, lo + 10, p_reach, float(minutes)))
+    graph.add_legs(legs, scope)
     return graph, used
 
 
-def _adjacency(graph: InMemoryGraph, ids: Sequence[str]) -> dict[str, dict[str, float]]:
-    return {i: {leg.to_id: leg.minutes for leg in graph.legs_from(i)} for i in ids}
+def _adjacency(graph: ChargerGraph, ids: Sequence[str], scope: str = "") -> dict[str, dict[str, float]]:
+    adj: dict[str, dict[str, float]] = {i: {} for i in ids}
+    for leg in graph.legs(scope):  # one read for the whole plan: a Neo4j round trip per node would dominate
+        if leg.from_id in adj:
+            adj[leg.from_id][leg.to_id] = leg.minutes
+    return adj
 
 
 def alts_for(node: Node, nodes: Sequence[Node], exclude: set[str]) -> tuple[Node, ...]:
@@ -277,12 +288,29 @@ def make_stops(ctx: Ctx, path: Sequence[Node], all_nodes: Sequence[Node], extra_
     return stops
 
 
-def propose_paths(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool, k: int = K_CANDIDATES) -> tuple[list[list[Node]], InMemoryGraph]:
-    graph, _ = build_leg_graph(ctx, nodes, trust_aware=trust_aware)
-    ids = ["START"] + [n.id for n in nodes] + ["END"]
-    by_id = {n.id: n for n in nodes}
-    paths = [[by_id[i] for i in p[1:-1]] for _, p in k_shortest_paths(_adjacency(graph, ids), "START", "END", k)]
-    return paths, graph
+def _drop_best_effort(graph: ChargerGraph, scope: str) -> None:
+    """Leftover LEGs must never fail a plan or hide its real error: the service's periodic sweep removes them."""
+    try:
+        graph.drop_legs(scope)
+    except Exception as exc:  # noqa: BLE001 - logged by class name only
+        log.warning("could not drop the legs of scope %s (%s); the periodic sweep will", scope, type(exc).__name__)
+
+
+def propose_paths(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool, k: int = K_CANDIDATES,
+                  graph: ChargerGraph | None = None) -> tuple[list[list[Node]], ChargerGraph]:
+    """Candidate charging chains. With an external ``graph`` (Neo4j) the LEGs live there under a fresh scope for
+    the duration of this call only and are dropped afterwards, so concurrent plans never see each other's legs."""
+    scope = uuid.uuid4().hex if graph is not None else ""
+    try:
+        leg_graph, _ = build_leg_graph(ctx, nodes, trust_aware=trust_aware, graph=graph, scope=scope)
+        ids = ["START"] + [n.id for n in nodes] + ["END"]
+        by_id = {n.id: n for n in nodes}
+        paths = [[by_id[i] for i in p[1:-1]]
+                 for _, p in k_shortest_paths(_adjacency(leg_graph, ids, scope), "START", "END", k)]
+    finally:
+        if graph is not None:
+            _drop_best_effort(graph, scope)
+    return paths, leg_graph
 
 
 # --- Monte Carlo with backups -----------------------------------------------------------------------------
@@ -438,8 +466,9 @@ def _build_ctx(vehicle: VehicleContext, route: PlannedRoute, start_soc: float, t
 
 
 def _choose(ctx: Ctx, nodes: Sequence[Node], rng: np.random.Generator, *, trust_aware: bool,
-            use_alts: bool = True) -> tuple[list[Stop], PlanEval, list[tuple[list[Stop], PlanEval]]]:
-    paths, _ = propose_paths(ctx, nodes, trust_aware=trust_aware)
+            use_alts: bool = True, graph: ChargerGraph | None = None
+            ) -> tuple[list[Stop], PlanEval, list[tuple[list[Stop], PlanEval]]]:
+    paths, _ = propose_paths(ctx, nodes, trust_aware=trust_aware, graph=graph)
     if [] not in paths:
         paths.append([])  # the no-stop plan is always scored, even when infeasible (then it simply fails)
     scored = []
@@ -462,12 +491,14 @@ def _choose(ctx: Ctx, nodes: Sequence[Node], rng: np.random.Generator, *, trust_
 
 def plan_only(vehicle: VehicleContext, route: PlannedRoute, route_chargers: Sequence[RouteCharger],
               trust: dict[str, ChargerTrust], *, start_soc: float, target_confidence: float = 0.9, seed: int = 0,
-              cfg: ForecastConfig = ForecastConfig(), trust_aware: bool = True) -> tuple[list[Stop], PlanEval, Ctx]:
+              cfg: ForecastConfig = ForecastConfig(), trust_aware: bool = True,
+              graph: ChargerGraph | None = None) -> tuple[list[Stop], PlanEval, Ctx]:
     """Propose and score candidate chains and return the chosen plan (no Bingo Line, levers or texts):
     the light path used by the simulation experiments E3 and E4."""
     rng = np.random.default_rng(seed)
     ctx = _build_ctx(vehicle, route, start_soc, target_confidence, rng, cfg)
-    stops, ev, _ = _choose(ctx, make_nodes(route_chargers, trust, trust_aware=trust_aware), rng, trust_aware=trust_aware)
+    stops, ev, _ = _choose(ctx, make_nodes(route_chargers, trust, trust_aware=trust_aware), rng, trust_aware=trust_aware,
+                           graph=graph)
     return stops, ev, ctx
 
 
@@ -486,12 +517,13 @@ def dispatch(
     other_vehicles: Sequence[tuple[VehicleContext, float]] = (),
     compute_levers: bool = True,
     highway_speed_mps: float | None = None,
+    graph: ChargerGraph | None = None,
 ) -> DispatchResult:
     t0 = time.perf_counter()
     rng = np.random.default_rng(seed)
     ctx = _build_ctx(vehicle, route, start_soc, target_confidence, rng, cfg, highway_speed_mps)
     nodes = make_nodes(route_chargers, trust, trust_aware=trust_aware)
-    stops, ev, _ = _choose(ctx, nodes, rng, trust_aware=trust_aware)
+    stops, ev, _ = _choose(ctx, nodes, rng, trust_aware=trust_aware, graph=graph)
     conf = ev.confidence
 
     # evidence check: would the decision flip if stale/unknown chargers were at their pessimistic value?
@@ -517,7 +549,7 @@ def dispatch(
     result = _assemble(vehicle, ctx, stops, ev, nodes, decision, refusal, polyline or [], rng)
     if compute_levers:
         result.levers = _levers(vehicle, route, route_chargers, trust, ctx, stops, ev, nodes, start_soc, target_confidence,
-                                seed, cfg, trust_aware, other_vehicles, stale, conf, decision)
+                                seed, cfg, trust_aware, other_vehicles, stale, conf, decision, graph)
     result.compute_ms = int(round(1000 * (time.perf_counter() - t0)))
     return result
 
@@ -600,11 +632,12 @@ def _risk_sources(vehicle: VehicleContext, ctx: Ctx, stops: Sequence[Stop]) -> l
 
 
 def _levers(vehicle, route, route_chargers, trust, ctx, stops, ev, nodes, start_soc, target, seed, cfg, trust_aware,
-            others, stale, base_conf, decision) -> list[dict]:
+            others, stale, base_conf, decision, graph=None) -> list[dict]:
     levers = []
     base_min = ev.mean_minutes
     slow = dispatch(vehicle, route, route_chargers, trust, start_soc=start_soc, target_confidence=target, seed=seed,
-                    cfg=cfg, trust_aware=trust_aware, compute_levers=False, highway_speed_mps=CRUISE_LEVER_MPS)
+                    cfg=cfg, trust_aware=trust_aware, compute_levers=False, highway_speed_mps=CRUISE_LEVER_MPS,
+                    graph=graph)
     if slow.confidence_raw > base_conf + LEVER_MIN_GAIN:
         levers.append({"lever_id": "cruise_80", "label": "Cruise at 80 km/h on the highway",
                        "new_confidence": slow.confidence, "time_cost_min": int(round(slow.duration_min - base_min))})
@@ -618,7 +651,7 @@ def _levers(vehicle, route, route_chargers, trust, ctx, stops, ev, nodes, start_
                            "new_confidence": round_prob(e2.confidence), "time_cost_min": int(round(EXTRA_CHARGE_MIN))})
     for other, other_soc in others:
         alt = dispatch(other, route, route_chargers, trust, start_soc=other_soc, target_confidence=target, seed=seed,
-                       cfg=cfg, trust_aware=trust_aware, compute_levers=False)
+                       cfg=cfg, trust_aware=trust_aware, compute_levers=False, graph=graph)
         if alt.confidence_raw > base_conf + LEVER_MIN_GAIN and alt.decision != "INSUFFICIENT_EVIDENCE":
             levers.append({"lever_id": f"vehicle_{other.vehicle_id}", "label": f"Use {other.vehicle_id} instead",
                            "new_confidence": alt.confidence, "time_cost_min": int(round(alt.duration_min - base_min))})

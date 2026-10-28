@@ -54,8 +54,9 @@ def get_voice_client() -> SarvamClient | None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    get_service()  # build the demo fleet and trust estimates once, before the first request
+    svc = get_service()  # build the demo fleet and trust estimates once, before the first request
     yield
+    svc.close()  # release the Neo4j driver
 
 
 app = FastAPI(title="Verity API", version="0.1.0", lifespan=lifespan)

@@ -24,7 +24,7 @@ engine runs fully offline and the Neo4j / Sarvam / Open Charge Map parts say so 
 
 | Key | Used for |
 |---|---|
-| `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD` | the Neo4j charger graph (`scripts/neo4j_smoke_test.py`, `scripts/import_chargers.py`) |
+| `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD` | the Neo4j charger graph: when set and reachable, the API reads chargers, reports and dispatch chains through it; otherwise the in-memory graph gives the same answers. Also `scripts/neo4j_smoke_test.py`, `scripts/import_chargers.py`, `scripts/graph_insights.py` |
 | `SARVAM_API_KEY` | voice: `/api/voice/tts` and `/api/voice/stt` (503 without it) |
 | `OCM_API_KEY` | Open Charge Map as a second charger source (skipped without it) |
 
@@ -35,7 +35,9 @@ uv run uvicorn api.main:app --reload
 ```
 
 **Check it is reachable:** open <http://localhost:8000/api/health> in a browser. You should see
-`{"status":"ok","version":"0.1.0","neo4j":"in_memory","is_simulated":true}`. Interactive docs are at
+`{"status":"ok","version":"0.1.0","neo4j":"connected","is_simulated":true}` when Neo4j credentials are in `.env` and
+the database answers, or `"neo4j":"in_memory"` otherwise (no credentials, or the connection failed: the engine then
+runs on the in-memory graph; `VERITY_GRAPH=memory` forces that). Interactive docs are at
 <http://localhost:8000/docs>. From a page: `fetch("http://localhost:8000/api/health").then(r => r.json())`.
 
 CORS allows exactly these origins: `null` (a page opened by double-clicking, `file://`),
@@ -47,7 +49,8 @@ Real engine responses for the demo scenario are saved in [`docs/api_examples/`](
 (regenerate with `uv run python scripts/export_api_examples.py`), so the frontend can swap its mocks for them.
 
 A full dispatch (plan, Bingo Line, levers) takes a few seconds on a laptop: the demo runs 1500 Monte Carlo runs
-per forecast (`VERITY_N_RUNS` changes it). The first start takes ~3 s to calibrate the demo fleet.
+per forecast (`VERITY_N_RUNS` changes it): about 2.5 s on the in-memory graph and about 5 s through Neo4j (up to ~10 s when AuraDB is slow). The
+first start takes ~3 s to calibrate the demo fleet, plus the graph sync when Neo4j is used.
 
 ## Tests and experiments
 
@@ -68,7 +71,8 @@ uv run python scripts/run_all.py --fast         # the same steps with tiny sizes
 Every chart title says "(simulated)". Other scripts: `uv run python -m verity.sim` (simulated trips),
 `uv run python -m verity.splits` (the fixed held-out split: written once, never rewritten),
 `uv run python -m verity.routing` (cached Noida-Agra route), `uv run python scripts/import_chargers.py`
-(OpenStreetMap chargers), `uv run python scripts/neo4j_smoke_test.py`.
+(OpenStreetMap chargers), `uv run python scripts/neo4j_smoke_test.py`,
+`uv run python scripts/graph_insights.py` (route coverage gaps and fake-report ring candidates, from the graph).
 
 ## Data: what is real and what is simulated
 
@@ -76,8 +80,8 @@ Every chart title says "(simulated)". Other scripts: `uv run python -m verity.si
   processed copy in `data/processed/`) and the OpenStreetMap charger directory.
 - **Simulated (labelled `is_simulated: true`):** all trips (`data/sim/`), the demo fleet, the charger reports,
   and every experiment. No real EV trips or charger audits are in this repo yet; real logs go in `data/trips/`.
-- **Blocked until you add them:** the BMW i3 dataset (`data/raw/bmw_i3/`), Neo4j credentials, a Sarvam key and an
-  Open Charge Map key. See `docs/MORNING_REPORT_ENGINE.md`.
+- **Blocked until you add them:** the BMW i3 dataset (`data/raw/bmw_i3/`), a Sarvam key and an Open Charge Map key.
+  Neo4j credentials are optional: without them the in-memory graph is used. See `docs/MORNING_REPORT_ENGINE.md`.
 
 ## Layout
 

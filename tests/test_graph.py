@@ -15,12 +15,15 @@ import pytest
 
 from verity.paths import REPO_ROOT
 from verity.schemas import ChargerRecord, Report
+from tests.graph_fakes import FakeDriver
 from verity.trust.graph import NODE_LABELS, InMemoryGraph, Leg, Neo4jGraph, load_env
 
 IST = timezone(timedelta(hours=5, minutes=30))
 T0 = datetime(2026, 10, 27, 10, 0, tzinfo=IST)
-PROTOCOL_METHODS = ("add_charger", "add_report", "chargers", "reports", "add_leg", "legs_from", "add_alternate",
-                    "alternates", "add_works_with", "works_with", "co_reporting_pairs")
+PROTOCOL_METHODS = ("add_charger", "add_chargers", "add_report", "add_reports", "chargers", "reports", "add_leg",
+                    "add_legs", "legs", "legs_from", "drop_legs", "sweep_stale_legs", "add_alternate", "add_alternates",
+                    "alternates", "add_road_segments", "reset_road_network", "coverage_gaps", "report_rings",
+                    "prune_simulated_reports", "add_works_with", "works_with", "co_reporting_pairs")
 
 
 def charger(i: int, op: str = "OpA") -> ChargerRecord:
@@ -76,37 +79,6 @@ def test_co_reporting_pairs_count_shared_chargers() -> None:
 # --- Neo4j through a fake driver ---------------------------------------------------------------------------
 
 
-class FakeRecord:
-    def __init__(self, data: dict) -> None:
-        self._data = data
-
-    def data(self) -> dict:
-        return self._data
-
-
-class FakeDriver:
-    def __init__(self, canned: list[list[dict]] | None = None) -> None:
-        self.log: list[tuple[str, dict]] = []
-        self.canned = list(canned or [])
-        self.closed = False
-
-    def session(self, database: str | None = None) -> "FakeDriver":
-        return self
-
-    def __enter__(self) -> "FakeDriver":
-        return self
-
-    def __exit__(self, *exc: object) -> None:
-        return None
-
-    def run(self, query: str, **params: object) -> list[FakeRecord]:
-        self.log.append((query, params))
-        return [FakeRecord(r) for r in (self.canned.pop(0) if self.canned else [])]
-
-    def close(self) -> None:
-        self.closed = True
-
-
 def test_neo4j_graph_implements_the_whole_interface() -> None:
     assert all(callable(getattr(Neo4jGraph, m, None)) for m in PROTOCOL_METHODS)
     assert all(callable(getattr(InMemoryGraph, m, None)) for m in PROTOCOL_METHODS)
@@ -121,14 +93,16 @@ def test_constraints_cover_every_node_label_from_claude_md() -> None:
 
 
 def test_add_charger_and_report_write_the_documented_relationships() -> None:
-    drv = FakeDriver()
+    drv = FakeDriver([[], [{"n": 1}]])  # the report write answers with how many reports matched a Charger node
     g = Neo4jGraph(driver=drv)
     g.add_charger(charger(1))
     g.add_report(report("C1", "s1", "broken"))
     (q_charger, p_charger), (q_report, p_report) = drv.log
     assert "RUN_BY" in q_charger and "[:AT]" in q_charger and "MERGE (c:Charger" in q_charger
-    assert p_charger["operator"] == "OpA" and json.loads(p_charger["connectors"]) == [{"type": "CCS2", "kw": 60.0}]
-    assert "REPORTED" in q_report and p_report["status"] == "broken" and p_report["t"].startswith("2026-10-27T10:00")
+    row = p_charger["rows"][0]
+    assert row["operator"] == "OpA" and json.loads(row["connectors"]) == [{"type": "CCS2", "kw": 60.0}]
+    assert "REPORTED" in q_report and p_report["rows"][0]["status"] == "broken"
+    assert p_report["rows"][0]["t"].startswith("2026-10-27T10:00")
 
 
 def test_reports_and_legs_are_parsed_back_from_rows() -> None:
@@ -142,11 +116,11 @@ def test_reports_and_legs_are_parsed_back_from_rows() -> None:
 
 
 def test_leg_band_and_co_reporting_use_the_expected_cypher() -> None:
-    drv = FakeDriver()
+    drv = FakeDriver([[{"n": 1}]])  # the leg write answers with how many legs it matched
     g = Neo4jGraph(driver=drv)
     g.add_leg(Leg("A", "B", 40, 60, 0.8, 75.0))
     g.co_reporting_pairs(min_shared=4)
-    assert "LEG {soc_band:$band}" in drv.log[0][0] and drv.log[0][1]["band"] == "40-60"
+    assert "LEG {soc_band: row.band, scope: $scope}" in drv.log[0][0] and drv.log[0][1]["rows"][0]["band"] == "40-60"
     assert "count(DISTINCT c)" in drv.log[1][0] and drv.log[1][1]["k"] == 4
 
 

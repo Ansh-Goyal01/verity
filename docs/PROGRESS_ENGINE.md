@@ -21,12 +21,13 @@ Commit message per milestone: `A<n>: <summary>`.
 - [x] A3 Truth simulator
 - [x] A4 Calibration and E1 (BMW i3 part BLOCKED: dataset not downloaded)
 - [x] A5 Forecast and E2
-- [x] A6 Trust engine and E5 (Neo4j live test BLOCKED: no credentials)
+- [x] A6 Trust engine and E5 (Neo4j live test was BLOCKED: no credentials; done in A12)
 - [x] A7 Routing and chargers (Open Charge Map BLOCKED: no API key; OSM only)
 - [x] A8 Dispatch, E3 and E4
-- [x] A9 API per docs/API_CONTRACT.md (voice and Neo4j untested against real services)
+- [x] A9 API per docs/API_CONTRACT.md (voice untested against the real Sarvam service; Neo4j wired in A12)
 - [x] A10 Quality pass
 - [x] A11 Morning report (`docs/MORNING_REPORT_ENGINE.md`)
+- [x] A12 Neo4j load-bearing: trust and dispatch read through the graph, in-memory fallback, parity test
 
 ## Notes per milestone
 
@@ -167,8 +168,8 @@ Commit message per milestone: `A<n>: <summary>`.
   schema (constraints for all 7 labels, REPORTED / RUN_BY / AT / LEG per battery band / ALTERNATE /
   WORKS_WITH, co-reporting query, prefix-scoped test-data delete). `scripts/neo4j_smoke_test.py` skips
   cleanly without `.env` credentials (run: "SKIPPED ... exit 0").
-- BLOCKED: the Neo4j implementation has only been tested through an injected fake driver (query shape
-  and parsing); the Cypher has never run against a real server. Needs AuraDB credentials in `.env`.
+- Was BLOCKED when A6 was written, resolved in A12: the Neo4j implementation had only been tested through an
+  injected fake driver (query shape and parsing); the Cypher now also runs against a real AuraDB instance.
 - Tests: `test_trust.py` (13) and `test_graph.py` (13). Settings (source prior Beta(4,1)) chosen on
   simulator seeds 0-7; E5 on seeds 100-119.
 - E5 (SIMULATED; 20 worlds per scenario, 120 chargers, 100 honest users; mean absolute error of the recovered
@@ -207,7 +208,7 @@ Commit message per milestone: `A<n>: <summary>`.
 - `engine/verity/chargers.py` + `scripts/import_chargers.py`: OSM Overpass import (195 OSM records, 54 merged
   within 50 m -> 141 chargers in `data/processed/chargers_ncr.json`, 1 request; 5 requests in total so far).
 - BLOCKED: Open Charge Map needs a free API key (`OCM_API_KEY` in .env; not created tonight). Neo4j load skipped
-  (no credentials).
+  (no credentials tonight; since loaded, see A12).
 - KNOWN WEAKNESSES of the import: only 1 of 141 chargers has a tagged connector power (OSM rarely tags kW; untagged
   connectors are dropped, not guessed), all site types are "unknown" (keyword heuristic matched nothing), 90 have
   no operator. Dispatch needs connector power for charge times: A8 must treat missing power as unknown.
@@ -255,3 +256,43 @@ Commit message per milestone: `A<n>: <summary>`.
 
 ### A11 Morning report (done)
 - `docs/MORNING_REPORT_ENGINE.md` written; `docs/AI_USAGE.md` completed. Network requests tonight: see the report.
+
+### A12 Neo4j load-bearing (done)
+- Before: only `/api/health` touched Neo4j; trust and dispatch ran on `InMemoryGraph`. Now `open_graph()`
+  (`trust/graph_build.py`) MERGEs the demo's chargers, operators, sites, sources and SIMULATED reports
+  (`is_simulated=true` on the REPORTED edge and the Source) into Neo4j when credentials exist and
+  `verify_connectivity()` passes. Trust (the `TrustEngine` input), the near-route charger list and the LEG chains
+  dispatch proposes all come back out through `ChargerGraph`. Missing credentials or any failure (connect, auth, sync,
+  or a query failing mid-request) -> the in-memory mirror, same data, same answer. `/api/health` says `connected` only
+  while Neo4j is the graph in use. `VERITY_GRAPH=auto|memory|neo4j` (default auto).
+- Latent bug found only by running against a real server: `Neo4jGraph.add_leg` matched `(:Charger)` on both ends, but
+  dispatch's `START` / `END` are not chargers, so those edges would have vanished silently. LEGs now carry a
+  per-dispatch `scope`, `START`/`END` are per-scope `RoadSegment` nodes, and graph writes are single `UNWIND`
+  batches (an AuraDB round trip is ~100 ms, so per-edge writes would have cost ~25 s per plan).
+- Parity: `tests/test_graph_parity.py` (live; skips without credentials): V07, V12 and V19 give identical whole
+  responses (decision, confidence, stops, alternates, Bingo Line, levers) and all 207 chargers identical `p_works`
+  through both graphs. Also compared by hand at the default 1500 runs through `uvicorn`: identical.
+- Timing (AuraDB Free from this laptop): at the default 1500 runs, in-memory 2.4-2.7 s per dispatch and Neo4j
+  4.7-5.8 s (14 queries, 2.3-2.9 s inside Neo4j, 9 runs). A later live run at 500 runs saw 4.9-7.1 s inside Neo4j and
+  8.0-10.2 s per dispatch (network variance; the timeout wrapper was A/B-tested and costs nothing). Under 15 s, so the
+  graph is still read per request. One cold start right after the full test suite measured 12-16 s at 1500 runs, not
+  reproduced in 6 reruns, cause unknown: the 15 s line can be crossed on a bad day (options in DECISIONS A12).
+- Two Neo4j queries, run by `scripts/graph_insights.py`: `coverage_gaps` and `report_rings`. On the demo: 5 road
+  segments (km 40-70 and 180-191) have no usable alternate (3 of the 10 near-route chargers count: the others have no
+  reports); no ring, as designed (demo sources report on 1-3 chargers), and the trust engine's own detector flags
+  nothing either. The ring query is proved by a fake ring planted in the live test (TEST- data, deleted afterwards).
+- Fallback verified live: `NEO4J_PASSWORD=wrong` -> health `in_memory`, dispatch still answers (GO 0.95 for V12);
+  the logged reason is `AuthError` and no credential value appears in any server log.
+- Not done on purpose: dispatch backups (`alts_for`) stay geometry on the graph-read chargers (ALTERNATE edges feed
+  only the coverage query); no new HTTP endpoint (the contract is unchanged); no automatic reconnect after a fallback.
+- Tests added: `test_graph_batch.py`, `test_graph_build.py`, `test_api_graph.py`, `test_graph_parity.py`, two in
+  `test_dispatch.py`. Known failure NOT caused by A12: `test_routing.py::test_committed_charger_directory_validates_and_is_labelled`
+  expects the charger directory's `ocm_status` to start with BLOCKED, but the working-copy directory (modified and
+  uncommitted before A12: 141 -> 207 chargers) says `fetched`. Full suite: 214 passed, 1 failed (that one).
+- Reviewed by a code-reviewer and a security-reviewer subagent: no CRITICAL; one HIGH (the fallback caught every
+  exception and was permanent) fixed by narrowing it to Neo4j/driver/OS errors; also fixed: a malformed URI crashing
+  startup, `drop_legs` scope collisions, the prune touching other runs' `TEST-` data, `TEST-` chargers reaching
+  planning, a torn view between `chargers`/`trust`/`near`, cleanup failures hiding the real error, silent leg drops,
+  and a hard-coded "no ring" claim in the insights script. Left as documented limits: no socket read timeout,
+  unbounded `self.plans` and no rate limiting (pre-existing), permanent fallback until restart, live tests sharing
+  the database with a running API (DECISIONS A12).

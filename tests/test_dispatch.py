@@ -127,6 +127,60 @@ def test_trust_aware_planner_avoids_the_unreliable_charger() -> None:
     assert aware.confidence >= 0.9
 
 
+# --- planning through an external graph (Neo4j in the API) -----------------------------------------------------
+
+from verity.trust.graph import InMemoryGraph  # noqa: E402 - kept next to the only tests that need it
+
+
+class SpyGraph(InMemoryGraph):
+    """In-memory graph that records the scopes LEGs were written under, and how many legs each held when dropped."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.written: list[str] = []
+        self.dropped: list[str] = []
+        self.legs_at_drop: list[int] = []
+
+    def add_legs(self, legs, scope: str = "") -> None:
+        self.written.append(scope)
+        super().add_legs(legs, scope)
+
+    def drop_legs(self, scope: str) -> None:
+        self.legs_at_drop.append(len(self.legs(scope)))
+        self.dropped.append(scope)
+        super().drop_legs(scope)
+
+
+def test_planning_through_an_external_graph_gives_the_same_plan_and_leaves_no_legs_behind() -> None:
+    graph = SpyGraph()
+    plain, via_graph = run(60.0), run(60.0, graph=graph)
+    assert (via_graph.decision, via_graph.confidence, via_graph.stops) == (plain.decision, plain.confidence, plain.stops)
+    assert len(graph.written) >= 2 and all(graph.written)  # the plan and its re-plans each got their own scope
+    assert len(set(graph.written)) == len(graph.written) and graph.dropped == graph.written
+    assert all(n > 0 for n in graph.legs_at_drop) and graph._legs == {}
+
+
+def test_legs_are_dropped_even_when_the_write_fails() -> None:
+    class Exploding(SpyGraph):
+        def add_legs(self, legs, scope: str = "") -> None:
+            self.written.append(scope)
+            raise ConnectionError("link dropped mid-write")
+
+    graph = Exploding()
+    with pytest.raises(ConnectionError):
+        run(60.0, graph=graph)
+    assert graph.dropped == graph.written and len(graph.written) == 1
+
+
+def test_a_failing_cleanup_does_not_fail_or_change_the_plan() -> None:
+    class CleanupFails(SpyGraph):
+        def drop_legs(self, scope: str) -> None:
+            raise ConnectionError("link gone before the cleanup")
+
+    plain, via_graph = run(60.0), run(60.0, graph=CleanupFails())
+    assert (via_graph.decision, via_graph.confidence, via_graph.stops) == (plain.decision, plain.confidence, plain.stops)
+
+
 def test_charging_longer_never_lowers_confidence() -> None:
     ctx = _build_ctx(vehicle(), ROUTE, 55.0, 0.9, np.random.default_rng(6), CFG)
     chargers, trust = scenario(("C", 100.0, 0.95))

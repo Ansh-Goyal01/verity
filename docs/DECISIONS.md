@@ -143,3 +143,62 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
 - 2026-10-27 (A10): `scripts/run_all.py` deletes only its own named outputs, never data/, the cache or the fixed
   split, and runs every step as a subprocess with a log in results/logs/. `--fast` shrinks the experiments for a
   plumbing check and says its numbers are not results.
+- 2026-10-28 (A12): The graph in use is Neo4j only when credentials exist AND `verify_connectivity()` and the sync
+  succeed; otherwise an in-memory mirror holding the same data (`VERITY_GRAPH=auto|memory|neo4j`, default auto; the
+  tests force memory via `tests/conftest.py` so the suite never depends on the network). `/api/health` reports the
+  backend actually in use. If a Neo4j query fails mid-request the request is re-run on the mirror and health flips to
+  `in_memory` for good (no automatic reconnect; restart to retry). Failure reasons log the exception CLASS only.
+- 2026-10-28 (A12): What reads through the graph: chargers and reports (-> trust -> near-route chargers) on every
+  dispatch, and the LEG chains of each plan. Dispatch backups (`alts_for`) stay geometry on the graph-read chargers:
+  moving them onto ALTERNATE edges would change behaviour for no gain. Chargers and reports are re-read per dispatch
+  (2 queries) so a graph edited outside the API is picked up; `/api/chargers` uses the view from the last dispatch.
+- 2026-10-28 (A12): Idempotent sync with MERGE. A report's identity is (source, charger, time); simulated reports
+  absent from the current scenario are pruned; the derived road network (segments + ALTERNATE edges) is deleted and
+  rebuilt on every sync. `Report.is_simulated` (default false) is stored on REPORTED edges and on Source nodes (a
+  source is simulated only if all its reports are). The prune only ever touches simulated reports.
+- 2026-10-28 (A12): Both backends return chargers by id, reports by (time, source, charger) and legs by (from, to,
+  band). Cypher gives no row order and the Dawid-Skene EM sums floats in report order, so without this the two graphs
+  could disagree in the last digits; with it `tests/test_graph_parity.py` compares whole responses exactly.
+- 2026-10-28 (A12): LEG edges carry a per-dispatch `scope` (uuid) and are written in one batch, read in one query and
+  dropped in a `finally`; START/END are per-scope `RoadSegment` nodes (`<scope>:START`). This also fixes `add_leg`,
+  which matched `(:Charger)` on both ends and would have dropped every START/END leg on a real server. Scoped LEGs
+  older than 1 h (a crashed request) are swept at startup.
+- 2026-10-28 (A12): ALTERNATE `p_reach` stores the alternate's P(works) from the trust model, plus `km_ahead`; whether
+  a vehicle has the energy to get there is vehicle-specific and stays with the Monte Carlo. A charger counts as
+  coverage only if it has been reported on (trust level not `unknown`) and P(works) >= 0.5 (approximate - verify): an
+  unreported charger is not coverage (golden rule 6). Road segments are 10 km slices; the window is the planner's 60 km.
+- 2026-10-28 (A12): Ring query = two sources filing the same verdict on >= 4 common chargers within 72 h (approximate -
+  verify), grouped into rings, and cross-checked against the trust engine's detector, which is what actually
+  down-weights sources. Without the window slow rings show up, and so do honest repeat reporters; E5 already showed a
+  10-day evasive ring is missed by the windowed view. The demo has no ring; a live test plants one (TEST- data).
+- 2026-10-28 (A12): Measured against the 15 s rule (default 1500 runs, AuraDB Free, this laptop, 9 runs): in-memory
+  2.4-2.7 s per dispatch, Neo4j 4.7-5.8 s (14 queries = 2 reads + 4 re-plans x write/read/drop; 2.3-2.9 s of it inside
+  Neo4j). A later live run (500 runs) saw 4.9-7.1 s inside Neo4j and 8.0-10.2 s per dispatch; an A/B of the
+  query-timeout wrapper on one connection (8 pings, 5 reads each way) showed the wrapper costs nothing, so that
+  spread is AuraDB/network variance. Typical and worst observed are under 15 s, so the graph is still read per
+  request. BUT one cold start right after the full test suite measured 12-16 s per dispatch at 1500 runs and did not
+  reproduce in 6 reruns (cause unknown): on a bad day the 15 s line can be crossed. Reading chargers and reports
+  once at startup would save only 2 of the 14 queries; the LEG round trips dominate. For a hard bound: return the
+  legs from the write and drop once per dispatch (14 -> ~7 queries), or keep LEGs in memory (`graph=None`) and use
+  Neo4j for chargers, reports and the two queries.
+- 2026-10-28 (A12, after review): The fallback triggers only on Neo4j, driver and OS errors (`BACKEND_FAILURES`); a bug
+  in the engine code run on the graph surfaces as itself and leaves Neo4j on, instead of switching it off for everyone.
+  A stale pooled connection gets one retry (`ServiceUnavailable` / `SessionExpired`; every statement is idempotent).
+  No automatic reconnect after a fallback (restart to retry).
+- 2026-10-28 (A12, after review): Timeouts: connect and pool acquisition 10 s, 30 s server-side per query. Driver 6.4
+  has no socket read timeout, so a connection that stalls silently mid-query can still hold a worker thread: NOT
+  mitigated.
+- 2026-10-28 (A12, after review): Leg cleanup is best-effort (logged by class name; it never fails a plan);
+  `sweep_stale_legs` runs at startup and every 10 min and removes scoped legs older than 1 h. A leg whose endpoint is
+  not in the graph is a `KeyError`, not a silent drop. A scope may not contain ':' (waypoint ids are `<scope>:START`).
+- 2026-10-28 (A12, after review): The AuraDB is shared with the live tests. The engine ignores `TEST-` chargers and
+  their reports when it reads; the live tests plant theirs at (0, 0), far from any route, and delete them in `finally`;
+  the prune only touches this scenario's simulated reports and never `TEST-` sources. Live tests and a running API
+  share one database and one road network, so run them one at a time. A charger removed from the directory is NOT
+  pruned from the graph (the parity test would flag the drift).
+- 2026-10-28 (A12, after review): `EngineService.chargers / trust / near` are read-only properties over one
+  `GraphView` that is swapped in a single assignment. A repeated identical request returns the stored plan
+  (idempotency per the contract) without re-reading the graph, so a report filed after the first plan only shows in a
+  different request. `/api/health` reports the backend in use as of the last request; a link that died since is
+  noticed at the next request. Not fixed, pre-existing: `self.plans` grows without bound and no endpoint is rate
+  limited, which matters more now that each new plan costs Neo4j round trips.
