@@ -8,25 +8,25 @@
    "soc_pct": 40
   },
   {
-   "t_offset_s": 686,
+   "t_offset_s": 452,
    "type": "soc_reading",
-   "km": 9.6,
-   "soc_pct": 37
+   "km": 6.3,
+   "soc_pct": 38
   },
   {
-   "t_offset_s": 696,
+   "t_offset_s": 462,
    "type": "charger_report",
-   "charger_id": "CH-0006",
+   "charger_id": "CH-0023",
    "status": "broken",
    "source_trust": "high"
   },
   {
-   "t_offset_s": 706,
+   "t_offset_s": 472,
    "type": "forecast",
    "action": "DIVERT",
    "message": "Planned charger reported broken. Divert to the alternate ahead.",
    "divert_to": {
-    "charger_id": "CH-0004",
+    "charger_id": "CH-0015",
     "name": "Tata",
     "lat": 28.3190968,
     "lon": 77.5517525,

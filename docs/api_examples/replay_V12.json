@@ -8,24 +8,54 @@
    "soc_pct": 62
   },
   {
-   "t_offset_s": 1239,
+   "t_offset_s": 1357,
    "type": "soc_reading",
-   "km": 21.9,
-   "soc_pct": 54
+   "km": 25.0,
+   "soc_pct": 52
   },
   {
-   "t_offset_s": 1249,
+   "t_offset_s": 2319,
+   "type": "soc_reading",
+   "km": 50.0,
+   "soc_pct": 41
+  },
+  {
+   "t_offset_s": 3280,
+   "type": "soc_reading",
+   "km": 75.0,
+   "soc_pct": 30
+  },
+  {
+   "t_offset_s": 4242,
+   "type": "soc_reading",
+   "km": 100.0,
+   "soc_pct": 19
+  },
+  {
+   "t_offset_s": 4494,
+   "type": "soc_reading",
+   "km": 106.6,
+   "soc_pct": 16
+  },
+  {
+   "t_offset_s": 4504,
    "type": "charger_report",
-   "charger_id": "CH-0004",
+   "charger_id": "CH-0006",
    "status": "broken",
    "source_trust": "high"
   },
   {
-   "t_offset_s": 1259,
+   "t_offset_s": 4514,
    "type": "forecast",
-   "action": "SLOW_DOWN",
-   "message": "Planned charger reported broken and no other charger is reachable with confidence: slow down and save energy.",
-   "divert_to": null
+   "action": "DIVERT",
+   "message": "Planned charger reported broken. Divert to the alternate ahead.",
+   "divert_to": {
+    "charger_id": "CH-0003",
+    "name": "EV charging station (OpenStreetMap)",
+    "lat": 27.5495366,
+    "lon": 77.7557237,
+    "p_works": 0.95
+   }
   }
  ],
  "is_simulated": true

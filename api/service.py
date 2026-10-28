@@ -4,9 +4,12 @@ What is real and what is simulated (every response says ``is_simulated: true``):
 * REAL: the Noida-Agra route, elevation and weather forecast (data/processed/route_noida_agra.json) and
   the OpenStreetMap charger directory (data/processed/chargers_ncr.json).
 * SIMULATED: the three demo vehicles and their trips (data/sim/demo, calibrated through the real
-  pipeline), and the charger REPORTS (demo inputs below). The reports are scenario inputs chosen to show
-  a well-evidenced charger, a thinly evidenced one, a stale one and an unreported one; every decision,
-  probability, plan and message that comes out is computed by the engine from them.
+  pipeline), and the charger REPORTS (demo inputs below). The reports show a well-evidenced charger, a thinly
+  evidenced one, a stale one and an unreported one, and are attached to NAMED chargers (DEMO_REPORTS), not to
+  km bands. The reports and the vehicles' starting charge were CHOSEN to illustrate three outcomes (V07
+  NO_GO, V12 GO with a DIVERT in its replay, V19 INSUFFICIENT_EVIDENCE); they were found by trying inputs
+  against the engine, never by changing it (docs/DECISIONS.md A13). Every decision, probability, plan and
+  message that comes out is computed by the engine from them.
 """
 
 from __future__ import annotations
@@ -16,6 +19,7 @@ import json
 import logging
 import os
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import timedelta
 
@@ -43,19 +47,63 @@ DEMO_SEED = 1028
 SWEEP_EVERY_S = 600.0  # how often to remove plan legs that a crashed or failed-cleanup request left behind
 DEMO_FLEET = (("V07", "compact_esuv", 0.78), ("V12", "compact_esuv", 0.98), ("V19", "compact_esuv", 0.95))
 # (label, start SoC %, number of trips used for calibration). Scenario inputs, not results.
-FLEET_META = {"V07": ("Vehicle 7", 82, 6), "V12": ("Vehicle 12", 62, 8), "V19": ("Vehicle 19", 40, 4)}
+# V07 starts at 70 % (was 82 %): at 82 % the denser corridor lifts its raw confidence to the target and the
+# pessimistic reading refuses it instead; see docs/DECISIONS.md A13.
+FLEET_META = {"V07": ("Vehicle 7", 70, 6), "V12": ("Vehicle 12", 62, 8), "V19": ("Vehicle 19", 40, 4)}
 BOOKING = {"booking_id": "BK-001", "origin": {"name": "Noida", "lat": 28.5355, "lon": 77.3910},
            "destination": {"name": "Agra", "lat": 27.1767, "lon": 78.0081},
            "departure_time": "2026-10-28T14:00:00+05:30", "passengers": 4, "ac_on": True, "target_confidence": 0.9}
 CORRIDOR_KM = 3.0  # chargers within this distance of the route are planning candidates
 ENDPOINT_TOLERANCE_KM = 30.0  # the demo route only serves requests that start/end near Noida and Agra
-# Demo report scenarios by position along the route: (km from, km to, [(report ages in days, status)]).
-DEMO_REPORTS = (
-    (120.0, 130.0, "well evidenced", [(a, "working") for a in (1, 2, 3, 4, 6, 8, 10, 12, 15)] + [(5, "broken")]),
-    (170.0, 180.0, "thinly evidenced", [(12, "working"), (21, "working"), (30, "working")]),
-    (30.0, 40.0, "stale", [(41, "working")]),
-    (15.0, 25.0, "no reports", []),
+PIN_KM_TOLERANCE = 1.0  # a pinned charger must still sit this close (km) to where the scenario expects it
+
+
+@dataclass(frozen=True)
+class ScenarioPin:
+    """Simulated reports bound to ONE named charger. Charger ids are numbered by the import, so a directory rebuild
+    renumbers them: ``source_id`` (the stable OSM/OCM id) and ``km`` guard against attaching the reports to a
+    different charger. ``reports`` are (age in days, status)."""
+
+    charger_id: str
+    source_id: str
+    km: float
+    role: str
+    reports: tuple[tuple[int, str], ...]
+
+
+# Demo report scenarios, bound to chargers of data/processed/chargers_ncr.json (207 chargers, OSM + Open Charge Map).
+# SIMULATED inputs, chosen to illustrate three outcomes (docs/DECISIONS.md A13).
+DEMO_REPORTS: tuple[ScenarioPin, ...] = (
+    ScenarioPin("CH-0003", "osm:node/13952066560", 125.7, "well evidenced",
+                tuple((a, "working") for a in (1, 2, 3, 4, 6, 8, 10, 12, 15)) + ((5, "broken"),)),
+    ScenarioPin("CH-0002", "osm:node/9529343817", 175.0, "thinly evidenced",
+                ((12, "working"), (21, "broken"), (30, "broken"))),
+    ScenarioPin("CH-0015", "osm:node/13955464891", 33.9, "stale", ((41, "working"),)),
+    ScenarioPin("CH-0020", "osm:node/7554422920", 21.6, "no reports", ()),
 )
+
+
+def demo_reports_for(near: Sequence[RouteCharger], pins: Sequence[ScenarioPin] = DEMO_REPORTS) -> list[Report]:
+    """The demo's simulated reports, on the pinned chargers only. A pin that no longer matches the directory raises:
+    the demo must stop, not silently attach its reports elsewhere (or nowhere) and flip the decisions."""
+    by_id = {rc.charger.id: rc for rc in near}
+    out: list[Report] = []
+    for pin in pins:
+        label = f"demo scenario pin {pin.charger_id} ({pin.role}, {pin.source_id}, km {pin.km:g})"
+        rc = by_id.get(pin.charger_id)
+        if rc is None:
+            raise ValueError(f"{label}: no such charger within {CORRIDOR_KM:g} km of the route; the charger directory "
+                             "changed, so re-pin the scenario (docs/DECISIONS.md A13)")
+        if pin.source_id not in rc.charger.source_ids:
+            raise ValueError(f"{label}: that id now belongs to a different charger (its source ids are "
+                             f"{list(rc.charger.source_ids)}); the directory was renumbered, so re-pin the scenario")
+        if abs(rc.km_along - pin.km) > PIN_KM_TOLERANCE:
+            raise ValueError(f"{label}: the charger now sits at km {rc.km_along:.1f}; re-pin the scenario")
+        for i, (age, status) in enumerate(pin.reports):
+            out.append(Report(charger_id=pin.charger_id, source_id=f"demo-user-{i}", status=status,
+                              t=NOW - timedelta(days=age, hours=2 * i), evidence="SIMULATED demo report",
+                              is_simulated=True))
+    return out
 
 
 class ApiError(Exception):
@@ -96,7 +144,7 @@ class EngineService:
         self.poly = np.array(self.snap["polyline"])
         self.poly_km = np.array(self.snap["polyline_km"])
         directory, self.directory_meta = load_chargers()
-        self.demo_reports = self._demo_reports(chargers_near_route(directory, self.poly, self.poly_km, CORRIDOR_KM))
+        self.demo_reports = demo_reports_for(chargers_near_route(directory, self.poly, self.poly_km, CORRIDOR_KM))
         # The graph (Neo4j when it works, in-memory otherwise) is what trust and dispatch read; the directory file
         # only seeds it. VERITY_GRAPH=auto|memory|neo4j overrides the default (auto).
         self.graph: GraphHandle = open_graph(directory, self.demo_reports,
@@ -110,18 +158,6 @@ class EngineService:
         self._last_sweep = time.monotonic()  # open_graph already swept at startup
 
     # -- setup ----------------------------------------------------------------------------------------------
-    def _demo_reports(self, near: list[RouteCharger]) -> list[Report]:
-        out: list[Report] = []
-        for lo, hi, _, reports in DEMO_REPORTS:
-            target = next((rc for rc in near if lo <= rc.km_along <= hi), None)
-            if target is None:
-                continue
-            for i, (age, status) in enumerate(reports):
-                out.append(Report(charger_id=target.charger.id, source_id=f"demo-user-{i}", status=status,
-                                  t=NOW - timedelta(days=age, hours=2 * i), evidence="SIMULATED demo report",
-                                  is_simulated=True))
-        return out
-
     def _build_fleet(self) -> dict[str, FleetVehicle]:
         if not (SIM_DIR / "demo" / "manifest.json").exists():
             generate_dataset("demo", DEMO_SEED, fleet=DEMO_FLEET, trips_per_vehicle=8)

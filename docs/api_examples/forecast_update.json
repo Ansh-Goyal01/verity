@@ -3,13 +3,13 @@
  "km_along_route": 57.9,
  "confidence": 1.0,
  "arrival_soc": {
-  "p10": 20,
-  "p50": 22,
-  "p90": 23
+  "p10": 22,
+  "p50": 23,
+  "p90": 25
  },
- "bingo_soc_pct_here": 39,
- "action": "CONTINUE",
+ "bingo_soc_pct_here": 63,
+ "action": "SLOW_DOWN",
  "divert_to": null,
- "message": "On plan: still above the Bingo Line.",
+ "message": "Battery is below the Bingo Line and no alternate is reachable with confidence: slow down and save energy.",
  "is_simulated": true
 }

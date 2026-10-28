@@ -18,7 +18,7 @@ from verity.trust.graph import Alternate, InMemoryGraph, Leg, Neo4jGraph, Ring, 
 from verity.trust.graph_build import GraphUnavailable, open_graph
 
 N_RUNS = 500  # parity does not depend on the run count; fewer runs keep the live tests quick
-DEMO_SOC = {"V07": 82, "V12": 62, "V19": 40}
+DEMO_SOC = {"V07": 70, "V12": 62, "V19": 40}  # the demo scenario's starting charge (api/service.py FLEET_META)
 MAX_DISPATCH_S = 15.0  # the budget from the brief: a dispatch through Neo4j must stay under this
 T0 = datetime(2026, 10, 27, 10, 0, tzinfo=timezone(timedelta(hours=5, minutes=30)))
 BASE = {"origin": {"lat": 28.5355, "lon": 77.3910}, "destination": {"lat": 27.1767, "lon": 78.0081},

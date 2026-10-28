@@ -23,7 +23,7 @@ from verity.paths import DOCS_DIR  # noqa: E402
 OUT = DOCS_DIR / "api_examples"
 BASE = {"origin": {"lat": 28.5355, "lon": 77.3910}, "destination": {"lat": 27.1767, "lon": 78.0081},
         "departure_time": "2026-10-28T14:00:00+05:30", "passengers": 4, "ac_on": True, "target_confidence": 0.9}
-DEMO_SOC = {"V07": 82, "V12": 62, "V19": 40}  # the demo scenario's starting charge levels
+DEMO_SOC = {"V07": 70, "V12": 62, "V19": 40}  # the demo scenario's starting charge levels (api/service.py FLEET_META)
 
 
 def main() -> int:
@@ -54,8 +54,8 @@ def main() -> int:
         replays = {vid: c.get(f"/api/demo/replay/{p}") for vid, p in plan_ids.items()}
         for vid, p in plan_ids.items():
             save(f"replay_{vid}", "GET", f"/api/demo/replay/{p}", replays[vid])
-        # replay.json: the first demo plan whose scripted trip ends in a DIVERT (a reachable alternate exists)
-        best = next((v for v, r in replays.items() if r.json()["events"][-1]["action"] == "DIVERT"), "V12")
+        # replay.json: the GO vehicle's scripted trip (the demo's DIVERT story), else the first plan that ends in a DIVERT
+        best = next((v for v in ("V12", *replays) if replays[v].json()["events"][-1]["action"] == "DIVERT"), "V12")
         save("replay", "GET", f"/api/demo/replay/{plan_ids[best]}", replays[best])
         tts = {"text": "Divert now", "language": "hi-IN"}
         save("voice_tts_503", "POST", "/api/voice/tts", c.post("/api/voice/tts", json=tts), tts)

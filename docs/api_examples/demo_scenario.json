@@ -21,7 +21,7 @@
    "vehicle_id": "V07",
    "label": "Vehicle 7",
    "model_class": "compact_esuv",
-   "soc_pct": 82,
+   "soc_pct": 70,
    "usable_kwh_estimate": {
     "p10": 33.1,
     "p50": 37.1,

@@ -202,3 +202,41 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
   different request. `/api/health` reports the backend in use as of the last request; a link that died since is
   noticed at the next request. Not fixed, pre-existing: `self.plans` grows without bound and no endpoint is rate
   limited, which matters more now that each new plan costs Neo4j round trips.
+- 2026-10-28 (A13): The rebuilt charger directory (207 chargers: OpenStreetMap + Open Charge Map, `ocm_status`
+  fetched, 78 OCM records) flipped the demo: V07 NO_GO -> INSUFFICIENT_EVIDENCE, V19 INSUFFICIENT_EVIDENCE -> NO_GO,
+  V12 stayed GO. Diagnosed by varying scenario inputs only. The corridor went from 4 to 10 chargers: two real OCM
+  stations (CH-0006 at km 118.6, CH-0004 at km 125.6, 110 m from OSM's CH-0003) and three more chargers at km 17-22.
+  Ids are numbered by the import and were renumbered (old CH-0002/0001/0004/0006 are now CH-0003/0002/0015/0020, same
+  coordinates). V07 now stops at km 119 with two backups next door: raw confidence 0.85 -> 0.90, so only the
+  pessimistic reading of its unreported chargers refuses it. V19: the planner shortlists `K_CANDIDATES = 6` chains
+  ranked by its cost model, and the denser corridor fills them with 3-stop chains (0.82-0.85), so the 2-stop chain
+  that scored 0.90 is never offered.
+- 2026-10-28 (A13): Scenario input change 1 of 3: the simulated reports are bound to NAMED chargers
+  (`DEMO_REPORTS` of `ScenarioPin`, api/service.py) instead of km bands (first charger in 120-130 / 170-180 / 30-40 /
+  15-25 km). CH-0003 (osm:node/13952066560, km 125.7) well evidenced: 10 reports, 9 working + 1 broken, as before.
+  CH-0002 (osm:node/9529343817, km 175.0) thinly evidenced. CH-0015 (osm:node/13955464891, km 33.9) stale: 1 working
+  report 41 days old, as before. CH-0020 (osm:node/7554422920, km 21.6) no reports, as before. Each pin also carries
+  its stable OSM id and expected km: a pin whose charger left the corridor, no longer has that id (renumbered) or moved
+  more than 1 km raises `ValueError` at startup (the old code dropped a band with no charger without a word).
+- 2026-10-28 (A13): Change 2 of 3: the thinly evidenced charger's record is 1 working + 2 broken (12, 21, 30 days
+  old), was 3 working. With 3 working reports its p_works (0.89) kept 3-stop chains cheap enough to crowd out the
+  2-stop chain; the mixed record raises their planner cost (failure penalty 45 min x (1 - p_works)), so 2-stop chains
+  enter the shortlist and V19 reaches 0.90 again. It is still thin (3 reports).
+- 2026-10-28 (A13): Change 3 of 3: V07 starts at 70 % (was 82 %). At 82 % its best chains score 0.887-0.896 and the
+  decision rests on the pessimistic reading; at 70 % raw confidence is 0.813-0.837. 74 % was rejected (0.863 at most,
+  0.012 from the decision line). Unchanged: V12 62 %, V19 40 %, states of health 0.78 / 0.98 / 0.95, calibration trip
+  counts, the simulated trips in `data/sim/demo`, the route, target confidence 0.9.
+- 2026-10-28 (A13): Measured outcomes (1500 runs, 8 seeds, raw confidence; confidences are shown to the nearest 5 %,
+  so the decision line is 0.875): V07 at 70 % NO_GO 0.813-0.837; V12 at 62 % GO 0.900-0.943; V19 at 40 %
+  INSUFFICIENT_EVIDENCE 0.895-0.905; every seed gave the same decision. V12's replay (the 85th-percentile energy run,
+  its planned charger CH-0006 reported broken) ends in a DIVERT to CH-0003; driven through `execute_trip` with CH-0006
+  down, that run is not stranded (final SoC 17.8 %). V07's replay says SLOW_DOWN (no alternate reachable with
+  confidence); `docs/api_examples/replay.json` is now V12's plan, regenerated with `VERITY_GRAPH=memory`.
+- 2026-10-28 (A13): DISCLOSURE: these inputs were chosen to illustrate three outcomes and were found by trying
+  scenarios against the engine (seven report scenarios, SoC sweeps from 40 to 82 %). The engine, trust model,
+  thresholds (`usable_alternate`, confidence rules), experiments and held-out split were not changed to get them. The
+  outcomes sit near planner-shortlist boundaries, so a new corridor charger can still flip them: the pins stop silent
+  re-targeting, and `tests/test_demo_scenario.py` asserts the three decisions and the DIVERT replay on the committed
+  directory, so a data change fails the build instead of the demo. If it does, re-pin and record it here; do not
+  loosen the test or touch the engine. Also: `tests/test_routing.py` no longer pins `ocm_status` to BLOCKED (a data
+  state); it checks that the label tells the truth about the data.

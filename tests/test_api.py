@@ -14,7 +14,7 @@ from verity.voice import SarvamClient
 
 DISPATCH_BODY = {"origin": {"lat": 28.5355, "lon": 77.3910}, "destination": {"lat": 27.1767, "lon": 78.0081},
                  "departure_time": "2026-10-28T14:00:00+05:30", "passengers": 4, "ac_on": True, "target_confidence": 0.9}
-DEMO_SOC = {"V07": 82, "V12": 62, "V19": 40}
+DEMO_SOC = {"V07": 70, "V12": 62, "V19": 40}  # the demo scenario's starting charge (api/service.py FLEET_META)
 
 
 def body(vid: str, soc: float | None = None) -> dict:

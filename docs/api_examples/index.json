@@ -34,7 +34,7 @@
     "ac_on": true,
     "target_confidence": 0.9,
     "vehicle_id": "V07",
-    "start_soc_pct": 82
+    "start_soc_pct": 70
    },
    "status": 200
   },
@@ -110,7 +110,7 @@
   {
    "file": "replay_V07.json",
    "method": "GET",
-   "path": "/api/demo/replay/PL-5796",
+   "path": "/api/demo/replay/PL-5f72",
    "request_body": null,
    "status": 200
   },
@@ -131,7 +131,7 @@
   {
    "file": "replay.json",
    "method": "GET",
-   "path": "/api/demo/replay/PL-47be",
+   "path": "/api/demo/replay/PL-9b91",
    "request_body": null,
    "status": 200
   },

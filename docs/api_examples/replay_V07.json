@@ -1,22 +1,22 @@
 {
- "plan_id": "PL-5796",
+ "plan_id": "PL-5f72",
  "events": [
   {
    "t_offset_s": 0,
    "type": "soc_reading",
    "km": 0.0,
-   "soc_pct": 82
+   "soc_pct": 70
   },
   {
    "t_offset_s": 1239,
    "type": "soc_reading",
    "km": 21.9,
-   "soc_pct": 69
+   "soc_pct": 57
   },
   {
    "t_offset_s": 1249,
    "type": "charger_report",
-   "charger_id": "CH-0004",
+   "charger_id": "CH-0015",
    "status": "broken",
    "source_trust": "high"
   },
