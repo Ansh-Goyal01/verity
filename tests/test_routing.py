@@ -206,4 +206,10 @@ def test_committed_charger_directory_validates_and_is_labelled() -> None:
     chargers, meta = load_chargers()
     assert len(chargers) > 50 and meta["is_simulated"] is False
     assert all(c.id.startswith("CH-") and c.source_ids for c in chargers)
-    assert json.loads(CHARGERS_FILE.read_text(encoding="utf-8"))["sources"]["ocm_status"].startswith("BLOCKED")
+    sources = json.loads(CHARGERS_FILE.read_text(encoding="utf-8"))["sources"]
+    has_ocm = any(s.startswith("ocm:") for c in chargers for s in c.source_ids)
+    # The status label must tell the truth about the data, whichever state the directory is in.
+    if sources["ocm_status"].startswith("BLOCKED"):
+        assert sources["ocm_records"] == 0 and not has_ocm
+    else:
+        assert sources["ocm_status"] == "fetched" and sources["ocm_records"] > 0 and has_ocm
