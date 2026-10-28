@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+<title id="title">Noida to Agra route strip</title>
+<desc id="desc">Illustrative V12 route, charging stop, alternate, Bingo Line, expected battery band and point of no return.</desc>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap');
+.mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; }
+.sans { font-family: 'IBM Plex Sans', Arial, sans-serif; }
+</style>
+<rect width="1600" height="900" fill="#14161A"/>
+<text x="64" y="58" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="start" letter-spacing="2">VERITY · DISPATCH RELEASE</text>
+<rect x="1280" y="28" width="256" height="44" rx="22" fill="none" stroke="#F5A524" stroke-width="2"/>
+<text x="1408" y="57" class="mono" font-size="20" font-weight="600" fill="#F5A524" text-anchor="middle" >ILLUSTRATIVE</text>
+<text x="64" y="124" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="start" letter-spacing="2">SECTION 2 · ROUTE AND CHARGERS</text>
+<text x="64" y="184" class="mono" font-size="48" font-weight="600" fill="#F2EFE8" text-anchor="start" >NOIDA → AGRA</text>
+<path d="M64 210H1536" stroke="#414349" stroke-width="2"/>
+<text x="1536" y="182" class="mono" font-size="25" font-weight="500" fill="#F5A524" text-anchor="end" >231.4 KM · ABOUT 90% CONFIDENCE</text>
+<path d="M110 288H1490" stroke="#A9A498" stroke-width="6"/>
+<circle cx="110" cy="288" r="11" fill="#F2EFE8"/>
+<circle cx="1490" cy="288" r="11" fill="#F2EFE8"/>
+<rect x="818.626" y="278" width="20" height="20" fill="#F5A524"/>
+<text x="110" y="336" class="mono" font-size="24" font-weight="500" fill="#F2EFE8" text-anchor="start" >NOIDA</text>
+<text x="1490" y="336" class="mono" font-size="24" font-weight="500" fill="#F2EFE8" text-anchor="end" >AGRA</text>
+<text x="848.626" y="270" class="mono" font-size="22" font-weight="500" fill="#F5A524" text-anchor="start" >PLANNED CHARGE</text>
+<text x="848.626" y="300" class="mono" font-size="22" font-weight="500" fill="#F5A524" text-anchor="start" >120.5 km · +26%</text>
+<path d="M828.626 288 L743.626 380 H598.626" fill="none" stroke="#9DB4FF" stroke-width="3" stroke-dasharray="9 7"/>
+<circle cx="598.626" cy="380" r="9" fill="#9DB4FF"/>
+<text x="578.626" y="386" class="mono" font-size="22" font-weight="500" fill="#9DB4FF" text-anchor="end" >ALTERNATE</text>
+<text x="64" y="443" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="start" >BATTERY %</text>
+<path d="M110 744H1490" stroke="#414349"/>
+<text x="94" y="752" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >0</text>
+<path d="M110 690H1490" stroke="#414349"/>
+<text x="94" y="698" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >20</text>
+<path d="M110 636H1490" stroke="#414349"/>
+<text x="94" y="644" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >40</text>
+<path d="M110 582H1490" stroke="#414349"/>
+<text x="94" y="590" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >60</text>
+<path d="M110 528H1490" stroke="#414349"/>
+<text x="94" y="536" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >80</text>
+<path d="M110 474H1490" stroke="#414349"/>
+<text x="94" y="482" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >100</text>
+<path d="M110.0,509.1 L169.6,520.4 L229.3,531.8 L288.9,542.9 L348.5,554.2 L408.2,565.5 L467.8,576.9 L527.5,588.2 L587.1,599.5 L646.7,610.6 L706.4,622.0 L766.0,633.3 L825.6,644.6 L828.6,575.0 L885.3,580.1 L944.9,585.2 L1004.6,590.4 L1064.2,595.8 L1123.8,600.9 L1183.5,606.3 L1243.1,611.4 L1302.7,616.8 L1362.4,622.0 L1422.0,627.4 L1481.7,632.5 L1490.0,633.3 L1490.0,660.3 L1481.7,659.5 L1422.0,654.4 L1362.4,649.0 L1302.7,643.8 L1243.1,638.4 L1183.5,633.3 L1123.8,627.9 L1064.2,622.8 L1004.6,617.4 L944.9,612.2 L885.3,607.1 L828.6,602.0 L825.6,671.6 L766.0,660.3 L706.4,649.0 L646.7,637.6 L587.1,626.5 L527.5,615.2 L467.8,603.9 L408.2,592.5 L348.5,581.2 L288.9,569.9 L229.3,558.8 L169.6,547.4 L110.0,536.1 Z" fill="#F5A524" opacity="0.2"/>
+<polyline points="110.0,522.6 169.6,533.9 229.3,545.3 288.9,556.4 348.5,567.7 408.2,579.0 467.8,590.4 527.5,601.7 587.1,613.0 646.7,624.1 706.4,635.5 766.0,646.8 825.6,658.1 828.6,588.5 885.3,593.6 944.9,598.7 1004.6,603.9 1064.2,609.3 1123.8,614.4 1183.5,619.8 1243.1,624.9 1302.7,630.3 1362.4,635.5 1422.0,640.9 1481.7,646.0 1490.0,646.8" fill="none" stroke="#F5A524" stroke-width="4" stroke-linejoin="round"/>
+<polyline points="110.0,557.7 169.6,569.0 229.3,580.4 288.9,591.5 348.5,602.8 408.2,614.1 467.8,625.5 527.5,636.8 587.1,648.1 646.7,659.2 706.4,670.6 766.0,681.9 825.6,693.2 828.6,623.6 885.3,628.7 944.9,633.8 1004.6,639.0 1064.2,644.4 1123.8,649.5 1183.5,654.9 1243.1,660.0 1302.7,665.4 1362.4,670.6 1422.0,676.0 1481.7,681.1 1490.0,681.9" fill="none" stroke="#FF6B6B" stroke-width="4" stroke-linejoin="round"/>
+<path d="M730.225 254V744" stroke="#FF6B6B" stroke-width="3" stroke-dasharray="10 8"/>
+<text x="716.225" y="420" class="mono" font-size="22" font-weight="500" fill="#FF6B6B" text-anchor="end" >POINT OF NO RETURN · 104 km</text>
+<path d="M828.626 744v-16" stroke="#F5A524" stroke-width="5"/>
+<text x="110" y="783" class="mono" font-size="21" font-weight="500" fill="#A9A498" text-anchor="middle" >0</text>
+<text x="408.185" y="783" class="mono" font-size="21" font-weight="500" fill="#A9A498" text-anchor="middle" >50</text>
+<text x="706.37" y="783" class="mono" font-size="21" font-weight="500" fill="#A9A498" text-anchor="middle" >100</text>
+<text x="1004.55" y="783" class="mono" font-size="21" font-weight="500" fill="#A9A498" text-anchor="middle" >150</text>
+<text x="1302.74" y="783" class="mono" font-size="21" font-weight="500" fill="#A9A498" text-anchor="middle" >200</text>
+<text x="1490" y="783" class="mono" font-size="21" font-weight="500" fill="#A9A498" text-anchor="middle" >231.4</text>
+<text x="800" y="820" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="middle" >DISTANCE ALONG ROUTE · KM</text>
+<path d="M64 858h40" stroke="#F5A524" stroke-width="4"/>
+<text x="118" y="866" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="start" >Expected battery · p10–p90 band / p50 line</text>
+<path d="M940 858h40" stroke="#FF6B6B" stroke-width="4"/>
+<text x="994" y="866" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="start" >Bingo Line</text>
+<text x="1536" y="866" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >illustrative</text>
+</svg>

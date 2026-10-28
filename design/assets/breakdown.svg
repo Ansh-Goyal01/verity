@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+<title id="title">V12 energy breakdown</title>
+<desc id="desc">Illustrative battery waterfall: 82 percent start, all seven energy terms including 26 percent charging, and 36 percent arrival.</desc>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap');
+.mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; }
+.sans { font-family: 'IBM Plex Sans', Arial, sans-serif; }
+</style>
+<rect width="1600" height="900" fill="#14161A"/>
+<text x="64" y="58" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="start" letter-spacing="2">VERITY · DISPATCH RELEASE</text>
+<rect x="1280" y="28" width="256" height="44" rx="22" fill="none" stroke="#F5A524" stroke-width="2"/>
+<text x="1408" y="57" class="mono" font-size="20" font-weight="600" fill="#F5A524" text-anchor="middle" >ILLUSTRATIVE</text>
+<text x="64" y="124" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="start" letter-spacing="2">SECTION 4 · ENERGY BREAKDOWN</text>
+<text x="64" y="184" class="mono" font-size="48" font-weight="600" fill="#F2EFE8" text-anchor="start" >V12 · BATTERY DISPATCH</text>
+<path d="M64 210H1536" stroke="#414349" stroke-width="2"/>
+<text x="1536" y="182" class="mono" font-size="28" font-weight="500" fill="#F5A524" text-anchor="end" >82% START → 36% ARRIVAL</text>
+<path d="M92 672H1536" stroke="#414349"/>
+<text x="74" y="680" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >0%</text>
+<path d="M92 591.2H1536" stroke="#414349"/>
+<text x="74" y="599.2" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >20%</text>
+<path d="M92 510.4H1536" stroke="#414349"/>
+<text x="74" y="518.4" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >40%</text>
+<path d="M92 429.6H1536" stroke="#414349"/>
+<text x="74" y="437.6" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >60%</text>
+<path d="M92 348.8H1536" stroke="#414349"/>
+<text x="74" y="356.8" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >80%</text>
+<path d="M92 268H1536" stroke="#414349"/>
+<text x="74" y="276" class="mono" font-size="20" font-weight="500" fill="#A9A498" text-anchor="end" >100%</text>
+<rect x="128.222" y="340.72" width="88" height="331.28" rx="5" fill="#F5A524"/>
+<text x="172.222" y="322.72" class="mono" font-size="29" font-weight="600" fill="#F2EFE8" text-anchor="middle" >82%</text>
+<text x="172.222" y="715" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >Starting</text>
+<text x="172.222" y="744" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >battery</text>
+<path d="M216.222 340.72H288.667" stroke="#A9A498" stroke-width="2" stroke-dasharray="5 5"/>
+<rect x="288.667" y="340.72" width="88" height="80.8" rx="5" fill="#FF6B6B"/>
+<text x="332.667" y="322.72" class="mono" font-size="29" font-weight="600" fill="#F2EFE8" text-anchor="middle" >-20%</text>
+<text x="332.667" y="715" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >Rolling</text>
+<text x="332.667" y="744" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >resistance</text>
+<path d="M376.667 421.52H449.111" stroke="#A9A498" stroke-width="2" stroke-dasharray="5 5"/>
+<rect x="449.111" y="421.52" width="88" height="129.28" rx="5" fill="#FF6B6B"/>
+<text x="493.111" y="403.52" class="mono" font-size="29" font-weight="600" fill="#F2EFE8" text-anchor="middle" >-32%</text>
+<text x="493.111" y="715" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >Air drag</text>
+<path d="M537.111 550.8H609.556" stroke="#A9A498" stroke-width="2" stroke-dasharray="5 5"/>
+<rect x="609.556" y="550.8" width="88" height="12.12" rx="5" fill="#FF6B6B"/>
+<text x="653.556" y="532.8" class="mono" font-size="29" font-weight="600" fill="#F2EFE8" text-anchor="middle" >-3%</text>
+<text x="653.556" y="715" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >Climbs</text>
+<path d="M697.556 562.92H770" stroke="#A9A498" stroke-width="2" stroke-dasharray="5 5"/>
+<rect x="770" y="562.92" width="88" height="32.32" rx="5" fill="#FF6B6B"/>
+<text x="814" y="544.92" class="mono" font-size="29" font-weight="600" fill="#F2EFE8" text-anchor="middle" >-8%</text>
+<text x="814" y="715" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >Stop-and-go</text>
+<path d="M858 595.24H930.444" stroke="#A9A498" stroke-width="2" stroke-dasharray="5 5"/>
+<rect x="930.444" y="575.04" width="88" height="20.2" rx="5" fill="#3DD68C"/>
+<text x="974.444" y="557.04" class="mono" font-size="29" font-weight="600" fill="#F2EFE8" text-anchor="middle" >+5%</text>
+<text x="974.444" y="715" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >Regenerative</text>
+<text x="974.444" y="744" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >braking</text>
+<path d="M1018.44 575.04H1090.89" stroke="#A9A498" stroke-width="2" stroke-dasharray="5 5"/>
+<rect x="1090.89" y="575.04" width="88" height="56.56" rx="5" fill="#FF6B6B"/>
+<text x="1134.89" y="557.04" class="mono" font-size="29" font-weight="600" fill="#F2EFE8" text-anchor="middle" >-14%</text>
+<text x="1134.89" y="715" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >AC and</text>
+<text x="1134.89" y="744" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >electronics</text>
+<path d="M1178.89 631.6H1251.33" stroke="#A9A498" stroke-width="2" stroke-dasharray="5 5"/>
+<rect x="1251.33" y="526.56" width="88" height="105.04" rx="5" fill="#3DD68C"/>
+<text x="1295.33" y="508.56" class="mono" font-size="29" font-weight="600" fill="#F2EFE8" text-anchor="middle" >+26%</text>
+<text x="1295.33" y="715" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >Charging</text>
+<text x="1295.33" y="744" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >stops</text>
+<path d="M1339.33 526.56H1411.78" stroke="#A9A498" stroke-width="2" stroke-dasharray="5 5"/>
+<rect x="1411.78" y="526.56" width="88" height="145.44" rx="5" fill="#3DD68C"/>
+<text x="1455.78" y="508.56" class="mono" font-size="29" font-weight="600" fill="#F2EFE8" text-anchor="middle" >36%</text>
+<text x="1455.78" y="715" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >Arrival</text>
+<text x="1455.78" y="744" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="middle" >battery</text>
+<path d="M64 798H1536" stroke="#414349" stroke-width="2"/>
+<text x="64" y="848" class="mono" font-size="29" font-weight="500" fill="#F2EFE8" text-anchor="start" >82 − 20 − 32 − 3 − 8 + 5 − 14 + 26 = 36%</text>
+<text x="1536" y="848" class="mono" font-size="22" font-weight="500" fill="#A9A498" text-anchor="end" >illustrative</text>
+</svg>
