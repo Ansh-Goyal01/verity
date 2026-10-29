@@ -21,3 +21,23 @@ charger locations are real public data.
 | 2026-10-29 | Codex CLI | R6: graph ALTERNATE probability rename and stale-property removal, migration/query test, memory switch verification and docs. No live Neo4j calls (credentials absent). |
 | 2026-10-29 to 30 | Codex CLI | R4a: preserved original E1 artifacts, added experiment-only training-LOO discrepancy variance, 20 training subset draws/k, unique-trip and per-subset 50/80/90% coverage/Wilson reporting, frozen audit/evaluation reuse and three statistical bookkeeping tests. Ran one final held-out simulated evaluation; no paid service calls. |
 | 2026-10-30 | Codex CLI | R7: evidence classification, honesty/limitations pass, historical status notices and wording audit. No external calls. |
+
+## Finish-track disclosure additions
+
+The rows below append to the historical record; they do not claim the old services were called on this machine.
+The two chat/frontend rows were supplied by the takeover instructions. Teammate tool names remain unconfirmed.
+A13's prior commit history records the work, but does not identify its assistant tool; confirm that attribution
+with the teammate rather than inventing a Claude Code run. A12 and BMW groundwork tool attribution already
+appears in the original rows above. Current finish-track work uses Codex CLI only, with no subagents.
+
+| Date | Tool | What it was used for |
+|---|---|---|
+| 2026-10-26 to 28 | Claude (claude.ai chat, by Ansh) | Research of the problem statements, literature and market sources; the build plan and the frontend brief; the Claude Code task files and prompts; debugging of setup problems (Neo4j connection, TLS, credentials). |
+| 2026-10-26 to 28 | AI assistants used by the frontend teammate: [TEAMMATE: add tool names] | Trip logger, fleet console, driver view and design system, generated from docs brief and tested and uploaded by her. |
+| 2026-10-28 | Historical A13 work; assistant tool not recorded in commits (team confirmation required) | Pinned simulated demo scenario inputs, scenario sweeps, regression tests, examples and E3/E4 reruns. See 9eb15b1, 2e07e70 and DECISIONS A13. No claim that Codex performed this historical work. |
+| Historical import, before takeover | Open Charge Map (non-AI service) | Directory import in commit 31592f9, merged with OSM. Source status is fetched. No OCM request in this finish run; no key on this machine. |
+| 2026-10-28 (historical) | IEEE DataPort BMW i3 dataset (non-AI source) | Download/profile documented in BMW_I3_NOTES.md and commit 7dc5f10; raw files absent on takeover machine. Loader and fixed split reused. No dataset download in this finish run. |
+| 2026-10-30 | Codex CLI | R8 disclosure and BMW citation/download instructions; preserved existing rows and explicitly marked missing teammate/A13 tool attribution. No Claude Code, live Neo4j, Sarvam, OCM or dataset-download calls in this run. |
+
+Historical documentation includes numbers supplied by earlier scripts; finish reports are generated from saved
+artifacts by a reporting script. REAL source geography does not establish real operational reliability.

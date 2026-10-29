@@ -130,3 +130,19 @@ R4a's training-only E1 widening still undercovers individual-subset forecasts. I
 a different quantity and must be labelled as such. This experiment-only correction does not change live
 engine forecasts. Trips share vehicles, so trip-level Wilson intervals are descriptive, not adjusted
 for clustering. E5 usage traces share model assumptions, and its ten-day evasive ring is missed.
+
+## BMW i3 public dataset citation and download
+
+Matthias Steinstraeter, Johannes Buberger, Dimitar Trifonov, "Battery and Heating Data in Real Driving Cycles",
+IEEE Dataport, October 19, 2020, doi:[10.21227/6jr9-5235](https://doi.org/10.21227/6jr9-5235).
+
+Raw data is not in this repository. Open the DOI, log into IEEE DataPort if requested and download
+**Measurement Data.zip**. Extract the 70 `TripXnn.csv` files and `Overview.xlsx` directly into
+`data/raw/bmw_i3/` (a zip may create a `Measurement Data` subfolder; move its contents up).
+Run `uv run python -m verity.datasets.bmw_i3` and require `loader_ready`, `n_trips: 70`.
+Do not change/regenerate `data/splits/bmw_i3_split.json` or inspect held-out trips.
+Then follow R4b and [BMW_I3_NOTES.md](docs/BMW_I3_NOTES.md): fetch the authors' paper, decide exclusions
+using training data only, apply that policy to both parts, and load the test part exactly once in the
+final evaluation with `final_evaluation=True`. Use the label
+"(REAL data: BMW i3, Germany, heater/AC load; not Indian conditions)" for eventual results.
+Current real-data evaluation status: **NOT DONE (dataset not on this machine)**.

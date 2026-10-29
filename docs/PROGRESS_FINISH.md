@@ -29,7 +29,7 @@ Plan recorded before implementation (plan mode unavailable). Work in this order,
   at least 20 training subsets/k; aggregate repeated predictions per held-out trip for Wilson intervals;
   save frozen settings/training audit before opening held-out observations; evaluate once, report undercoverage.
 - [x] R7: evidence table, all specified limitations, plan status note, wording audit and change list.
-- [ ] R8: append accurate disclosure and service history; dataset citation/download instructions.
+- [x] R8: append accurate disclosure and service history; dataset citation/download instructions.
 - [ ] R5: BLOCKED — SARVAM_API_KEY absent. No paid calls. Add key locally to .env manually, then
   verify current official endpoint/header/fields/model IDs and make at most one TTS and one STT call;
   stop on authentication failure. Never log the key.
@@ -96,3 +96,7 @@ Remaining undercoverage is explicit: most 90% mixture bands are below nominal. M
   under the two-file web override. No logger/ or design/ edits.
 - Full pytest: 243 passed, 11 skipped, 1 warning in 55.98 s. BEFORE_fix and both splits match starting git
   content after Windows checkout newline normalization; git diff on data/splits is empty.
+
+## R8 verification
+
+Appended required historical chat/frontend disclosure, historical OCM/BMW service provenance and current Codex-only work. Existing A12/Aura/BMW rows preserved. A13 assistant attribution and frontend tool names require team confirmation; no identity invented. README now includes the user-supplied dataset citation and exact raw-file placement/check steps. Full pytest: 243 passed, 11 skipped, 1 warning in 52.26 s. No new dependency.
