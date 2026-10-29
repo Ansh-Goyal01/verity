@@ -106,3 +106,9 @@ Appended required historical chat/frontend disclosure, historical OCM/BMW servic
 SARVAM_API_KEY absent; no endpoint verification or TTS/STT calls. Manual step: add your key locally to .env, verify current official endpoints/header/request fields/models, make at most one TTS and one STT call, stop on auth failure. Key values must never be printed.
 
 Full pytest: ================= 243 passed, 11 skipped, 1 warning in 58.17s =================
+
+## R4b reviewed: BLOCKED
+
+BMW loader check reports raw folder missing/empty. NOT DONE (dataset not on this machine). Download Measurement Data.zip from https://doi.org/10.21227/6jr9-5235 and place 70 TripXnn.csv files plus Overview.xlsx directly in data/raw/bmw_i3/. Require loader_ready and n_trips=70. Preserve split; fetch paper and freeze training-only exclusions before exactly one final test load.
+
+Full pytest: ============ 243 passed, 11 skipped, 1 warning in 62.23s (0:01:02) ============
