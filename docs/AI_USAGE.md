@@ -41,3 +41,4 @@ appears in the original rows above. Current finish-track work uses Codex CLI onl
 
 Historical documentation includes numbers supplied by earlier scripts; finish reports are generated from saved
 artifacts by a reporting script. REAL source geography does not establish real operational reliability.
+| 2026-10-30 | Codex CLI | R5: documented blocker and manual steps; no external or paid call, no raw-data/test-trip read. |

@@ -100,3 +100,9 @@ Remaining undercoverage is explicit: most 90% mixture bands are below nominal. M
 ## R8 verification
 
 Appended required historical chat/frontend disclosure, historical OCM/BMW service provenance and current Codex-only work. Existing A12/Aura/BMW rows preserved. A13 assistant attribution and frontend tool names require team confirmation; no identity invented. README now includes the user-supplied dataset citation and exact raw-file placement/check steps. Full pytest: 243 passed, 11 skipped, 1 warning in 52.26 s. No new dependency.
+
+## R5 reviewed: BLOCKED
+
+SARVAM_API_KEY absent; no endpoint verification or TTS/STT calls. Manual step: add your key locally to .env, verify current official endpoints/header/request fields/models, make at most one TTS and one STT call, stop on auth failure. Key values must never be printed.
+
+Full pytest: ================= 243 passed, 11 skipped, 1 warning in 58.17s =================
