@@ -5,7 +5,8 @@
     uv run python scripts/run_all.py --only tests,E5
 
 "Clean state" means the files this script produces (charts, result JSON, API examples, logs) are deleted
-first and regenerated; it never touches data/, the fixed held-out split, the cache, or anything outside
+first and regenerated; E1 is regenerated from its fingerprint-verified immutable final evaluation
+(to avoid evaluating held-out trips twice), while E2-E5 execute. It never touches data/, the fixed held-out split, the cache, or anything outside
 the repository. Every step runs in its own process; its output goes to results/logs/<step>.log. The exit
 code is non-zero if any step fails or does not produce its expected files.
 """

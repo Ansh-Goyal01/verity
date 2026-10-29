@@ -22,8 +22,8 @@
    "stranded_only_dispatch": 0,
    "mean_minutes_fixed_not_stranded": 207.1,
    "mean_minutes_dispatch_not_stranded": 207.0,
-   "plan_ms_fixed_mean": 195.0,
-   "plan_ms_dispatch_mean": 180.0
+   "plan_ms_fixed_mean": 100.0,
+   "plan_ms_dispatch_mean": 86.0
   },
   "10% chargers down": {
    "trips": 200,
@@ -43,8 +43,8 @@
    "stranded_only_dispatch": 0,
    "mean_minutes_fixed_not_stranded": 209.9,
    "mean_minutes_dispatch_not_stranded": 210.1,
-   "plan_ms_fixed_mean": 255.0,
-   "plan_ms_dispatch_mean": 234.0
+   "plan_ms_fixed_mean": 102.0,
+   "plan_ms_dispatch_mean": 89.0
   },
   "20% chargers down": {
    "trips": 200,
@@ -64,8 +64,8 @@
    "stranded_only_dispatch": 0,
    "mean_minutes_fixed_not_stranded": 214.8,
    "mean_minutes_dispatch_not_stranded": 215.4,
-   "plan_ms_fixed_mean": 256.0,
-   "plan_ms_dispatch_mean": 236.0
+   "plan_ms_fixed_mean": 97.0,
+   "plan_ms_dispatch_mean": 85.0
   },
   "40% chargers down": {
    "trips": 200,
@@ -85,18 +85,18 @@
    "stranded_only_dispatch": 1,
    "mean_minutes_fixed_not_stranded": 213.8,
    "mean_minutes_dispatch_not_stranded": 215.6,
-   "plan_ms_fixed_mean": 186.0,
-   "plan_ms_dispatch_mean": 172.0
+   "plan_ms_fixed_mean": 95.0,
+   "plan_ms_dispatch_mean": 85.0
   }
  },
  "compute": {
   "real_route_km": 190.77,
   "chargers_near_route": 10,
   "runs_per_forecast": 2000,
-  "full_dispatch_ms_mean": 3655.0,
-  "full_dispatch_ms_max": 3735
+  "full_dispatch_ms_mean": 1632.0,
+  "full_dispatch_ms_max": 1668
  },
- "runtime_s": 430.7,
+ "runtime_s": 186.6,
  "notes": [
   "The 0 % row is the control: stranding there comes from energy-forecast error, not chargers.",
   "Chargers, reports and failures are SIMULATED; energy truth comes from verity.sim.",

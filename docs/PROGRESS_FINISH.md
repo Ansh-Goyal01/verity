@@ -39,7 +39,7 @@ Plan recorded before implementation (plan mode unavailable). Work in this order,
   Run the loader check and require loader_ready, n_trips=70. Do not regenerate the split or inspect test trips.
   Then fetch the authors' paper, freeze training-only exclusions, run the final test evaluation exactly once.
   BMW results must say NOT DONE (dataset not on this machine).
-- [ ] R10: full clean run_all, fresh API export, verify decisions/replay, full tests; script-generated
+- [x] R10: full clean run_all, fresh API export, verify decisions/replay, full tests; script-generated
   final report and deck numbers with provenance, intervals and explicit missing measurements.
 - [ ] R9: optional; assess after R10 committed. Drop first if time is short; record independence limitation.
 - [ ] R11: final local commit, clean-tree/split/scope review, user review/push commands.
@@ -112,3 +112,15 @@ Full pytest: ================= 243 passed, 11 skipped, 1 warning in 58.17s =====
 BMW loader check reports raw folder missing/empty. NOT DONE (dataset not on this machine). Download Measurement Data.zip from https://doi.org/10.21227/6jr9-5235 and place 70 TripXnn.csv files plus Overview.xlsx directly in data/raw/bmw_i3/. Require loader_ready and n_trips=70. Preserve split; fetch paper and freeze training-only exclusions before exactly one final test load.
 
 Full pytest: ============ 243 passed, 11 skipped, 1 warning in 62.23s (0:01:02) ============
+
+## Git identity resolved
+
+The user supplied Anushka Saxena / saxenaanushka33@gmail.com. Both were configured with git config --local only. Nine preserved milestone trees committed in order directly on main (R0 through R4b, with blockers documented). No branches created/deleted, no push, no gh. Earlier pending-identity notes describe the state when those snapshots were prepared.
+
+## R10 completed
+
+Full clean-output run_all: ALL STEPS OK (E1 verified frozen final evaluation; E2-E5 executed full sizes; Neo4j smoke explicitly SKIPPED). Fresh API examples exported again. V07 NO_GO, V12 GO, V19 INSUFFICIENT_EVIDENCE and V12 replay DIVERT asserted by finish_report.py. Script-generated final/deck reports and durable measurements/validation artifacts saved.
+
+Final post-report pytest: 243 passed, 11 skipped, 1 warning in 53.06s. Source log: results/logs/pytest_final.log (ignored); durable summary results/finish_validation.json. Full timings and confidence seed ranges recorded in results/finish_measurements.json. No current-machine Neo4j timing or live Sarvam claim.
+
+R9 SKIPPED: optional site-correlation engine change deferred to prioritize required validation and handoff; same-site independence remains disclosed. No optional engine change was attempted.

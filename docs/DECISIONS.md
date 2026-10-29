@@ -281,3 +281,7 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
 - 2026-10-30 (R5): BLOCKED. SARVAM_API_KEY absent; no endpoint verification or TTS/STT calls. Manual step: add your key locally to .env, verify current official endpoints/header/request fields/models, make at most one TTS and one STT call, stop on auth failure. Key values must never be printed.
 
 - 2026-10-30 (R4b): BLOCKED. BMW loader check reports raw folder missing/empty. NOT DONE (dataset not on this machine). Download Measurement Data.zip from https://doi.org/10.21227/6jr9-5235 and place 70 TripXnn.csv files plus Overview.xlsx directly in data/raw/bmw_i3/. Require loader_ready and n_trips=70. Preserve split; fetch paper and freeze training-only exclusions before exactly one final test load.
+
+- 2026-10-30 (R10): Full clean-output runner reuses the frozen E1 evaluation to respect one held-out evaluation; all other experiments execute full configured sizes. Generate final/deck reports from artifacts with scripts/finish_report.py; include both coverage definitions, missing live-backend timing, and machine metadata. Optional R9 deferred: same-site independence remains a limitation, and its prerequisite committed R10 run is blocked by missing author identity.
+
+- 2026-10-30 (Git): User supplied repository-only author identity; configured via git config --local. Committed preserved per-milestone index trees in authorized order without modifying working files. Temporary commit helpers removed after successful commits. No push.

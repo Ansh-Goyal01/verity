@@ -7390,6 +7390,6 @@
   }
  ],
  "refusal_reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
- "compute_ms": 10975,
+ "compute_ms": 3182,
  "is_simulated": true
 }

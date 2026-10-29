@@ -43,3 +43,4 @@ Historical documentation includes numbers supplied by earlier scripts; finish re
 artifacts by a reporting script. REAL source geography does not establish real operational reliability.
 | 2026-10-30 | Codex CLI | R5: documented blocker and manual steps; no external or paid call, no raw-data/test-trip read. |
 | 2026-10-30 | Codex CLI | R4b: documented blocker and manual steps; no external or paid call, no raw-data/test-trip read. |
+| 2026-10-30 | Codex CLI | R10: full run_all (E1 frozen evaluation verification, full E2-E5), fresh local API exports, script-measured demo seed ranges/directory counts/uncached timing, generated final/deck reports, full pytest. Neo4j smoke skipped; no external services or paid calls. |

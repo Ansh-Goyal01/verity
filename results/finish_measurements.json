@@ -1,0 +1,324 @@
+{
+ "is_simulated": true,
+ "at_utc": "2026-10-29T18:51:00.520292+00:00",
+ "machine": {
+  "os": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+  "logical_cpus": 12,
+  "python": "3.12.10"
+ },
+ "demo": {
+  "V07": {
+   "decision": "NO_GO",
+   "exported_confidence": 0.85,
+   "n_seeds": 8,
+   "runs_per_seed": 1500,
+   "seeds": [
+    {
+     "seed": 0,
+     "decision": "NO_GO",
+     "raw": 0.8166666666666667,
+     "shown": 0.8,
+     "mc_wilson95": [
+      0.796284194774703,
+      0.8354312731309594
+     ]
+    },
+    {
+     "seed": 1,
+     "decision": "NO_GO",
+     "raw": 0.8266666666666667,
+     "shown": 0.85,
+     "mc_wilson95": [
+      0.8066819586696001,
+      0.8449824187488726
+     ]
+    },
+    {
+     "seed": 2,
+     "decision": "NO_GO",
+     "raw": 0.8126666666666666,
+     "shown": 0.8,
+     "mc_wilson95": [
+      0.7921312451775007,
+      0.8316046589230375
+     ]
+    },
+    {
+     "seed": 3,
+     "decision": "NO_GO",
+     "raw": 0.83,
+     "shown": 0.85,
+     "mc_wilson95": [
+      0.8101529541203097,
+      0.8481610598024331
+     ]
+    },
+    {
+     "seed": 4,
+     "decision": "NO_GO",
+     "raw": 0.8366666666666667,
+     "shown": 0.85,
+     "mc_wilson95": [
+      0.8171029116072317,
+      0.8545103753240515
+     ]
+    },
+    {
+     "seed": 5,
+     "decision": "NO_GO",
+     "raw": 0.8133333333333334,
+     "shown": 0.8,
+     "mc_wilson95": [
+      0.7928231659974718,
+      0.8322426654039206
+     ]
+    },
+    {
+     "seed": 6,
+     "decision": "NO_GO",
+     "raw": 0.824,
+     "shown": 0.8,
+     "mc_wilson95": [
+      0.8039070188612405,
+      0.8424376493538162
+     ]
+    },
+    {
+     "seed": 7,
+     "decision": "NO_GO",
+     "raw": 0.8226666666666667,
+     "shown": 0.8,
+     "mc_wilson95": [
+      0.8025201576442182,
+      0.8411646559691304
+     ]
+    }
+   ],
+   "raw_range": [
+    0.8126666666666666,
+    0.8366666666666667
+   ]
+  },
+  "V12": {
+   "decision": "GO",
+   "exported_confidence": 0.95,
+   "n_seeds": 8,
+   "runs_per_seed": 1500,
+   "seeds": [
+    {
+     "seed": 0,
+     "decision": "GO",
+     "raw": 0.902,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8859110661534849,
+      0.9160350962614928
+     ]
+    },
+    {
+     "seed": 1,
+     "decision": "GO",
+     "raw": 0.942,
+     "shown": 0.95,
+     "mc_wilson95": [
+      0.9290031346814919,
+      0.9527386657847273
+     ]
+    },
+    {
+     "seed": 2,
+     "decision": "GO",
+     "raw": 0.938,
+     "shown": 0.95,
+     "mc_wilson95": [
+      0.9246413138043232,
+      0.9491209228567719
+     ]
+    },
+    {
+     "seed": 3,
+     "decision": "GO",
+     "raw": 0.9393333333333334,
+     "shown": 0.95,
+     "mc_wilson95": [
+      0.926093610980976,
+      0.9503284802818274
+     ]
+    },
+    {
+     "seed": 4,
+     "decision": "GO",
+     "raw": 0.9093333333333333,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8937376205011941,
+      0.9228377422231778
+     ]
+    },
+    {
+     "seed": 5,
+     "decision": "GO",
+     "raw": 0.936,
+     "shown": 0.95,
+     "mc_wilson95": [
+      0.9224658120608882,
+      0.9473066426976451
+     ]
+    },
+    {
+     "seed": 6,
+     "decision": "GO",
+     "raw": 0.9,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8837811087105377,
+      0.914175271801878
+     ]
+    },
+    {
+     "seed": 7,
+     "decision": "GO",
+     "raw": 0.9426666666666667,
+     "shown": 0.95,
+     "mc_wilson95": [
+      0.9297315805025391,
+      0.9533401472645341
+     ]
+    }
+   ],
+   "raw_range": [
+    0.9,
+    0.9426666666666667
+   ]
+  },
+  "V19": {
+   "decision": "INSUFFICIENT_EVIDENCE",
+   "exported_confidence": 0.9,
+   "n_seeds": 8,
+   "runs_per_seed": 1500,
+   "seeds": [
+    {
+     "seed": 0,
+     "decision": "INSUFFICIENT_EVIDENCE",
+     "raw": 0.912,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8965905311390097,
+      0.9253045407887786
+     ]
+    },
+    {
+     "seed": 1,
+     "decision": "INSUFFICIENT_EVIDENCE",
+     "raw": 0.8946666666666667,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8781101604845497,
+      0.9092068016210338
+     ]
+    },
+    {
+     "seed": 2,
+     "decision": "INSUFFICIENT_EVIDENCE",
+     "raw": 0.9013333333333333,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8852008712037032,
+      0.9154153639104206
+     ]
+    },
+    {
+     "seed": 3,
+     "decision": "INSUFFICIENT_EVIDENCE",
+     "raw": 0.8993333333333333,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8830715374691924,
+      0.9135549157423692
+     ]
+    },
+    {
+     "seed": 4,
+     "decision": "INSUFFICIENT_EVIDENCE",
+     "raw": 0.8973333333333333,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8809440422040153,
+      0.9116926291049843
+     ]
+    },
+    {
+     "seed": 5,
+     "decision": "INSUFFICIENT_EVIDENCE",
+     "raw": 0.9046666666666666,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8887539819134073,
+      0.9185118897049865
+     ]
+    },
+    {
+     "seed": 6,
+     "decision": "INSUFFICIENT_EVIDENCE",
+     "raw": 0.9026666666666666,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8866214727555608,
+      0.916654616960271
+     ]
+    },
+    {
+     "seed": 7,
+     "decision": "INSUFFICIENT_EVIDENCE",
+     "raw": 0.898,
+     "shown": 0.9,
+     "mc_wilson95": [
+      0.8816530059765416,
+      0.912313592633312
+     ]
+    }
+   ],
+   "raw_range": [
+    0.8946666666666667,
+    0.912
+   ]
+  }
+ },
+ "timings": {
+  "V07": [
+   3151.786500005983,
+   3055.065199965611,
+   3025.493900058791
+  ],
+  "V12": [
+   3021.538899978623,
+   2988.2022000383586,
+   3021.987900021486
+  ],
+  "V19": [
+   3182.36779992003,
+   3091.7992000468075,
+   3076.7064000247046
+  ]
+ },
+ "neo4j": "NOT DONE: credentials absent; historical timings are not current-machine measurements",
+ "directory": {
+  "total": 207,
+  "corridor": 10,
+  "corridor_offset_km": 3,
+  "tagged_power": 1,
+  "corridor_tagged_power": 0,
+  "largest_gap_km": 84.631,
+  "gap_endpoints_km": [
+   33.937,
+   118.568
+  ],
+  "note": "REAL directory locations only; gap excludes route endpoints, not an audit of availability"
+ },
+ "replay_V12": "DIVERT",
+ "notes": [
+  "SIMULATED fleet/reports. Seed range is not a CI. MC Wilson describes finite draws conditional on the model, not field accuracy.",
+  "Memory timings are full uncached service dispatch with levers, initialization and HTTP excluded. No timing CI."
+ ]
+}

@@ -1,3 +1,5 @@
+> Superseded by FINAL_REPORT.md and RESULTS_FOR_DECK.md. This historical demo table predates the charger-directory rebuild.
+
 # Morning report: engine track (Ansh)
 
 Written 2026-10-27 night. Everything below is local and committed in git; **nothing was pushed**, no GitHub

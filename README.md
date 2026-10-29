@@ -65,7 +65,7 @@ uv run python scripts/run_all.py --fast         # the same steps with tiny sizes
 
 | Experiment | Command | Output (in `results/`) |
 |---|---|---|
-| E1 learning curve on held-out trips | `uv run python experiments/e1_learning_curve.py` | `e1_learning_curve_simulated.*` |
+| E1 learning curve on held-out trips | `uv run python experiments/e1_learning_curve.py --reuse-evaluation` | `e1_learning_curve_simulated.*` |
 | E2 calibration of arrival probability | `uv run python experiments/e2_calibration.py` | `e2_calibration_simulated.*` |
 | E3 reliability-blind vs trust-aware planning | `uv run python experiments/e3_reliability_planning.py` | `e3_reliability_planning_simulated.*` |
 | E4 fixed shortest path vs dispatch policy | `uv run python experiments/e4_dispatch_vs_fixed.py` | `e4_dispatch_vs_fixed_simulated.*` |
@@ -146,3 +146,7 @@ using training data only, apply that policy to both parts, and load the test par
 final evaluation with `final_evaluation=True`. Use the label
 "(REAL data: BMW i3, Germany, heater/AC load; not Indian conditions)" for eventual results.
 Current real-data evaluation status: **NOT DONE (dataset not on this machine)**.
+
+E1 is evaluated once: use `--reuse-evaluation` to verify its frozen training/code/settings fingerprint
+and regenerate its public JSON/chart. A plain evaluation command refuses to overwrite the saved final
+evaluation. The full runner uses this verification step for E1 and executes E2-E5 at full sizes.
