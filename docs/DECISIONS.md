@@ -263,3 +263,5 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
   seed and fails if it differs, and `load_split_part("test")` raises unless `final_evaluation=True` (only the final E1 run passes it).
 
 - 2026-10-29 (R0, Codex CLI): Follow takeover overrides: main only, local commits, no branch deletion, no push/gh; write the multi-file plan in PROGRESS_FINISH.md because plan mode is unavailable. Baseline independently verified. Missing Git identity requested; prepare milestone snapshots while awaiting it.
+
+- 2026-10-29 (R1): Median arrival is exactly the 10% reserve in the live-update test; the extra 12 points saturated confidence. All assertions retained, seeds 0?11 checked outside permanent tests. No forecast implementation change.

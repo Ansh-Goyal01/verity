@@ -87,7 +87,8 @@ def test_used_at_km_interpolates_and_reaches_the_total() -> None:
 
 def test_live_update_reacts_to_a_battery_reading() -> None:
     r = runs(route(150.0), n=3000)
-    start = float(np.median(r.total_used)) + 10.0 + 12.0  # median arrival 22 %, reserve 10 %
+    # Put median arrival at the 10 % reserve so confidence does not saturate near 1.
+    start = float(np.median(r.total_used)) + 10.0
     assert start < 100.0
     expected = start - float(np.median(r.used_at_km(100.0)))
     base = live_update(r, start, 100.0, expected)

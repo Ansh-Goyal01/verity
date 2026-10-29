@@ -16,3 +16,4 @@ script in this repo. All trip, report and fleet data in this repo is SIMULATED a
 charger locations are real public data.
 
 | 2026-10-29 | Codex CLI | R0 takeover: read repository instructions and handoff, verified main/HEAD and baseline, wrote finish plan. No subagents or external services used. |
+| 2026-10-29 | Codex CLI | R1: fixed live-update test setup and checked seeds 0?11 in a scratch script; full pytest. |

@@ -18,7 +18,7 @@ working tree clean. No applicable AGENTS.md found. Branch creation/deletion, pus
 Plan recorded before implementation (plan mode unavailable). Work in this order, full pytest per milestone:
 
 - [x] R0: preflight, git rule, this plan. Post-milestone pytest: 239 passed, 11 skipped, 1 warning in 140.75 s; local commit pending identity.
-- [ ] R1: move live-update test to the reserve boundary; scratch-check seeds 0–11, retain assertions.
+- [x] R1: move live-update test to the reserve boundary; scratch-check seeds 0–11, retain assertions.
 - [ ] R2: inspect then apply only missing API switch and planned-stop null tooltip changes;
   Node syntax checks and scratch integration with a real local API. Document usage in root README
   because the override permits only two web file edits (web/README.md excluded).
@@ -47,3 +47,7 @@ Plan recorded before implementation (plan mode unavailable). Work in this order,
 No energy/trust/threshold changes or scenario retuning; only explicitly permitted experiment/graph edits.
 R4a will use a saved evaluation artifact for R10's E1 step to avoid evaluating held-out trips twice.
 All raw data stays ignored. No new dependencies planned. Decisions and actual AI/service use appended.
+
+## R1 verification
+
+All original assertions passed for seeds 0?11 in a scratch script. Full pytest: 239 passed, 11 skipped, 1 warning in 84.16 s.
