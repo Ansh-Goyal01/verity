@@ -130,3 +130,43 @@ R9 SKIPPED: optional site-correlation engine change deferred to prioritize requi
 Final scope/split/raw-data audit passed; only the two permitted web edits. No branch operation, push or gh. R0/R1/R2/R6/R4a/R7/R8/R5/R4b/R10 have separate local milestone commits; R5/R4b commits document blockers. Final full pytest: 243 passed, 11 skipped, 1 warning in 52.39s. The wrap-up commit completes R11.
 
 Review: `git status --short`, `git log --oneline b372fe5..HEAD`, `git diff --stat b372fe5..HEAD`, `git show HEAD`. After your review, you may run `git push origin main` yourself. No push performed by Codex.
+
+## Fleet Console follow-up plan (user-authorized frontend scope extension)
+
+Before edits: inspect current JS/CSS, contract/schema, live memory API and available browser/network tools.
+Confirmed V12 dispatch omits starting_battery_pct; scenario supplies SoC. All seven real API breakdown
+terms sum with scenario start to arrival. Plan: use scenario SoC, validate breakdown/start/arrival without
+inventing missing values; fit all labels/negative cumulative totals inside an accessible chart; keep
+OpenStreetMap attribution/provider, expose persistent tile-failure notice with explicit route-only/retry
+controls. Add focused Node regression checks with live API data and missing/invalid data cases; full pytest.
+Record actual Codex use and diagnostics; local commit only. No models, thresholds, demo inputs, results,
+held-out splits, logger or design changes. Browser tooling is unavailable; visual/network verification
+will be explicitly manual. Direct tile probes both returned ConnectError (including outside sandbox).
+
+### Fleet Console follow-up outcome
+
+- Code defect confirmed against the live local memory API and DispatchResponse schema: nonexistent
+  starting_battery_pct caused NaN bars; scenario soc_pct is the correct starting value. All seven live
+  V12 breakdown rows were available and reconciled to arrival, so no missing value was invented.
+- Waterfall now validates input, reports unavailable/invalid data, retains signed/zero terms, uses a
+  scale containing intermediate totals, wraps horizontal labels and scrolls within narrow cards.
+  A reconciliation warning reports inconsistent API values unchanged. Caption identifies attribution
+  rather than a chronological battery trace; simulated charts are labelled.
+- OSM provider remains unchanged. Tile connection probes failed with ConnectError both in the sandbox
+  and outside it, with no HTTP status. Cannot conclude an OSM provider rejection. No browser debugging
+  endpoint or installed Playwright/Puppeteer was available; actual browser error remains unverified.
+  Map failures now persist through partial tile success; explicit route-only/retry buttons preserve
+  route/charger overlays and OSM attribution. No automatic provider switching or repeated request loop.
+- Checks: node --check web/js/console.js; 5/5 Node DOM/Leaflet-harness tests, including live local memory
+  API contract checks (VERITY_TEST_API=http://127.0.0.1:8000 node --test tests/frontend_console.test.cjs).
+  Without that environment variable the four offline checks run and the live check explicitly skips.
+  Full uv run pytest: 243 passed, 11 skipped, 1 warning in 86.03 s; git diff --check clean.
+- Models, thresholds, scenario inputs, saved results, fixed splits, logger and design unchanged.
+  No paid service call or experiment/held-out evaluation. No dependency added.
+- Manual browser verification: hard-refresh the real-API console; select V07 and V12; check every label
+  and value in dark/light themes and at narrow/desktop widths (horizontal chart scroll is intentional).
+  Check route-only view keeps route/markers/attribution, then Retry street tiles. In DevTools Network,
+  inspect the failing tile.openstreetmap.org request's HTTP status or net::ERR_* and Console errors;
+  this distinguishes local DNS/TLS/proxy/extension filtering from an HTTP provider response. Successful
+  local /api requests and visible overlays alone do not verify basemap connectivity. No visual claim
+  is made from the DOM/Leaflet test harness.
