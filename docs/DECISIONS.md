@@ -285,3 +285,5 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
 - 2026-10-30 (R10): Full clean-output runner reuses the frozen E1 evaluation to respect one held-out evaluation; all other experiments execute full configured sizes. Generate final/deck reports from artifacts with scripts/finish_report.py; include both coverage definitions, missing live-backend timing, and machine metadata. Optional R9 deferred: same-site independence remains a limitation, and its prerequisite committed R10 run is blocked by missing author identity.
 
 - 2026-10-30 (Git): User supplied repository-only author identity; configured via git config --local. Committed preserved per-milestone index trees in authorized order without modifying working files. Temporary commit helpers removed after successful commits. No push.
+
+- 2026-10-30 (R11): Final audit confirms main, only two authorized web files, untouched fixed splits/physics/forecast/trust scoring/demo inputs, no tracked raw data or .env. No optional R9 engine change, no branches/push/gh. All milestone commits use user-provided repository-local identity.

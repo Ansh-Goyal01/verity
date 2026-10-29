@@ -41,8 +41,8 @@ Plan recorded before implementation (plan mode unavailable). Work in this order,
   BMW results must say NOT DONE (dataset not on this machine).
 - [x] R10: full clean run_all, fresh API export, verify decisions/replay, full tests; script-generated
   final report and deck numbers with provenance, intervals and explicit missing measurements.
-- [ ] R9: optional; assess after R10 committed. Drop first if time is short; record independence limitation.
-- [ ] R11: final local commit, clean-tree/split/scope review, user review/push commands.
+- [ ] R9: SKIPPED (optional); independence limitation retained.
+- [x] R11: final local commit, clean-tree/split/scope review, user review/push commands.
 
 No energy/trust/threshold changes or scenario retuning; only explicitly permitted experiment/graph edits.
 R4a will use a saved evaluation artifact for R10's E1 step to avoid evaluating held-out trips twice.
@@ -124,3 +124,9 @@ Full clean-output run_all: ALL STEPS OK (E1 verified frozen final evaluation; E2
 Final post-report pytest: 243 passed, 11 skipped, 1 warning in 53.06s. Source log: results/logs/pytest_final.log (ignored); durable summary results/finish_validation.json. Full timings and confidence seed ranges recorded in results/finish_measurements.json. No current-machine Neo4j timing or live Sarvam claim.
 
 R9 SKIPPED: optional site-correlation engine change deferred to prioritize required validation and handoff; same-site independence remains disclosed. No optional engine change was attempted.
+
+## R11 wrap-up
+
+Final scope/split/raw-data audit passed; only the two permitted web edits. No branch operation, push or gh. R0/R1/R2/R6/R4a/R7/R8/R5/R4b/R10 have separate local milestone commits; R5/R4b commits document blockers. Final full pytest: 243 passed, 11 skipped, 1 warning in 52.39s. The wrap-up commit completes R11.
+
+Review: `git status --short`, `git log --oneline b372fe5..HEAD`, `git diff --stat b372fe5..HEAD`, `git show HEAD`. After your review, you may run `git push origin main` yourself. No push performed by Codex.
