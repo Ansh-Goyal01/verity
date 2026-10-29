@@ -267,3 +267,5 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
 - 2026-10-29 (R1): Median arrival is exactly the 10% reserve in the live-update test; the extra 12 points saturated confidence. All assertions retained, seeds 0?11 checked outside permanent tests. No forecast implementation change.
 
 - 2026-10-29 (R2): Only missing API query switch and planned-stop null-age tooltip changed. Document ?api= in root README, since the two-file web override supersedes TASKS_FINISH web/README request. Both substitutions are idempotent. Local HTTP/Node verification passed; no paid calls.
+
+- 2026-10-29 (R6): Correct historical A12 naming: ALTERNATE.p_works is charger reliability; sync SETs it and REMOVE a.p_reach. Read and coverage filters migrated together; HTTP contract unchanged. LEG.p_reach is mean(band_midpoint - sampled_leg_energy >= required_arrival_reserve), a genuine conditional energy-reach frequency; retain it. Existing memory backend reused. Live migration not tested: no credentials.

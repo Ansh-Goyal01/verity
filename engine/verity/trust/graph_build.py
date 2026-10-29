@@ -129,7 +129,7 @@ def open_graph(chargers: Sequence[ChargerRecord], reports: Sequence[Report], *, 
 def populate_road_network(graph: ChargerGraph, route_chargers: Sequence[RouteCharger], trust: dict[str, ChargerTrust],
                           total_km: float, alt_ahead_km: float, segment_km: float = SEGMENT_KM) -> None:
     """Cut the route into road segments and link each to the usable chargers lying ahead within ``alt_ahead_km``
-    (the planner's own backup window). ALTERNATE ``p_reach`` is the alternate's P(works) from the trust model:
+    (the planner's own backup window). ALTERNATE ``p_works`` is the alternate's P(works) from the trust model:
     whether a vehicle has the energy to get there is settled per vehicle by the Monte Carlo, not stored here."""
     n = max(math.ceil(total_km / segment_km), 1)
     segments = [RoadSegmentRec(f"seg-{i:04d}", i * segment_km, min((i + 1) * segment_km, total_km)) for i in range(n)]

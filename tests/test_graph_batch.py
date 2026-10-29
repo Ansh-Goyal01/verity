@@ -247,3 +247,19 @@ def test_a_dropped_pooled_connection_is_retried_once_but_other_errors_are_not(mo
     assert Neo4jGraph("neo4j+s://example.invalid", "u", "p").chargers() == [] and len(calls) == 2
     with pytest.raises(ConnectionError):  # not a stale-connection error: raised straight away, once
         Neo4jGraph(driver=FakeDriver(fail_after=0)).chargers()
+
+
+def test_alternate_sync_migrates_probability_and_all_queries_use_p_works() -> None:
+    drv = FakeDriver([[], [{"id": "C1", "p": 0.9}], []])
+    graph = Neo4jGraph(driver=drv)
+    edge = Alternate("seg-0", "C1", p_works=0.9, km_ahead=5.0)
+    graph.add_alternates([edge])
+    assert graph.alternates("seg-0") == [("C1", 0.9)]
+    graph.coverage_gaps(min_p=0.5)
+    write, read, gaps = [q for q, _ in drv.log]
+    assert "SET a.p_works=row.p" in write and "REMOVE a.p_reach" in write
+    assert "a.p_works AS p" in read and "a.p_works >= $min_p" in gaps
+    assert drv.log[0][1]["rows"][0]["p"] == edge.p_works
+    memory = InMemoryGraph()
+    memory.add_alternates([edge])
+    assert memory.alternates("seg-0") == [("C1", 0.9)]

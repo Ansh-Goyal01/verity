@@ -23,7 +23,7 @@ Plan recorded before implementation (plan mode unavailable). Work in this order,
   Node syntax checks and scratch integration with a real local API. Document usage in root README
   because the override permits only two web file edits (web/README.md excluded).
 - [x] R3: SKIPPED by override; existing loader and fixed seed-31 49/21 split reused, never regenerated.
-- [ ] R6: verify existing memory switch; rename only graph ALTERNATE probability to p_works,
+- [x] R6: verify existing memory switch; rename only graph ALTERNATE probability to p_works,
   explicitly remove stale Neo4j property, test migration/query semantics, explain LEG probability.
 - [ ] R4a: preserve before artifacts; implement training-only leave-one-trip-out discrepancy,
   at least 20 training subsets/k; aggregate repeated predictions per held-out trip for Wilson intervals;
@@ -55,3 +55,7 @@ All original assertions passed for seeds 0-11 in a scratch script. Full pytest: 
 ## R2 verification
 
 Only web/js/api.js and web/js/console.js changed under web/. Replacement edits are idempotent. Node v26.13.0 syntax checks passed. Scratch Node VM checked mock mode and fetched scenario/V12 dispatch from real uvicorn: GO, confidence 0.95, is_simulated=true. Full pytest: 239 passed, 11 skipped, 1 warning in 80.75 s. Root README documents ?api=; no web/README.md edit because the override forbids extra web files.
+
+## R6 verification
+
+R6a reused: existing test_api_graph memory-backend test passes; README includes PowerShell usage. ALTERNATE stores p_works; writes REMOVE a.p_reach and reads/coverage filters use p_works. Added fake-driver and memory migration-semantic check. LEG remains a band-midpoint Monte Carlo energy reach frequency, conditional on the model (not charger reliability). No live Aura verification: credentials absent. Full pytest: 240 passed, 11 skipped, 1 warning in 65.94 s.

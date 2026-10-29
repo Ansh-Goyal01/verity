@@ -97,3 +97,17 @@ Every chart title says "(simulated)". Other scripts: `uv run python -m verity.si
 
 Golden rules (see `CLAUDE.md`): never invent data, label every simulation, never touch the held-out split while
 building, physics first, probabilities come from the model rounded to 5 %, refuse rather than guess.
+
+## Graph probability semantics
+
+For an offline run in PowerShell, set `$env:VERITY_GRAPH = "memory"` before starting uvicorn.
+This skips Neo4j connections even if credentials exist; `/api/health` reports `in_memory`.
+The existing `tests/test_api_graph.py` checks the memory backend (R6a reused).
+
+Graph `ALTERNATE.p_works` is the trust model's probability that the charger works, not an energy
+reach probability. Sync sets `p_works` and explicitly removes obsolete `p_reach` on each ALTERNATE.
+`LEG.p_reach` remains a genuine Monte Carlo energy-reach frequency at the battery-band midpoint:
+`mean(midpoint - sampled_leg_energy >= arrival_reserve)`, using the destination/stop reserve as appropriate.
+It is conditional on the forecast and does not include charger reliability or guarantee a whole trip.
+The API's per-vehicle alternate `p_reach` is also unchanged. Live Aura migration is not verified on
+this machine because Neo4j credentials are absent; fake-driver tests verify the Cypher write/read/filter.

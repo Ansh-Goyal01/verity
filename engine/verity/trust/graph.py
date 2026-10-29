@@ -4,7 +4,7 @@ Schema (CLAUDE.md): nodes Charger, Operator, Site, HardwareModel, VehicleModel, 
 relationships (Source)-[:REPORTED {status, t}]->(Charger), (Charger)-[:RUN_BY]->(Operator),
 (Charger)-[:AT]->(Site), (Charger)-[:IS]->(HardwareModel),
 (VehicleModel)-[:WORKS_WITH {success_rate, n}]->(HardwareModel),
-(Charger)-[:LEG {soc_band, p_reach, minutes}]->(Charger), (RoadSegment)-[:ALTERNATE {p_reach}]->(Charger).
+(Charger)-[:LEG {soc_band, p_reach, minutes}]->(Charger), (RoadSegment)-[:ALTERNATE {p_works}]->(Charger).
 A LEG is stored per battery band, never as one fixed probability.
 
 The planner only talks to ``ChargerGraph``; ``InMemoryGraph`` is the fallback (offline, deterministic) and
@@ -66,9 +66,11 @@ class RoadSegmentRec(NamedTuple):
 
 
 class Alternate(NamedTuple):
+    """Charger working probability; energy reach is evaluated per vehicle elsewhere."""
+
     segment_id: str
     charger_id: str
-    p_reach: float
+    p_works: float
     km_ahead: float | None = None
 
 
@@ -140,7 +142,7 @@ class ChargerGraph(Protocol):
     def legs_from(self, charger_id: str, scope: str = "") -> list[Leg]: ...
     def drop_legs(self, scope: str) -> None: ...
     def sweep_stale_legs(self, max_age_s: float = STALE_LEG_SECONDS) -> None: ...
-    def add_alternate(self, segment_id: str, charger_id: str, p_reach: float) -> None: ...
+    def add_alternate(self, segment_id: str, charger_id: str, p_works: float) -> None: ...
     def add_alternates(self, edges: Sequence[Alternate]) -> None: ...
     def alternates(self, segment_id: str) -> list[tuple[str, float]]: ...
     def add_road_segments(self, segments: Sequence[RoadSegmentRec]) -> None: ...
@@ -215,12 +217,12 @@ class InMemoryGraph:
     def sweep_stale_legs(self, max_age_s: float = STALE_LEG_SECONDS) -> None:
         return None  # nothing outlives the process in memory
 
-    def add_alternate(self, segment_id: str, charger_id: str, p_reach: float) -> None:
-        self.add_alternates([Alternate(segment_id, charger_id, p_reach)])
+    def add_alternate(self, segment_id: str, charger_id: str, p_works: float) -> None:
+        self.add_alternates([Alternate(segment_id, charger_id, p_works)])
 
     def add_alternates(self, edges: Sequence[Alternate]) -> None:
         for e in edges:
-            self._alternates[e.segment_id][e.charger_id] = (e.p_reach, e.km_ahead)
+            self._alternates[e.segment_id][e.charger_id] = (e.p_works, e.km_ahead)
 
     def alternates(self, segment_id: str) -> list[tuple[str, float]]:
         return sorted(((cid, p) for cid, (p, _) in self._alternates[segment_id].items()), key=lambda kv: (-kv[1], kv[0]))
@@ -470,18 +472,18 @@ class Neo4jGraph:
                   max_age_ms=int(max_age_s * 1000))
 
     # -- road network, alternates, coverage ---------------------------------------------------------------
-    def add_alternate(self, segment_id: str, charger_id: str, p_reach: float) -> None:
-        self.add_alternates([Alternate(segment_id, charger_id, p_reach)])
+    def add_alternate(self, segment_id: str, charger_id: str, p_works: float) -> None:
+        self.add_alternates([Alternate(segment_id, charger_id, p_works)])
 
     def add_alternates(self, edges: Sequence[Alternate]) -> None:
-        rows = [{"seg": e.segment_id, "cid": e.charger_id, "p": e.p_reach, "km": e.km_ahead} for e in edges]
+        rows = [{"seg": e.segment_id, "cid": e.charger_id, "p": e.p_works, "km": e.km_ahead} for e in edges]
         if rows:
             self._run("UNWIND $rows AS row MATCH (c:Charger {id:row.cid}) MERGE (rs:RoadSegment {id:row.seg}) "
-                      "MERGE (rs)-[a:ALTERNATE]->(c) SET a.p_reach=row.p, a.km_ahead=row.km", rows=rows)
+                      "MERGE (rs)-[a:ALTERNATE]->(c) SET a.p_works=row.p, a.km_ahead=row.km REMOVE a.p_reach", rows=rows)
 
     def alternates(self, segment_id: str) -> list[tuple[str, float]]:
         rows = self._run("MATCH (rs:RoadSegment {id:$seg})-[a:ALTERNATE]->(c:Charger) "
-                         "RETURN c.id AS id, a.p_reach AS p ORDER BY p DESC, id", seg=segment_id)
+                         "RETURN c.id AS id, a.p_works AS p ORDER BY p DESC, id", seg=segment_id)
         return [(r["id"], r["p"]) for r in rows]
 
     def add_road_segments(self, segments: Sequence[RoadSegmentRec]) -> None:
@@ -496,7 +498,7 @@ class Neo4jGraph:
 
     def coverage_gaps(self, min_p: float = 0.0) -> list[RoadSegmentRec]:
         rows = self._run("MATCH (rs:RoadSegment) WHERE rs.km_from IS NOT NULL "
-                         "OPTIONAL MATCH (rs)-[a:ALTERNATE]->(:Charger) WHERE a.p_reach >= $min_p "
+                         "OPTIONAL MATCH (rs)-[a:ALTERNATE]->(:Charger) WHERE a.p_works >= $min_p "
                          "WITH rs, count(a) AS n WHERE n = 0 "
                          "RETURN rs.id AS id, rs.km_from AS km_from, rs.km_to AS km_to ORDER BY rs.km_from, rs.id",
                          min_p=min_p)

@@ -135,7 +135,7 @@ Relationships: `(Source)-[:REPORTED {status, t}]->(Charger)`, `(Charger)-[:RUN_B
 `(Charger)-[:AT]->(Site)`, `(Charger)-[:IS]->(HardwareModel)`,
 `(VehicleModel)-[:WORKS_WITH {success_rate, n}]->(HardwareModel)`,
 `(Charger)-[:LEG {soc_band, p_reach, minutes}]->(Charger)`,
-`(RoadSegment)-[:ALTERNATE {p_reach}]->(Charger)`.
+`(RoadSegment)-[:ALTERNATE {p_works}]->(Charger)`.
 LEG is stored per battery band, never as one fixed probability.
 
 ## Commands (keep this section updated as commands are created)
