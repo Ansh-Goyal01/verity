@@ -151,6 +151,7 @@ LEG is stored per battery band, never as one fixed probability.
 
 ## How to work in this repo
 
+- Git: commit directly to main. Never create branches. Commit locally; I push myself.
 - Use plan mode for any change touching more than two files; wait for approval before editing.
 - Small, reviewable steps. Run `uv run pytest` after every change and fix failures before moving on.
 - Type hints everywhere; pure functions in `engine/`; no network calls inside the physics or

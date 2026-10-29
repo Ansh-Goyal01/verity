@@ -14,3 +14,5 @@ writes its own numbers and charts, and the tests caught and fixed real bugs duri
 `docs/PROGRESS_ENGINE.md`). No number in the docs or charts was typed by hand; every one is produced by a
 script in this repo. All trip, report and fleet data in this repo is SIMULATED and labelled; the route and
 charger locations are real public data.
+
+| 2026-10-29 | Codex CLI | R0 takeover: read repository instructions and handoff, verified main/HEAD and baseline, wrote finish plan. No subagents or external services used. |

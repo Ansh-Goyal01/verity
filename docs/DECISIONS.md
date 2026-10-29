@@ -261,3 +261,5 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
   (unusable trips are filtered by flag later, equally on both sides). All 70 trips were profiled in aggregate (no model) BEFORE the
   split was written; the split itself depends on the ids only. Never re-split: `tests/test_bmw_i3.py` regenerates it from its recorded
   seed and fails if it differs, and `load_split_part("test")` raises unless `final_evaluation=True` (only the final E1 run passes it).
+
+- 2026-10-29 (R0, Codex CLI): Follow takeover overrides: main only, local commits, no branch deletion, no push/gh; write the multi-file plan in PROGRESS_FINISH.md because plan mode is unavailable. Baseline independently verified. Missing Git identity requested; prepare milestone snapshots while awaiting it.
