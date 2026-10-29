@@ -17,13 +17,26 @@ function initMap(d,cs){
     const controls=document.createElement('div');controls.className='mapcontrols';
     controls.innerHTML='<button id="map-retry" class="ghost" type="button">Retry street tiles</button><button id="map-route-only" class="ghost" type="button">Use route-only view</button>';
     notice.after(controls);
-    let tileFailures=0,tileSuccesses=0,routeOnly=false;
-    const fallback=()=>{notice.textContent='Street-map tiles are unavailable or incomplete. Route and charger locations remain visible over a plain background. Retry the tiles or use route-only view. This does not indicate an API failure.';};
-    base.on('tileerror',()=>{tileFailures++;if(!routeOnly)fallback();});
-    base.on('tileload',()=>{tileSuccesses++;});
-    base.on('load',()=>{if(routeOnly)return;if(tileFailures)fallback();else if(tileSuccesses)notice.textContent='';});
+    const tileStates=new Map();let routeOnly=false;
+    const updateTileNotice=()=>{
+      if(routeOnly)return;
+      const viewport=map.getContainer().getBoundingClientRect();
+      const visible=[...tileStates].filter(([tile])=>{
+        const r=tile.getBoundingClientRect();
+        return r.width>0&&r.height>0&&r.right>viewport.left&&r.left<viewport.right&&r.bottom>viewport.top&&r.top<viewport.bottom;
+      }).map(([,state])=>state);
+      if(visible.includes('failed'))notice.textContent='Some visible street-map tiles failed to load. Route and charger locations remain available. Retry the tiles or use route-only view.';
+      else if(!visible.length||visible.includes('pending'))notice.textContent='Loading street-map tiles...';
+      else notice.textContent='';
+    };
+    for(const [event,state] of [['tileloadstart','pending'],['tileerror','failed'],['tileload','loaded']]){
+      base.on(event,e=>{tileStates.set(e.tile,state);updateTileNotice();});
+    }
+    base.on('tileunload',e=>{tileStates.delete(e.tile);updateTileNotice();});
+    base.on('load',updateTileNotice);
+    map.on('moveend zoomend resize',updateTileNotice);
     $('#map-route-only').onclick=()=>{routeOnly=true;if(map.hasLayer(base))map.removeLayer(base);notice.textContent='Route-only view: street tiles are hidden. Route and charger coordinates still come from the selected plan and directory; the plain background is not a street map.';};
-    $('#map-retry').onclick=()=>{routeOnly=false;tileFailures=0;tileSuccesses=0;notice.textContent='Retrying street-map tiles...';if(!map.hasLayer(base))base.addTo(map);else base.redraw();};
+    $('#map-retry').onclick=()=>{routeOnly=false;tileStates.clear();notice.textContent='Retrying street-map tiles...';if(!map.hasLayer(base))base.addTo(map);else base.redraw();};
     base.addTo(map);
     mapResizeObserver=new ResizeObserver(scheduleMapFit);mapResizeObserver.observe($('#map'));
     window.addEventListener('resize',scheduleMapFit);

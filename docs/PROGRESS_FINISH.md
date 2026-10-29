@@ -170,3 +170,22 @@ will be explicitly manual. Direct tile probes both returned ConnectError (includ
   this distinguishes local DNS/TLS/proxy/extension filtering from an HTTP provider response. Successful
   local /api requests and visible overlays alone do not verify basemap connectivity. No visual claim
   is made from the DOM/Leaflet test harness.
+
+## Tile recovery follow-up plan
+
+Replace lifetime failure counters with per-tile pending/loaded/failed state, reconcile only tiles intersecting the current viewport, remove unloaded tiles, and update on tile and viewport events. Preserve route-only/retry controls and attribution. Add recovery, mixed visible failures, offscreen/unloaded failures, pending tiles and route-only regression checks; run full pytest, document actual Codex use and commit locally. Browser DevTools remains unavailable; do not claim the current user viewport was inspected.
+
+### Tile recovery follow-up outcome
+
+The stale warning path was confirmed in code: failures accumulated until explicit Retry and successful
+loads never decremented them. Replaced with current per-image state filtered by viewport intersection.
+Recovery clears only that tile's failure; other visible failures keep the warning. Unloaded/offscreen
+failures no longer keep it stale. Pending tiles show loading; route-only remains isolated from late events.
+Provider, controls, attribution, models/API, CSS, saved data/results and splits unchanged.
+
+Checks: node --check and git diff --check passed; Node harness 6 passed, 1 optional live API check skipped.
+Full uv run pytest: 253 passed, 1 skipped, 1 warning in 109.15 s. Existing live Neo4j tests ran successfully
+this time (configured credentials available), including their cleanup; no paid call or experiment rerun.
+Actual browser viewport/DevTools cannot be inspected from this session. Manual check: hard-refresh,
+confirm the warning clears after all visible tiles recover, pan/zoom to test changed visibility, and verify
+it remains when a visible gap is still failed; test Retry and route-only with attribution intact.
