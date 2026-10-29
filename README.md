@@ -40,6 +40,9 @@ the database answers, or `"neo4j":"in_memory"` otherwise (no credentials, or the
 runs on the in-memory graph; `VERITY_GRAPH=memory` forces that). Interactive docs are at
 <http://localhost:8000/docs>. From a page: `fetch("http://localhost:8000/api/health").then(r => r.json())`.
 
+Connect the plain-JS frontend by opening `web/console.html?api=http://127.0.0.1:8000`
+from a local static server. Without `?api=`, the page uses its labelled mocks. The API must be running.
+
 CORS allows exactly these origins: `null` (a page opened by double-clicking, `file://`),
 `http://localhost:5500` and `http://127.0.0.1:5500` (VS Code Live Server) and
 `https://ansh-goyal01.github.io` (GitHub Pages). Anything else is refused by the browser.

@@ -265,3 +265,5 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
 - 2026-10-29 (R0, Codex CLI): Follow takeover overrides: main only, local commits, no branch deletion, no push/gh; write the multi-file plan in PROGRESS_FINISH.md because plan mode is unavailable. Baseline independently verified. Missing Git identity requested; prepare milestone snapshots while awaiting it.
 
 - 2026-10-29 (R1): Median arrival is exactly the 10% reserve in the live-update test; the extra 12 points saturated confidence. All assertions retained, seeds 0?11 checked outside permanent tests. No forecast implementation change.
+
+- 2026-10-29 (R2): Only missing API query switch and planned-stop null-age tooltip changed. Document ?api= in root README, since the two-file web override supersedes TASKS_FINISH web/README request. Both substitutions are idempotent. Local HTTP/Node verification passed; no paid calls.

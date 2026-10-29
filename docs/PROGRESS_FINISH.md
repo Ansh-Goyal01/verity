@@ -19,7 +19,7 @@ Plan recorded before implementation (plan mode unavailable). Work in this order,
 
 - [x] R0: preflight, git rule, this plan. Post-milestone pytest: 239 passed, 11 skipped, 1 warning in 140.75 s; local commit pending identity.
 - [x] R1: move live-update test to the reserve boundary; scratch-check seeds 0–11, retain assertions.
-- [ ] R2: inspect then apply only missing API switch and planned-stop null tooltip changes;
+- [x] R2: inspect then apply only missing API switch and planned-stop null tooltip changes;
   Node syntax checks and scratch integration with a real local API. Document usage in root README
   because the override permits only two web file edits (web/README.md excluded).
 - [x] R3: SKIPPED by override; existing loader and fixed seed-31 49/21 split reused, never regenerated.
@@ -50,4 +50,8 @@ All raw data stays ignored. No new dependencies planned. Decisions and actual AI
 
 ## R1 verification
 
-All original assertions passed for seeds 0?11 in a scratch script. Full pytest: 239 passed, 11 skipped, 1 warning in 84.16 s.
+All original assertions passed for seeds 0-11 in a scratch script. Full pytest: 239 passed, 11 skipped, 1 warning in 84.16 s.
+
+## R2 verification
+
+Only web/js/api.js and web/js/console.js changed under web/. Replacement edits are idempotent. Node v26.13.0 syntax checks passed. Scratch Node VM checked mock mode and fetched scenario/V12 dispatch from real uvicorn: GO, confidence 0.95, is_simulated=true. Full pytest: 239 passed, 11 skipped, 1 warning in 80.75 s. Root README documents ?api=; no web/README.md edit because the override forbids extra web files.
