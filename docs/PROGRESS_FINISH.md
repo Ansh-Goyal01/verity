@@ -25,7 +25,7 @@ Plan recorded before implementation (plan mode unavailable). Work in this order,
 - [x] R3: SKIPPED by override; existing loader and fixed seed-31 49/21 split reused, never regenerated.
 - [x] R6: verify existing memory switch; rename only graph ALTERNATE probability to p_works,
   explicitly remove stale Neo4j property, test migration/query semantics, explain LEG probability.
-- [ ] R4a: preserve before artifacts; implement training-only leave-one-trip-out discrepancy,
+- [x] R4a: preserve before artifacts; implement training-only leave-one-trip-out discrepancy,
   at least 20 training subsets/k; aggregate repeated predictions per held-out trip for Wilson intervals;
   save frozen settings/training audit before opening held-out observations; evaluate once, report undercoverage.
 - [ ] R7: evidence table, all specified limitations, plan status note, wording audit and change list.
@@ -59,3 +59,22 @@ Only web/js/api.js and web/js/console.js changed under web/. Replacement edits a
 ## R6 verification
 
 R6a reused: existing test_api_graph memory-backend test passes; README includes PowerShell usage. ALTERNATE stores p_works; writes REMOVE a.p_reach and reads/coverage filters use p_works. Added fake-driver and memory migration-semantic check. LEG remains a band-midpoint Monte Carlo energy reach frequency, conditional on the model (not charger reliability). No live Aura verification: credentials absent. Full pytest: 240 passed, 11 skipped, 1 warning in 65.94 s.
+
+## R4a verification
+
+Before-fix JSON/PNG preserved byte-for-byte from the starting tree. All fits/variance estimates frozen before opening the 36 held-out SIMULATED trips. Final evaluation performed once; R10 reuses the fingerprinted artifact. At least 20 subset draws/k; at k=10 only one distinct subset exists. Full pytest: 243 passed, 11 skipped, 1 warning in 69.38 s. Scratch statistical checks are now three focused tests.
+
+| Method | k | MAE pp | 90% mixture coverage (Wilson 95%) | Mean per-subset coverage |
+|---|---|---|---|---|
+| verity_class_prior | 1 | 2.831 | 0.8889 [0.7468, 0.9559], n=36 | 0.8125 |
+| verity_class_prior | 2 | 2.437 | 0.8889 [0.7468, 0.9559], n=36 | 0.8306 |
+| verity_class_prior | 3 | 2.35 | 0.8889 [0.7468, 0.9559], n=36 | 0.8556 |
+| verity_class_prior | 5 | 2.321 | 0.8889 [0.7468, 0.9559], n=36 | 0.8375 |
+| verity_class_prior | 10 | 2.207 | 0.8889 [0.7468, 0.9559], n=36 | 0.8764 |
+| verity_pooled | 1 | 3.115 | 0.9167 [0.7817, 0.9713], n=36 | 0.8042 |
+| verity_pooled | 2 | 2.63 | 0.8889 [0.7468, 0.9559], n=36 | 0.8333 |
+| verity_pooled | 3 | 2.557 | 0.8889 [0.7468, 0.9559], n=36 | 0.8500 |
+| verity_pooled | 5 | 2.463 | 0.8889 [0.7468, 0.9559], n=36 | 0.8431 |
+| verity_pooled | 10 | 2.326 | 0.8889 [0.7468, 0.9559], n=36 | 0.8722 |
+
+Remaining undercoverage is explicit: most 90% mixture bands are below nominal. Mixture coverage and mean subset coverage describe different forecasts; neither treats the repeated subset predictions as independent samples. Wilson intervals are not adjusted for shared vehicles. No held-out retuning. Correction is experiment-only, not a production forecast fix.

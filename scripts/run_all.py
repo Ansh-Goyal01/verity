@@ -27,8 +27,8 @@ PY = sys.executable
 # name -> (command tail, files it must produce (relative to the repo), fast-mode extra args)
 STEPS: dict[str, tuple[list[str], list[str], list[str]]] = {
     "tests": (["-m", "pytest", "-W", "ignore"], [], []),
-    "E1": (["experiments/e1_learning_curve.py", "--dataset", "main"],
-           ["results/e1_learning_curve_simulated.png", "results/e1_learning_curve_simulated.json"], ["--resamples", "1"]),
+    "E1": (["experiments/e1_learning_curve.py", "--dataset", "main", "--reuse-evaluation"],
+           ["results/e1_learning_curve_simulated.png", "results/e1_learning_curve_simulated.json"], []),
     "E2": (["experiments/e2_calibration.py", "--dataset", "main"],
            ["results/e2_calibration_simulated.png", "results/e2_calibration_simulated.json"], ["--trips-per-vehicle", "8"]),
     "E3": (["experiments/e3_reliability_planning.py"],

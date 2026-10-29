@@ -1,0 +1,212 @@
+{
+ "experiment": "E1 learning curve",
+ "is_simulated": true,
+ "dataset": "main",
+ "rho_rel": 0.06,
+ "n_grid": [
+  1,
+  2,
+  3,
+  5,
+  10
+ ],
+ "resamples": 3,
+ "seed": 11,
+ "methods": {
+  "verity_pooled": {
+   "1": {
+    "mae_pp": 3.556,
+    "coverage_90": 0.676,
+    "mean_band_width_pp": 8.955,
+    "n_predictions": 108
+   },
+   "2": {
+    "mae_pp": 2.416,
+    "coverage_90": 0.787,
+    "mean_band_width_pp": 8.093,
+    "n_predictions": 108
+   },
+   "3": {
+    "mae_pp": 2.537,
+    "coverage_90": 0.806,
+    "mean_band_width_pp": 7.738,
+    "n_predictions": 108
+   },
+   "5": {
+    "mae_pp": 2.476,
+    "coverage_90": 0.787,
+    "mean_band_width_pp": 7.516,
+    "n_predictions": 108
+   },
+   "10": {
+    "mae_pp": 2.339,
+    "coverage_90": 0.722,
+    "mean_band_width_pp": 7.014,
+    "n_predictions": 36
+   }
+  },
+  "verity_class_prior": {
+   "1": {
+    "mae_pp": 3.263,
+    "coverage_90": 0.741,
+    "mean_band_width_pp": 9.66,
+    "n_predictions": 108
+   },
+   "2": {
+    "mae_pp": 2.201,
+    "coverage_90": 0.787,
+    "mean_band_width_pp": 8.326,
+    "n_predictions": 108
+   },
+   "3": {
+    "mae_pp": 2.265,
+    "coverage_90": 0.806,
+    "mean_band_width_pp": 8.088,
+    "n_predictions": 108
+   },
+   "5": {
+    "mae_pp": 2.457,
+    "coverage_90": 0.787,
+    "mean_band_width_pp": 7.852,
+    "n_predictions": 108
+   },
+   "10": {
+    "mae_pp": 2.199,
+    "coverage_90": 0.778,
+    "mean_band_width_pp": 7.242,
+    "n_predictions": 36
+   }
+  },
+  "nominal_spec": {
+   "1": {
+    "mae_pp": 5.737,
+    "coverage_90": 0.565,
+    "mean_band_width_pp": 16.439,
+    "n_predictions": 108
+   },
+   "2": {
+    "mae_pp": 5.737,
+    "coverage_90": 0.676,
+    "mean_band_width_pp": 15.986,
+    "n_predictions": 108
+   },
+   "3": {
+    "mae_pp": 5.737,
+    "coverage_90": 0.769,
+    "mean_band_width_pp": 17.366,
+    "n_predictions": 108
+   },
+   "5": {
+    "mae_pp": 5.737,
+    "coverage_90": 0.713,
+    "mean_band_width_pp": 16.896,
+    "n_predictions": 108
+   },
+   "10": {
+    "mae_pp": 5.737,
+    "coverage_90": 0.806,
+    "mean_band_width_pp": 18.922,
+    "n_predictions": 36
+   }
+  },
+  "flat_minus_25": {
+   "1": {
+    "mae_pp": 8.302,
+    "coverage_90": 0.611,
+    "mean_band_width_pp": 21.575,
+    "n_predictions": 108
+   },
+   "2": {
+    "mae_pp": 8.302,
+    "coverage_90": 0.759,
+    "mean_band_width_pp": 27.787,
+    "n_predictions": 108
+   },
+   "3": {
+    "mae_pp": 8.302,
+    "coverage_90": 0.778,
+    "mean_band_width_pp": 31.158,
+    "n_predictions": 108
+   },
+   "5": {
+    "mae_pp": 8.302,
+    "coverage_90": 0.796,
+    "mean_band_width_pp": 28.254,
+    "n_predictions": 108
+   },
+   "10": {
+    "mae_pp": 8.302,
+    "coverage_90": 0.861,
+    "mean_band_width_pp": 31.94,
+    "n_predictions": 36
+   }
+  },
+  "regression": {
+   "1": {
+    "mae_pp": 6.557,
+    "coverage_90": 0.065,
+    "mean_band_width_pp": 1.0,
+    "n_predictions": 108
+   },
+   "2": {
+    "mae_pp": 6.98,
+    "coverage_90": 0.056,
+    "mean_band_width_pp": 1.0,
+    "n_predictions": 108
+   },
+   "3": {
+    "mae_pp": 25.235,
+    "coverage_90": 0.046,
+    "mean_band_width_pp": 1.0,
+    "n_predictions": 108
+   },
+   "5": {
+    "mae_pp": 39.685,
+    "coverage_90": 0.176,
+    "mean_band_width_pp": 3.042,
+    "n_predictions": 108
+   },
+   "10": {
+    "mae_pp": 6.66,
+    "coverage_90": 0.5,
+    "mean_band_width_pp": 8.692,
+    "n_predictions": 36
+   }
+  }
+ },
+ "verity_pooled_mae_by_class": {
+  "compact_esuv": {
+   "1": 3.215,
+   "2": 2.402,
+   "3": 2.768,
+   "5": 2.863,
+   "10": 2.603
+  },
+  "e_scooter": {
+   "1": 2.883,
+   "2": 3.003,
+   "3": 2.681,
+   "5": 2.95,
+   "10": 2.73
+  },
+  "small_ecar": {
+   "1": 4.57,
+   "2": 1.845,
+   "3": 2.162,
+   "5": 1.615,
+   "10": 1.684
+  }
+ },
+ "test_trips": 36,
+ "vehicles": 9,
+ "runtime_s": 61.0,
+ "bmw_i3": {
+  "status": "blocked",
+  "reason": "D:\\hackfront-verity\\data\\raw\\bmw_i3 is missing or empty; download the dataset (free login)"
+ },
+ "notes": [
+  "Data is SIMULATED by verity.sim (planner physics differs from the truth by design).",
+  "Baseline bands are +/-1.645 x RMS training error (floor 0.5 pp); Verity bands are posterior-predictive.",
+  "BMW i3 data (German driving with heater load) is not available; that part is blocked."
+ ]
+}
