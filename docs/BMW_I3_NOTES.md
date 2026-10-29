@@ -1,3 +1,5 @@
+> Availability on the takeover machine: raw BMW files are absent; real E1 is NOT DONE (dataset not on this machine). The profiling below is historical work completed before the fixed split; no test trips were opened in this takeover.
+
 # BMW i3 dataset: what is in the files (read this before using the loader)
 
 Source: "Battery and Heating Data in Real Driving Cycles", Steinstraeter, Buberger and Trifonov, TU Munich, Institute of

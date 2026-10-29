@@ -28,7 +28,7 @@ Plan recorded before implementation (plan mode unavailable). Work in this order,
 - [x] R4a: preserve before artifacts; implement training-only leave-one-trip-out discrepancy,
   at least 20 training subsets/k; aggregate repeated predictions per held-out trip for Wilson intervals;
   save frozen settings/training audit before opening held-out observations; evaluate once, report undercoverage.
-- [ ] R7: evidence table, all specified limitations, plan status note, wording audit and change list.
+- [x] R7: evidence table, all specified limitations, plan status note, wording audit and change list.
 - [ ] R8: append accurate disclosure and service history; dataset citation/download instructions.
 - [ ] R5: BLOCKED — SARVAM_API_KEY absent. No paid calls. Add key locally to .env manually, then
   verify current official endpoint/header/fields/model IDs and make at most one TTS and one STT call;
@@ -78,3 +78,21 @@ Before-fix JSON/PNG preserved byte-for-byte from the starting tree. All fits/var
 | verity_pooled | 10 | 2.326 | 0.8889 [0.7468, 0.9559], n=36 | 0.8722 |
 
 Remaining undercoverage is explicit: most 90% mixture bands are below nominal. Mixture coverage and mean subset coverage describe different forecasts; neither treats the repeated subset predictions as independent samples. Wilson intervals are not adjusted for shared vehicles. No held-out retuning. Correction is experiment-only, not a production forecast fix.
+
+## R7 wording audit and verification
+
+- README opening now calls confidence a model estimate, not a tested guarantee.
+- README identifies both OSM and OCM locations, removes obsolete key/import blockers, links final status,
+  replaces old machine timings with the numbers-pack link, and states no Indian validation/interviews/pilot.
+- README adds every required limitation, scenario-sweep disclosure, experiment-only correction caveat,
+  remaining undercoverage, and same-site independence.
+- PLAN.md now says its proposed fieldwork was not completed; PLAN.pdf link retained.
+- EVIDENCE_STATUS.md classifies external source data, simulated evidence and NOT DONE work, with historical
+  prior-source provenance explicitly unverified and current BMW/Sarvam/Neo4j blockers.
+- PROGRESS_ENGINE.md and BMW_I3_NOTES.md have historical/current-availability notices; old logs preserved.
+- Wording scan of README/docs/web (task/prompts/morning-report exclusions applied) found no affirmative
+  claim of Indian validation/interviews/audits. API_CONTRACT audit enum is a schema option; no contract edit.
+  web/js/mock-data.js has a simulated audit source enum; documented in evidence status and left untouched
+  under the two-file web override. No logger/ or design/ edits.
+- Full pytest: 243 passed, 11 skipped, 1 warning in 55.98 s. BEFORE_fix and both splits match starting git
+  content after Windows checkout newline normalization; git diff on data/splits is empty.

@@ -20,3 +20,4 @@ charger locations are real public data.
 | 2026-10-29 | Codex CLI | R2: two permitted web fixes; Node syntax and scratch VM against local uvicorn. No external service calls. |
 | 2026-10-29 | Codex CLI | R6: graph ALTERNATE probability rename and stale-property removal, migration/query test, memory switch verification and docs. No live Neo4j calls (credentials absent). |
 | 2026-10-29 to 30 | Codex CLI | R4a: preserved original E1 artifacts, added experiment-only training-LOO discrepancy variance, 20 training subset draws/k, unique-trip and per-subset 50/80/90% coverage/Wilson reporting, frozen audit/evaluation reuse and three statistical bookkeeping tests. Ran one final held-out simulated evaluation; no paid service calls. |
+| 2026-10-30 | Codex CLI | R7: evidence classification, honesty/limitations pass, historical status notices and wording audit. No external calls. |

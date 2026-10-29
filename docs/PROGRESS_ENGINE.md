@@ -1,3 +1,5 @@
+> Historical engine progress; finish-track status is in PROGRESS_FINISH.md and EVIDENCE_STATUS.md. Earlier data/key blockers and counts describe their dates, not this machine.
+
 # Engine track progress (Ansh) — overnight build
 
 Started 2026-10-27. Source of truth for the milestones is `docs/TASKS_ANSH.md`.
