@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verity · Will I make it?</title>
+<meta name="description" content="Verity gives every EV trip a dispatch release: GO or NO-GO with a tested confidence level, backup chargers for every stop, and a live Bingo Line. When the evidence is thin, it refuses instead of guessing.">
+<meta name="theme-color" content="#07080A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307080A'/%3E%3Cpath d='M6 21a10 10 0 0 1 20 0' fill='none' stroke='%23F2EFE8' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M16 21l5-7' stroke='%23F5A524' stroke-width='2.6' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='21' r='2.4' fill='%23F5A524'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..600&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="css/home.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <a class="brand" href="#top" aria-label="Verity home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 22a11 11 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path class="needle" d="M16 22l6-8" stroke="#F5A524" stroke-width="2.6" stroke-linecap="round"/><circle cx="16" cy="22" r="2.6" fill="#F5A524"/></svg>
+    <span>Verity</span>
+  </a>
+  <nav aria-label="Sections">
+    <a href="#problem">Problem</a>
+    <a href="#how">How it works</a>
+    <a href="#proof">Proof</a>
+    <a href="#compare">Compare</a>
+    <a href="#driver">Driver</a>
+  </nav>
+  <a class="btn btn-sm btn-primary magnetic" href="index.html">Open Mission Control <span aria-hidden="true">→</span></a>
+</header>
+
+<main id="main">
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="hero-grid" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <a class="pill" href="#proof" data-reveal><span class="pill-dot"></span>hackFront India 2026 · T6.1 “Will I Make It” <span class="pill-arrow">→</span></a>
+      <h1 class="h1" id="hero-title"><span class="w">Will</span> <span class="w">I</span> <em class="w serif">make it?</em></h1>
+      <p class="lede" data-reveal>Range apps give you a number. Verity gives every EV trip a <b>dispatch release</b>: GO or NO-GO with a tested confidence level, a backup charger for every stop, and a <b>Bingo Line</b> that tells the driver exactly when to divert. When the evidence is thin, it says so.</p>
+      <div class="cta" data-reveal>
+        <a class="btn btn-primary btn-lg magnetic beam" href="index.html"><span>Open Mission Control</span> <span aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost btn-lg magnetic" href="index.html#/trip"><span class="play" aria-hidden="true"></span>Watch a trip divert</a>
+      </div>
+      <ul class="hero-meta" data-reveal id="hero-meta"></ul>
+    </div>
+
+    <div class="hero-visual" data-reveal>
+      <div class="instrument tilt" id="instrument">
+        <div class="inst-head">
+          <div><span class="mono dim">DISPATCH RELEASE</span><div class="inst-title" id="inst-title">Noida → Agra</div></div>
+          <div class="inst-stamp" id="inst-stamp" aria-live="polite"></div>
+        </div>
+        <svg class="inst-chart" id="inst-chart" viewBox="0 0 520 250" role="img" aria-label="Bingo Line for the demo trip (simulated)"></svg>
+        <div class="inst-readout" id="inst-readout"></div>
+        <div class="inst-foot"><span class="tag-sim">Simulated</span><span class="mono dim" id="inst-foot"></span></div>
+      </div>
+      <div class="float-card fc-1" id="fc-1"></div>
+      <div class="float-card fc-2" id="fc-2"></div>
+    </div>
+  </div>
+  <div class="scroll-cue" aria-hidden="true"><span></span></div>
+</section>
+
+<!-- MARQUEE -->
+<section class="marquee" aria-label="What Verity is built on">
+  <div class="marquee-track">
+    <ul>
+      <li>Physics energy model</li><li>Bayesian fleet calibration</li><li>Monte Carlo · shared trip factors</li><li>Dawid–Skene source trust</li><li>Fake-report ring detection</li><li>Neo4j charger graph</li><li>OpenStreetMap</li><li>Open Charge Map</li><li>Sarvam voice · Hindi + English</li><li>FastAPI</li>
+    </ul>
+    <ul aria-hidden="true">
+      <li>Physics energy model</li><li>Bayesian fleet calibration</li><li>Monte Carlo · shared trip factors</li><li>Dawid–Skene source trust</li><li>Fake-report ring detection</li><li>Neo4j charger graph</li><li>OpenStreetMap</li><li>Open Charge Map</li><li>Sarvam voice · Hindi + English</li><li>FastAPI</li>
+    </ul>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="section" id="problem">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal>01 · The problem</p>
+    <h2 class="h2" data-reveal>A pin on a map is <em class="serif">not</em> a working charger.</h2>
+    <div class="problem">
+      <div class="big-stat" data-reveal>
+        <div class="ticker-row"><span class="ticker" id="t-unknown" data-to="0">0</span><span class="of">/ <span id="t-total">0</span></span></div>
+        <p>chargers along our Noida → Agra demo corridor have <b>no recent report</b> saying they work. Verity starts every one of them at <em>unknown</em>.</p>
+        <span class="src">Charger directory: OpenStreetMap + Open Charge Map, merged within 50 m</span>
+      </div>
+      <div class="problem-cards">
+        <article class="pcard" data-reveal>
+          <span class="pcard-n">~1 in 6</span>
+          <p>public charging stations in India reported not working, in an industry estimate of the network for 2026.</p>
+          <a class="src" href="https://www.meraev.com/blog/india-ev-charging-network-2026-status-reliability" rel="noopener">Source: MeraEV blog (third-party estimate)</a>
+        </article>
+        <article class="pcard" data-reveal>
+          <span class="pcard-n">1 number</span>
+          <p>is what trip planners give you: a predicted arrival percentage. Guides tell drivers to keep a 10–15% buffer “just in case” — because nobody says how sure the number is.</p>
+          <a class="src" href="https://www.evcourse.com/how-to-use-abrp-road-trip" rel="noopener">Source: ABRP road-trip guide</a>
+        </article>
+        <article class="pcard" data-reveal>
+          <span class="pcard-n">“Unknown”</span>
+          <p>is how routing APIs label chargers whose status they cannot see. That is honest — but the plan still treats the stop like it will work.</p>
+          <a class="src" href="https://help.chargetrip.com/faq/api/" rel="noopener">Source: Chargetrip API FAQ</a>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW: sticky scrollytelling -->
+<section class="section how" id="how">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal>02 · How a release is made</p>
+    <h2 class="h2" data-reveal>Four steps from <em class="serif">“probably”</em> to a signed release.</h2>
+    <div class="story">
+      <div class="story-steps">
+        <article class="step" data-step="0"><span class="step-n">01</span><h3>Learn the car</h3><p>Every vehicle's logged trips calibrate its true usable battery, drag and AC load — a Bayesian posterior, pooled across the fleet so a new car borrows strength from its siblings.</p><span class="step-spec">calibrate.py · usable kWh with p10–p90</span></article>
+        <article class="step" data-step="1"><span class="step-n">02</span><h3>Simulate 2,000 futures</h3><p>A physics energy model runs inside a Monte Carlo. Driver, weather, wind and payload are sampled <em>once per trip</em>, not once per road segment — so long trips are not falsely confident.</p><span class="step-spec">forecast.py · expected battery band + Bingo Line</span></article>
+        <article class="step" data-step="2"><span class="step-n">03</span><h3>Distrust chargers</h3><p>Reports are weighted by each source's learned reliability, and coordinated fake-report rings are flagged in the graph. A charger nobody has vouched for stays <em>unknown</em> — and gets a backup.</p><span class="step-spec">trust/ · Dawid–Skene + ring detection + Neo4j</span></article>
+        <article class="step" data-step="3"><span class="step-n">04</span><h3>Release — or refuse</h3><p>GO, NO-GO, or <em>insufficient evidence</em>. Same booking, three vehicles, three different answers — each with the levers that would change it.</p><span class="step-spec">dispatch.py · decision, alternates, levers</span></article>
+      </div>
+      <div class="story-stage" aria-live="polite">
+        <div class="stage-card">
+          <div class="stage-head"><span class="mono dim" id="stage-label">STEP 01 · LEARN THE CAR</span><span class="tag-sim">Simulated</span></div>
+          <div class="stage-body">
+            <div class="scene is-on" data-scene="0" id="scene-0"></div>
+            <div class="scene" data-scene="1" id="scene-1"></div>
+            <div class="scene" data-scene="2" id="scene-2"></div>
+            <div class="scene" data-scene="3" id="scene-3"></div>
+          </div>
+          <div class="stage-dots" id="stage-dots"><i class="on"></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- UNDER THE HOOD: animated beams -->
+<section class="section hood">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal>03 · Under the hood</p>
+    <h2 class="h2" data-reveal>Six engines. <em class="serif">One</em> signed answer.</h2>
+    <div class="beams" id="beams" data-reveal>
+      <svg class="beam-svg" id="beam-svg" aria-hidden="true"></svg>
+      <div class="node n-l1" data-node>Trip logs<small>GPS + battery taps</small></div>
+      <div class="node n-l2" data-node>Calibration<small>Bayesian, fleet-pooled</small></div>
+      <div class="node n-l3" data-node>Physics<small>roll · aero · grade · AC</small></div>
+      <div class="node hub" data-node id="hub"><span class="hub-ring"></span>Dispatch<br>release<small>GO · NO-GO · REFUSE</small></div>
+      <div class="node n-r1" data-node>Monte Carlo<small>2,000 shared-factor runs</small></div>
+      <div class="node n-r2" data-node>Trust graph<small>Dawid–Skene · rings · Neo4j</small></div>
+      <div class="node n-r3" data-node>Driver voice<small>Hindi + English alerts</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF: bento -->
+<section class="section" id="proof">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal>04 · Proof</p>
+    <h2 class="h2" data-reveal>Tested, <em class="serif">not</em> promised.</h2>
+    <p class="sub" data-reveal>Five experiments on simulated worlds with a fixed held-out split. Every number below is read from the saved result files — including the ones that don't flatter us.</p>
+    <div class="bento" id="bento"></div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section class="section" id="compare">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal>05 · Where Verity fits</p>
+    <h2 class="h2" data-reveal>Others answer <em class="serif">how far.</em> Verity answers <em class="serif">how sure.</em></h2>
+    <div class="compare-cards">
+      <article class="ccard spot" data-reveal>
+        <span class="mono dim">ROUTE PLANNERS</span>
+        <h3>Predict a number</h3>
+        <p class="who">ABRP · Chargetrip · Statiq · EVJoints · HERE</p>
+        <p>Plan stops and predict your arrival percentage, using vehicle, speed, weather and elevation. The output is one number.</p>
+      </article>
+      <article class="ccard spot" data-reveal>
+        <span class="mono dim">CHARGER MAPS</span>
+        <h3>Crowdsource a score</h3>
+        <p class="who">PlugShare · network apps</p>
+        <p>Roll recent driver check-ins into a station score. Useful — but only as fresh as the last driver who checked in.</p>
+      </article>
+      <article class="ccard spot ccard-v" data-reveal>
+        <span class="mono amber">VERITY</span>
+        <h3>Sign a release</h3>
+        <p class="who">Physics + probability + trust graph</p>
+        <p>A confidence level tested against held-out trips, a backup priced into every stop, a Bingo Line for the drive — and a refusal when the evidence can't support a promise.</p>
+      </article>
+    </div>
+    <div class="table-wrap" data-reveal>
+      <table class="ctable">
+        <thead><tr><th scope="col">What the driver gets</th><th scope="col">Typical route planner</th><th scope="col">Typical charger map</th><th scope="col" class="v">Verity</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">The answer</th><td>Predicted arrival %</td><td>1–10 station score</td><td class="v">GO / NO-GO with a confidence level — or <b>insufficient evidence</b></td></tr>
+          <tr><th scope="row">Uncertainty</th><td>One number; drivers add their own buffer</td><td>—</td><td class="v">p10–p90 arrival band, checked for calibration (E2)</td></tr>
+          <tr><th scope="row">A charger nobody has verified</th><td>Shown as status unknown</td><td>Score waits for check-ins</td><td class="v">Starts at unknown; the plan carries a reachable backup</td></tr>
+          <tr><th scope="row">Fake or stale reports</th><td>—</td><td>Recency and verified accounts weigh more</td><td class="v">Learned source reliability + ring detection (E5)</td></tr>
+          <tr><th scope="row">On the road</th><td>Re-plan with live car data (paid tiers)</td><td>—</td><td class="v">Bingo Line + point of no return, divert alert by voice</td></tr>
+          <tr><th scope="row">Published test results</th><td>Vendor accuracy claims</td><td>—</td><td class="v">E1–E5 with n and confidence intervals, failures included</td></tr>
+        </tbody>
+      </table>
+      <p class="fine">Competitor columns summarise public product pages, help centres and guides as read in October 2026; sources are listed in <code>docs/COMPETITORS.md</code>. Products change — check them directly. Verity's results are from simulated worlds; no real-road validation exists yet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DRIVER -->
+<section class="section driver" id="driver">
+  <div class="wrap driver-grid">
+    <div>
+      <p class="eyebrow" data-reveal>06 · For the driver</p>
+      <h2 class="h2" data-reveal>The plan keeps working <em class="serif">after</em> you leave.</h2>
+      <p class="sub" data-reveal>Battery readings come in by keypad or voice. When a planned charger is reported broken, the engine re-plans and the phone says it out loud — in Hindi or English — before the driver passes the point of no return.</p>
+      <ol class="timeline" id="d-timeline" data-reveal></ol>
+      <div class="cta" data-reveal><a class="btn btn-primary magnetic" href="index.html#/trip">Play the full replay <span aria-hidden="true">→</span></a></div>
+    </div>
+    <div class="phone-stage" data-reveal>
+      <div class="phone" id="phone">
+        <div class="notch"></div>
+        <div class="screen" id="screen"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HONESTY -->
+<section class="section honesty">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal>07 · Refuse rather than guess</p>
+    <blockquote class="quote" id="refusal" data-reveal></blockquote>
+    <div class="rules" data-reveal>
+      <div><b>Never invent data.</b><span>Every number on this page is read from saved engine output or experiment files.</span></div>
+      <div><b>Label simulation.</b><span>Anything built on simulated worlds says so, right next to it.</span></div>
+      <div><b>Held-out trips are sacred.</b><span>The test split was fixed once and never used for tuning.</span></div>
+      <div><b>Probabilities come from the model.</b><span>Rounded to the nearest 5%, shown with their evidence.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final">
+  <div class="aurora small" aria-hidden="true"><i></i><i></i></div>
+  <div class="wrap final-inner">
+    <h2 class="h2 center" data-reveal>Know before you <em class="serif">go.</em></h2>
+    <p class="sub center" data-reveal>Open the dispatch console on the saved engine outputs, or point it at the live engine.</p>
+    <div class="cta center" data-reveal>
+      <a class="btn btn-primary btn-lg magnetic beam" href="index.html"><span>Open Mission Control</span> <span aria-hidden="true">→</span></a>
+      <a class="btn btn-ghost btn-lg magnetic" href="driver.html">Driver view</a>
+    </div>
+    <pre class="code" data-reveal><code><span class="dim">$</span> uv sync && uv run uvicorn api.main:app
+<span class="dim">$</span> open web/index.html?api=http://127.0.0.1:8000</code></pre>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <div class="brand small"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 22a11 11 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M16 22l6-8" stroke="#F5A524" stroke-width="2.6" stroke-linecap="round"/><circle cx="16" cy="22" r="2.6" fill="#F5A524"/></svg><span>Verity</span></div>
+    <p>Team Low Cortisol · hackFront India 2026 · T6.1 “Will I Make It”</p>
+    <p class="dim">Demo data is simulated. No real Indian road validation exists yet. Animations by <a href="https://motion.dev" rel="noopener">Motion</a>.</p>
+    <nav><a href="index.html">Mission Control</a><a href="driver.html">Driver view</a><a href="../logger/index.html">Trip logger</a><a href="console.html">Classic console</a></nav>
+  </div>
+</footer>
+
+<script src="vendor/motion-12.43.0.js"></script>
+<script src="js/snapshot.js"></script>
+<script src="js/verity-core.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>

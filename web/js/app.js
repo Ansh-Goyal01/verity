@@ -62,7 +62,16 @@
     document.title = `Verity · ${TAB_NAMES[tab]}`;
     moveInk();
     renderTab(tab);
+    enter(tab);
     requestAnimationFrame(() => Object.values(maps).forEach(m => { if (m.el.offsetParent) { m.map.invalidateSize(); if (!m.userMoved) fitMap(m); } }));
+  }
+  /* Spring entrance for a tab and its cards (Motion, vendored). Without Motion the CSS fade runs. */
+  function enter(tab) {
+    const M = window.Motion; if (!M || REDUCED) return;
+    const view = $('#view-' + tab);
+    M.animate(view, { opacity: [0, 1], y: [12, 0], filter: ['blur(6px)', 'blur(0px)'] }, { type: 'spring', bounce: 0, visualDuration: 0.45 });
+    const cards = $$('.panel, .strip, .kpi, .ev, .rcard, .flow li, .pipe, .tile, .doc, .release', view).filter(el => el.offsetParent).slice(0, 24);
+    if (cards.length) M.animate(cards, { opacity: [0, 1], y: [18, 0] }, { type: 'spring', bounce: 0.15, visualDuration: 0.55, delay: M.stagger(0.035, { startDelay: 0.05 }) });
   }
   function go(tab, arg) { location.hash = '#/' + tab + (arg ? '/' + arg : ''); }
   function renderTab(tab) {
@@ -677,6 +686,7 @@
     state.scenario.vehicles.forEach(v => cmds.push({ label: `Open ${v.vehicle_id} release`, hint: C.decisionLabel(plan(v.vehicle_id).decision), run: () => go('dispatch', v.vehicle_id) }));
     cmds.push({ label: 'Play live trip', hint: 'replay', run: () => trip.play() });
     cmds.push({ label: 'Toggle light / dark theme', hint: 'theme', run: toggleTheme });
+    cmds.push({ label: 'Open Verity home page', hint: 'home.html', run: () => { location.href = 'home.html'; } });
     cmds.push({ label: 'Open classic console', hint: 'console.html', run: () => { location.href = 'console.html' + location.search; } });
     cmds.push({ label: 'Open driver view', hint: 'driver.html', run: () => { location.href = 'driver.html' + location.search; } });
     return cmds;

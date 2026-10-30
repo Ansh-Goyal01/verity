@@ -65,3 +65,13 @@ test('charger stats only count the supplied directory',()=>{
   assert.equal(Object.values(st.byTrust).reduce((x,y)=>x+y,0),c.length);
   assert.equal(st.withReports,c.filter(x=>x.n_reports>0).length);
 });
+
+test('pages only reference local files that exist (offline demo stays intact)',()=>{
+  for(const page of ['web/home.html','web/index.html','index.html']){
+    const html=fs.readFileSync(path.join(root,page),'utf8'),dir=path.dirname(path.join(root,page));
+    const refs=[...html.matchAll(/(?:src|href)="([^"#?]+)"/g)].map(m=>m[1]).filter(u=>!/^(https?:|data:|mailto:)/.test(u));
+    assert(refs.length>0,page);
+    for(const r of refs)assert(fs.existsSync(path.join(dir,r)),`${page} references missing ${r}`);
+  }
+  assert(fs.readFileSync(path.join(root,'web/vendor/motion-12.43.0.js'),'utf8').includes('.Motion={}'));
+});

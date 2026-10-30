@@ -12,7 +12,7 @@ This repo holds the **engine** (Python) and the **HTTP API** the frontend pages 
 
 ## See it
 
-Open **`web/index.html`** in a browser (no install or build step). This is Verity Mission Control: six tabs covering the pitch, the dispatch console, a live trip replay with the driver phone view, charger trust, experiment evidence and the engine. Offline, it shows the saved engine outputs for the simulated demo scenario. Add `?api=http://127.0.0.1:8000` to use the live API. See [`web/README.md`](web/README.md).
+Open **`web/home.html`** (or the repository root `index.html`) in a browser. No install or build step is needed. This is the product site: the problem, how a release is made, the experiment results, how Verity compares with route planners and charger maps (sources in [`docs/COMPETITORS.md`](docs/COMPETITORS.md)), and the driver experience. Every number on it is read from the saved engine outputs and results. From there, **Open Mission Control** (`web/index.html`) for the six-tab dispatch app. Offline, both show the saved engine outputs for the simulated demo scenario. Add `?api=http://127.0.0.1:8000` to the Mission Control URL to use the live API. See [`web/README.md`](web/README.md).
 
 ## Setup
 

@@ -12,7 +12,11 @@ These pages use plain HTML, CSS and JavaScript. No install or build step is need
 
 Without `?api=` the pages run offline on the saved engine snapshot (`js/snapshot.js`), or on illustrative mocks if the snapshot is missing. Every offline response is simulated and the pages show a visible badge.
 
-## Mission Control (start here)
+## Product site (start here)
+
+Open `web/home.html`; the repository root `index.html` redirects to it. It is a single animated page. The hero shows a live Bingo Line instrument for the demo trip. The page then covers the problem, a scroll-driven "how a release is made" story, an animated pipeline, a proof bento with E1–E5 results, a competitor comparison, a driver phone that plays the saved replay, and the V19 refusal. Every value is read from `js/snapshot.js`. Animation uses Motion (`vendor/motion-12.43.0.js`, MIT, vendored so the page works offline). With reduced motion, or without that file, the page shows its final state. Competitor claims are sourced in `docs/COMPETITORS.md`.
+
+## Mission Control
 
 Open `web/index.html` (or the repository root `index.html`, which redirects to it). Six tabs, switchable with keys 1–6 or the Ctrl/⌘ K command palette:
 
