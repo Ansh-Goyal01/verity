@@ -10,6 +10,10 @@ This repo holds the **engine** (Python) and the **HTTP API** the frontend pages 
 (`logger/`, `web/`, `design/`) is plain HTML/CSS/JS built separately; the two sides meet only at
 [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) (change proposals: `docs/API_CONTRACT_CHANGES.md`).
 
+## See it
+
+Open **`web/index.html`** in a browser (no install or build step). This is Verity Mission Control: six tabs covering the pitch, the dispatch console, a live trip replay with the driver phone view, charger trust, experiment evidence and the engine. Offline, it shows the saved engine outputs for the simulated demo scenario. Add `?api=http://127.0.0.1:8000` to use the live API. See [`web/README.md`](web/README.md).
+
 ## Setup
 
 Requires [uv](https://docs.astral.sh/uv/) (it installs Python >= 3.11 and everything in `pyproject.toml`).
