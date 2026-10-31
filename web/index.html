@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verity · Mission Control</title>
+<meta name="description" content="Verity tells an EV driver, with an honest and tested confidence level, whether they will reach their destination, and plans charging around chargers that actually work.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2315181D'/%3E%3Cpath d='M6 21a10 10 0 0 1 20 0' fill='none' stroke='%23F2EFE8' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M16 21l5-7' stroke='%23F5A524' stroke-width='2.6' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='21' r='2.4' fill='%23F5A524'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../design/tokens.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top" id="top">
+  <a class="logo" href="#/mission" aria-label="Verity home">
+    <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 22a11 11 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path class="logo-needle" d="M16 22l6-8" stroke="var(--amber)" stroke-width="2.6" stroke-linecap="round"/><circle cx="16" cy="22" r="2.6" fill="var(--amber)"/></svg>
+    <span class="logo-word">VERITY</span>
+    <span class="logo-sub">DISPATCH RELEASE SYSTEM</span>
+  </a>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" class="tab" data-tab="mission" id="tab-mission" aria-controls="view-mission"><i>01</i>Mission</button>
+    <button role="tab" class="tab" data-tab="dispatch" id="tab-dispatch" aria-controls="view-dispatch"><i>02</i>Dispatch</button>
+    <button role="tab" class="tab" data-tab="trip" id="tab-trip" aria-controls="view-trip"><i>03</i>Live trip</button>
+    <button role="tab" class="tab" data-tab="trust" id="tab-trust" aria-controls="view-trust"><i>04</i>Charger trust</button>
+    <button role="tab" class="tab" data-tab="evidence" id="tab-evidence" aria-controls="view-evidence"><i>05</i>Evidence</button>
+    <button role="tab" class="tab" data-tab="engine" id="tab-engine" aria-controls="view-engine"><i>06</i>Engine</button>
+    <span class="tab-ink" aria-hidden="true"></span>
+  </nav>
+  <div class="top-actions">
+    <span id="source" class="source" title="Where the data on this page comes from"><b class="dot"></b><span>Loading…</span></span>
+    <button id="cmdk" class="iconbtn" type="button" aria-label="Open command palette (Ctrl K)"><kbd>⌘K</kbd></button>
+    <button id="theme" class="iconbtn" type="button" aria-label="Switch to light theme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="ticker" id="ticker" aria-label="Booking">
+  <span class="tk">BOOKING</span><span id="ticker-body">Loading booking…</span>
+</div>
+
+<main id="main">
+<div id="boot" class="boot" role="status"><span class="spinner" aria-hidden="true"></span>Loading dispatch data…</div>
+
+<!-- 01 MISSION -->
+<section class="view" id="view-mission" role="tabpanel" aria-labelledby="tab-mission" hidden>
+  <div class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">hackFront India 2026 · T6.1 “Will I Make It” · Team Low Cortisol</p>
+      <h1 class="display">Will I make it?<br><span class="display-sub">An honest answer, before you leave.</span></h1>
+      <p class="lede">Verity treats every EV trip like an airline treats a flight. It issues a <b>dispatch release</b>: GO or NO-GO with a tested confidence level, a charging plan built around chargers that actually work, backup chargers within reach, and a live <b>Bingo Line</b> — the battery level below which the driver must divert.</p>
+      <div class="hero-cta">
+        <a class="btn primary" href="#/dispatch">Open dispatch console <span aria-hidden="true">→</span></a>
+        <a class="btn" href="#/trip">Play a live trip</a>
+      </div>
+      <dl class="hero-facts" id="hero-facts"></dl>
+    </div>
+    <div class="hero-release" id="hero-release" aria-live="polite"></div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><span class="num">A</span><h2>One booking. Three vehicles. Three different answers.</h2><p>Click a vehicle to open its full release.</p></div>
+    <div class="strips" id="mission-strips"></div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><span class="num">B</span><h2>Tested, not promised.</h2><p>Headline numbers from the saved experiment runs. All are from simulated worlds; none are real-road validation.</p></div>
+    <div class="kpis" id="mission-kpis"></div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><span class="num">C</span><h2>How a release is made</h2><p>Physics first, uncertainty honest, chargers distrusted until proven.</p></div>
+    <ol class="flow" id="mission-flow">
+      <li><span class="flow-n">01</span><h3>Learn the car</h3><p>Bayesian calibration turns each vehicle's logged trips into its real usable capacity and drag, pooled across the fleet.</p></li>
+      <li><span class="flow-n">02</span><h3>Simulate the trip</h3><p>2,000 Monte Carlo runs with shared trip-level factors (driver, AC, wind, payload), so long trips are not falsely confident.</p></li>
+      <li><span class="flow-n">03</span><h3>Distrust chargers</h3><p>Reports are weighed by source reliability (Dawid–Skene); coordinated fake-report rings are flagged in the graph.</p></li>
+      <li><span class="flow-n">04</span><h3>Release or refuse</h3><p>GO, NO-GO, or <em>insufficient evidence</em> — with alternates, the Bingo Line, a point of no return and levers that raise confidence.</p></li>
+    </ol>
+  </div>
+
+  <div class="block refuse" id="mission-refuse"></div>
+</section>
+
+<!-- 02 DISPATCH -->
+<section class="view" id="view-dispatch" role="tabpanel" aria-labelledby="tab-dispatch" hidden>
+  <div class="dispatch">
+    <aside class="rail">
+      <h2 class="label">Vehicle releases</h2>
+      <div id="rail" class="rail-list"></div>
+      <p class="rail-note">Same booking, same route request. Each vehicle gets its own calibrated forecast.</p>
+    </aside>
+    <div class="dispatch-main">
+      <div id="release" class="release"></div>
+
+      <div class="grid-2 map-row">
+        <section class="panel map-panel">
+          <header class="panel-head"><h2 class="label">Route &amp; chargers</h2><div class="panel-tools"><button class="chip" id="d-fit" type="button">Fit route</button><button class="chip" id="d-tiles" type="button" aria-pressed="false">Route-only view</button></div></header>
+          <div class="map" id="d-map" aria-label="Route and charger map"></div>
+          <p class="state small" id="d-mapnote" role="status"></p>
+          <div class="legend" id="d-legend"></div>
+        </section>
+        <section class="panel">
+          <header class="panel-head"><h2 class="label">Charging plan</h2></header>
+          <div id="d-plan"></div>
+        </section>
+      </div>
+
+      <div id="d-withheld" class="withheld" hidden></div>
+      <div class="grid-2" id="d-charts">
+        <section class="panel">
+          <header class="panel-head"><h2 class="label">Bingo Line</h2><span class="hint">Hover to read the plan at any km</span></header>
+          <div id="d-bingo" class="chart"></div>
+        </section>
+        <section class="panel">
+          <header class="panel-head"><h2 class="label">Where the battery goes</h2><span class="hint">Percentage points of battery</span></header>
+          <div id="d-waterfall" class="chart scroll-x"></div>
+        </section>
+      </div>
+
+      <div class="grid-2">
+        <section class="panel">
+          <header class="panel-head"><h2 class="label">Levers</h2><span class="hint">What would change the answer</span></header>
+          <div id="d-levers"></div>
+        </section>
+        <section class="panel">
+          <header class="panel-head"><h2 class="label">Risk sources</h2><span class="hint">Why the confidence is not higher</span></header>
+          <div id="d-risks"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 LIVE TRIP -->
+<section class="view" id="view-trip" role="tabpanel" aria-labelledby="tab-trip" hidden>
+  <div class="trip-head">
+    <div>
+      <p class="eyebrow">Recorded engine replay</p>
+      <h2 class="h2">The plan keeps working after departure.</h2>
+      <p class="lede small">Battery readings arrive, a planned charger gets reported broken, and the engine reacts. Every event below is from the saved replay for the selected vehicle.</p>
+    </div>
+    <div class="trip-controls" role="group" aria-label="Replay controls">
+      <div class="seg" id="t-vehicles" role="radiogroup" aria-label="Vehicle"></div>
+      <button class="btn primary" id="t-play" type="button">▶ Play</button>
+      <button class="btn" id="t-reset" type="button">Reset</button>
+      <label class="select"><span>Speed</span><select id="t-speed"><option value="30">30×</option><option value="60" selected>60×</option><option value="150">150×</option></select></label>
+      <label class="toggle"><input type="checkbox" id="t-voice" checked><span>Voice alerts</span></label>
+    </div>
+  </div>
+  <div class="scrub" aria-hidden="true"><div class="scrub-fill" id="t-scrub"></div><div class="scrub-marks" id="t-marks"></div></div>
+  <div class="trip">
+    <section class="panel trip-map-panel">
+      <div class="map tall" id="t-map" aria-label="Trip replay map"></div>
+      <div class="trip-overlay" id="t-clock">T+00:00</div>
+    </section>
+    <div class="phone-wrap">
+      <div class="phone" id="phone">
+        <div class="phone-notch" aria-hidden="true"></div>
+        <div class="phone-screen" id="phone-screen"></div>
+      </div>
+      <p class="phone-cap">Driver view · <a href="driver.html">open full screen</a></p>
+    </div>
+    <section class="panel trip-log">
+      <header class="panel-head"><h2 class="label">Event log</h2><span class="hint" id="t-count"></span></header>
+      <ol class="log" id="t-log" aria-live="polite"></ol>
+    </section>
+  </div>
+</section>
+
+<!-- 04 CHARGER TRUST -->
+<section class="view" id="view-trust" role="tabpanel" aria-labelledby="tab-trust" hidden>
+  <div class="trust-hero" id="trust-hero"></div>
+  <div class="trust-grid">
+    <section class="panel">
+      <header class="panel-head"><h2 class="label">Charger directory near the route</h2><div class="panel-tools" id="trust-filters"></div></header>
+      <div class="map" id="c-map" aria-label="Charger directory map"></div>
+      <div class="legend" id="c-legend"></div>
+    </section>
+    <section class="panel">
+      <header class="panel-head"><h2 class="label">How trust is earned</h2></header>
+      <div class="trust-pipe" id="trust-pipe"></div>
+    </section>
+  </div>
+  <section class="panel">
+    <header class="panel-head"><h2 class="label">Directory</h2><input class="search" id="c-search" type="search" placeholder="Search name or operator" aria-label="Search chargers"></header>
+    <div class="table-wrap"><table class="table" id="c-table"><thead><tr><th scope="col" data-sort="name">Charger</th><th scope="col" data-sort="operator">Operator</th><th scope="col" data-sort="source">Source</th><th scope="col" data-sort="p_works" class="num">Chance it works</th><th scope="col" data-sort="n_reports" class="num">Reports</th><th scope="col" data-sort="days_since_last" class="num">Last report</th><th scope="col" data-sort="trust_level">Trust</th></tr></thead><tbody></tbody></table></div>
+    <p class="state small" id="c-count"></p>
+  </section>
+</section>
+
+<!-- 05 EVIDENCE -->
+<section class="view" id="view-evidence" role="tabpanel" aria-labelledby="tab-evidence" hidden>
+  <div class="ev-head">
+    <p class="eyebrow">Saved experiment results · results/*.json</p>
+    <h2 class="h2">Does it actually work? Here is what we measured.</h2>
+    <p class="lede small">Five experiments, each run on simulated worlds with a fixed held-out split. Every chart is drawn from the saved result files, with sample sizes and confidence intervals where they exist — and the failures are shown too.</p>
+  </div>
+  <div id="evidence" class="evidence"></div>
+</section>
+
+<!-- 06 ENGINE -->
+<section class="view" id="view-engine" role="tabpanel" aria-labelledby="tab-engine" hidden>
+  <div class="ev-head">
+    <p class="eyebrow">Architecture</p>
+    <h2 class="h2">Physics first. Probability honest. Graph-checked.</h2>
+  </div>
+  <div class="pipeline" id="pipeline"></div>
+  <div class="grid-2">
+    <section class="panel">
+      <header class="panel-head"><h2 class="label">Energy model · physics.py</h2></header>
+      <div class="eq">
+        <p><span>F<sub>roll</sub></span> = C<sub>rr</sub> · s<sub>surface</sub> · m · g · cos θ</p>
+        <p><span>F<sub>grade</sub></span> = m · g · sin θ</p>
+        <p><span>F<sub>aero</sub></span> = ½ · ρ<sub>air</sub>(T) · C<sub>d</sub>A · (v + v<sub>headwind</sub>)²</p>
+        <p><span>F<sub>inertia</sub></span> = m · (1 + δ) · a</p>
+        <p><span>P<sub>batt</sub></span> = P<sub>wheel</sub> / η<sub>drive</sub> &nbsp;or&nbsp; P<sub>wheel</sub> · η<sub>regen</sub></p>
+        <p class="eq-total"><span>ΔSoC</span> = 100 · Σ (P<sub>batt</sub> + P<sub>aux</sub> + P<sub>base</sub>) · Δt / E<sub>usable</sub></p>
+      </div>
+      <p class="small muted">Every term is reported separately, which is why the dispatch console can say “air drag −32 points, AC −9 points”. Calibrated per vehicle: C<sub>d</sub>A and C<sub>rr</sub> multipliers, η<sub>drive</sub>, AC coefficient, true usable capacity, driver aggressiveness.</p>
+    </section>
+    <section class="panel">
+      <header class="panel-head"><h2 class="label">Why shared uncertainty matters</h2></header>
+      <div id="engine-shared"></div>
+    </section>
+  </div>
+  <div class="grid-3">
+    <section class="panel rule-card"><h3>Never invent data</h3><p>No made-up numbers in code, UI or charts. Offline pages load saved engine outputs, and say so.</p></section>
+    <section class="panel rule-card"><h3>Label simulation</h3><p>Everything built from simulated data carries a visible “simulated” badge or title.</p></section>
+    <section class="panel rule-card"><h3>Refuse rather than guess</h3><p>When evidence is thin, the release says <em>insufficient evidence</em> and lists what would fix it.</p></section>
+    <section class="panel rule-card"><h3>Held-out trips are sacred</h3><p>The test split is fixed once and never used for tuning.</p></section>
+    <section class="panel rule-card"><h3>The graph never decides alone</h3><p>Neo4j proposes charging chains; each is scored by the Monte Carlo with backup plans.</p></section>
+    <section class="panel rule-card"><h3>Probabilities come from the model</h3><p>Rounded to the nearest 5%, shown with their evidence (“based on 3 reports in 60 days”).</p></section>
+  </div>
+  <section class="panel stack">
+    <header class="panel-head"><h2 class="label">Stack &amp; run</h2></header>
+    <div class="stack-grid">
+      <div><h3>Engine</h3><p>Python 3.11 · numpy · scipy · pydantic · FastAPI · Neo4j (AuraDB) · Sarvam voice (Saaras v3, Bulbul v3)</p></div>
+      <div><h3>Frontend</h3><p>Plain HTML, CSS and JS. No build step. Leaflet + OpenStreetMap. Hand-drawn SVG charts.</p></div>
+      <div><h3>Run it live</h3><pre><code>uv sync
+uv run uvicorn api.main:app
+open web/index.html?api=http://127.0.0.1:8000</code></pre></div>
+    </div>
+    <p class="small muted" id="engine-run"></p>
+  </section>
+</section>
+</main>
+
+<footer class="foot">
+  <span>Verity · Team Low Cortisol · hackFront India 2026</span>
+  <span>Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors</span>
+  <span><a href="home.html">Verity home</a> · <a href="console.html">Classic console</a> · <a href="driver.html">Driver view</a> · <a href="../logger/index.html">Trip logger</a></span>
+</footer>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette-box" role="dialog" aria-modal="true" aria-label="Command palette">
+    <input id="palette-input" type="text" placeholder="Jump to a tab, vehicle or action…" aria-label="Command">
+    <ul id="palette-list" role="listbox"></ul>
+    <p class="palette-foot"><kbd>↑</kbd><kbd>↓</kbd> move · <kbd>Enter</kbd> run · <kbd>Esc</kbd> close · <kbd>1</kbd>–<kbd>6</kbd> switch tabs</p>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/snapshot.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/verity-core.js"></script>
+<script src="vendor/motion-12.43.0.js"></script>
+<script>if(window.Motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('has-motion');</script>
+<script src="js/app.js"></script>
+</body>
+</html>

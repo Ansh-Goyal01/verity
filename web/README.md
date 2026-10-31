@@ -10,7 +10,24 @@ These pages use plain HTML, CSS and JavaScript. No install or build step is need
 4. The address must show the extracted folder. Do not open the HTML inside the ZIP or from a temporary ZIP folder.
 5. Keep internet connected for Google Fonts, Leaflet and OpenStreetMap tiles.
 
-`API_URL` in `web/js/api.js` is empty for mock mode. Keep it empty until the team engine is ready. Every example response is simulated and the pages show a visible badge.
+Without `?api=` the pages run offline on the saved engine snapshot (`js/snapshot.js`), or on illustrative mocks if the snapshot is missing. Every offline response is simulated and the pages show a visible badge.
+
+## Product site (start here)
+
+Open `web/home.html`; the repository root `index.html` redirects to it. It is a single animated page. The hero shows a live Bingo Line instrument for the demo trip. The page then covers the problem, a scroll-driven "how a release is made" story, an animated pipeline, a proof bento with E1–E5 results, a competitor comparison, a driver phone that plays the saved replay, and the V19 refusal. Every value is read from `js/snapshot.js`. Animation uses Motion (`vendor/motion-12.43.0.js`, MIT, vendored so the page works offline). With reduced motion, or without that file, the page shows its final state. Competitor claims are sourced in `docs/COMPETITORS.md`.
+
+## Mission Control
+
+Open `web/index.html` (or the repository root `index.html`, which redirects to it). Six tabs, switchable with keys 1–6 or the Ctrl/⌘ K command palette:
+
+1. **Mission**: the pitch in one screen. A rotating dispatch release for each vehicle, the three different answers for one booking, headline experiment numbers, and the INSUFFICIENT EVIDENCE refusal.
+2. **Dispatch**: confidence gauge against the target, arrival band, map, charging plan with backups, interactive Bingo Line (hover to read any km), energy waterfall, levers and risk sources.
+3. **Live trip**: plays the saved engine replay on a map next to a phone mock-up of the driver view. The broken-charger report and DIVERT / SLOW DOWN alert fire at their recorded times, with an optional voice alert (Hindi or English).
+4. **Charger trust**: the full charger directory with trust filters, a sortable searchable table and the E5 ring-detection results, including the evasive ring that is not caught.
+5. **Evidence**: E1–E5 charts drawn from the saved `results/*.json`, with sample sizes and confidence intervals, plus the last `run_all` status.
+6. **Engine**: the pipeline, the physics equations, why shared uncertainty matters, and the project's honesty rules.
+
+Data: with no `?api=` the pages load `js/snapshot.js`, which holds the **saved real engine outputs** from `docs/api_examples` and the experiment results. All of it comes from the simulated demo scenario, and the header says so. Regenerate it after new engine runs with `uv run python scripts/export_web_snapshot.py`. `?source=mock` uses the hand-written illustrative mocks instead. `?api=http://127.0.0.1:8000` uses the live engine. Tests: `node --test tests/frontend_app.test.cjs tests/frontend_console.test.cjs`.
 
 ## Fleet console
 
