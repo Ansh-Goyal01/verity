@@ -1,7 +1,7 @@
 """Run everything with one command:  uv run start.py
 
 Starts the engine API (port 8000) and serves the web pages (port 5500), waits until the engine
-answers, then opens Mission Control in your browser, connected to the live engine.
+answers, then opens the product site; its Mission Control buttons use the live engine.
 Press Ctrl+C to stop both.
 """
 
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent
 API_PORT, WEB_PORT = 8000, 5500
 API = f"http://127.0.0.1:{API_PORT}"
 APP_URL = f"http://localhost:{WEB_PORT}/web/index.html?api={API}"
-SITE_URL = f"http://localhost:{WEB_PORT}/web/home.html"
+SITE_URL = f"http://localhost:{WEB_PORT}/web/home.html?api={API}"
 
 
 def port_free(port: int) -> bool:
@@ -70,12 +70,12 @@ def main() -> int:
             print("The engine did not start. Scroll up for the error message.")
             return 1
         print("\n  Verity is running.")
+        print(f"  Product site (opens now):      {SITE_URL}")
         print(f"  Mission Control (live engine): {APP_URL}")
-        print(f"  Product site:                  {SITE_URL}")
         print(f"  API docs:                      {API}/docs")
         print("\n  The first load takes a few seconds while the engine plans three trips.")
         print("  Press Ctrl+C to stop.\n")
-        webbrowser.open(APP_URL)
+        webbrowser.open(SITE_URL)
         engine.wait()
         return engine.returncode or 0
     except KeyboardInterrupt:

@@ -107,14 +107,15 @@ html.has-motion .view{animation:none}
 .doc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
 .doc-title{font:700 11px var(--font-mono);letter-spacing:.14em;color:var(--muted)}
 .doc-id{font:500 11px var(--font-mono);color:var(--faint);margin-top:4px}
-.doc-route{display:flex;align-items:center;gap:12px;font:700 26px var(--font-display);margin:34px 0 16px}
+.doc-route{display:flex;align-items:center;gap:12px;font:700 26px var(--font-display);margin:14px 0 16px}
 .doc-route .arrow{flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--line-strong) 0 6px,transparent 6px 10px);position:relative}
 .doc-route .arrow:after{content:"";position:absolute;right:-2px;top:-4px;border:5px solid transparent;border-left:7px solid var(--line-strong)}
 .doc-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:var(--rule);border-left:var(--rule)}
 .doc-grid div{padding:10px 12px;border-right:var(--rule);border-bottom:var(--rule)}
 .doc-grid small{display:block;font:500 9.5px var(--font-mono);letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
 .doc-grid b{display:block;font:600 18px var(--font-mono);margin-top:3px}
-.doc-stamp{position:absolute;right:20px;top:16px}
+.doc-stamp{display:flex;justify-content:flex-end;margin:10px 4px 0}
+.doc-stamp .stamp.big.unknown{font-size:clamp(16px,1.7vw,22px);padding:8px 14px}
 .doc-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;font:500 10.5px var(--font-mono);color:var(--faint);flex-wrap:wrap}
 
 .block{margin:0 0 56px}

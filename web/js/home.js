@@ -11,6 +11,12 @@
   const r1 = v => isNum(v) ? Math.round(v * 10) / 10 : '—';
   const pctInt = v => isNum(v) ? Math.round(v * 100) + '%' : '—';
   if (MOTION) document.documentElement.classList.add('motion');
+  // Opened with ?api=… (e.g. by start.py): keep the live-engine connection on links into the app.
+  const apiParam = new URLSearchParams(location.search).get('api');
+  if (apiParam) document.querySelectorAll('a[href^="index.html"], a[href^="driver.html"], a[href^="console.html"]').forEach(a => {
+    const [path, hash] = a.getAttribute('href').split('#');
+    a.setAttribute('href', `${path}?api=${encodeURIComponent(apiParam)}${hash ? '#' + hash : ''}`);
+  });
 
   const spring = (extra = {}) => ({ type: 'spring', bounce: 0.18, visualDuration: 0.7, ...extra });
   function animate(el, kf, opts) { if (MOTION) return M.animate(el, kf, opts); return null; }
