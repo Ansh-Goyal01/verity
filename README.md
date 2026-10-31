@@ -10,6 +10,16 @@ This repo holds the **engine** (Python) and the **HTTP API** the frontend pages 
 (`logger/`, `web/`, `design/`) is plain HTML/CSS/JS built separately; the two sides meet only at
 [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) (change proposals: `docs/API_CONTRACT_CHANGES.md`).
 
+## Quick start (one command)
+
+Needs [uv](https://docs.astral.sh/uv/). From the repo folder:
+
+```
+uv run start.py
+```
+
+It starts the engine and the web pages, then opens Mission Control in your browser, connected to the live engine. Press Ctrl+C to stop.
+
 ## See it
 
 Open **`web/home.html`** (or the repository root `index.html`) in a browser. No install or build step is needed. This is the product site: the problem, how a release is made, the experiment results, how Verity compares with route planners and charger maps (sources in [`docs/COMPETITORS.md`](docs/COMPETITORS.md)), and the driver experience. Every number on it is read from the saved engine outputs and results. From there, **Open Mission Control** (`web/index.html`) for the six-tab dispatch app. Offline, both show the saved engine outputs for the simulated demo scenario. Add `?api=http://127.0.0.1:8000` to the Mission Control URL to use the live API. See [`web/README.md`](web/README.md).
