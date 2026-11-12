@@ -1,0 +1,126 @@
+{
+ "schema": "verity.range_passport.v1",
+ "label": "REAL trips (BMW i3, Germany); range on Indian routes is the engine's SIMULATION",
+ "is_simulated": false,
+ "status": "OK",
+ "vehicle": {
+  "id": "bmw_i3_tum",
+  "label": "BMW i3 60 Ah (TU Munich test car)"
+ },
+ "prior_class": "bmw_i3_60ah",
+ "nominal_kwh": 21.6,
+ "evidence": {
+  "trips": 40,
+  "km_logged": 728.2,
+  "soc_points_observed": 512.0,
+  "observed_km_per_100_soc_points": 142.2,
+  "temp_range_c": [
+   -3.3,
+   30.8
+  ]
+ },
+ "capacity": {
+  "usable_kwh_p50": 19.39,
+  "ci80_kwh": [
+   17.97,
+   20.53
+  ],
+  "ci95_kwh": [
+   17.19,
+   20.99
+  ],
+  "share_of_nominal_p50": 0.898
+ },
+ "range_in_indian_conditions": [
+  {
+   "route": "noida_agra",
+   "label": "Noida -> Agra highway, afternoon",
+   "route_km": 190.8,
+   "source": "osrm route, Open-Meteo elevation, forecast for 2026-10-28T14:00:00+05:30",
+   "passengers": 2,
+   "ac_on": true,
+   "range_km": {
+    "p10": 147,
+    "p50": 177,
+    "p90": 211
+   },
+   "wh_per_km": {
+    "p10": 90,
+    "p50": 108,
+    "p90": 133
+   }
+  },
+  {
+   "route": "noida_igi_evening",
+   "label": "Noida -> IGI Airport T3, evening",
+   "route_km": 41.5,
+   "source": "osrm route, Open-Meteo elevation, forecast for 2026-11-13T19:00",
+   "passengers": 2,
+   "ac_on": true,
+   "range_km": {
+    "p10": 244,
+    "p50": 280,
+    "p90": 324
+   },
+   "wh_per_km": {
+    "p10": 59,
+    "p50": 69,
+    "p90": 80
+   }
+  }
+ ],
+ "method": "Bayesian calibration of the physics energy model on the logged trips' SoC drops (Laplace posterior), then the Monte Carlo on fixed reference routes. Usable capacity = kWh per 100 SoC points as the vehicle's own gauge counts them.",
+ "validation": {
+  "label": "REAL: BMW i3 ground truth from integrated measured current",
+  "estimate_kwh": 19.39,
+  "truth_kwh": 22.7,
+  "error_pct": -14.6,
+  "in_ci80": false,
+  "in_ci95": false,
+  "learning_curve": {
+   "1": {
+    "n": 20,
+    "median_abs_error_pct": 17.3,
+    "mean_error_pct": -17.3,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   },
+   "3": {
+    "n": 20,
+    "median_abs_error_pct": 16.9,
+    "mean_error_pct": -16.8,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   },
+   "5": {
+    "n": 20,
+    "median_abs_error_pct": 15.4,
+    "mean_error_pct": -15.7,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   },
+   "10": {
+    "n": 20,
+    "median_abs_error_pct": 14.7,
+    "mean_error_pct": -15.0,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   },
+   "20": {
+    "n": 20,
+    "median_abs_error_pct": 14.9,
+    "mean_error_pct": -14.9,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   },
+   "40": {
+    "n": 1,
+    "median_abs_error_pct": 14.5,
+    "mean_error_pct": -14.5,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   }
+  },
+  "summary": "Passport estimate 19.39 kWh (80 % CI 17.97-20.53) vs measured 22.7 kWh per 100 SoC points (-14.6 %); truth inside the 95 % interval: False. The model caps usable capacity at 1.05 x nominal = 22.68 kWh. On its own logged trips this car drove 142.2 km per 100 SoC points (measured, German conditions incl. winter heating); the Indian-route ranges above are model outputs NOT validated against measured Indian driving, and the capacity bias suggests the model under-predicts this car's consumption."
+ }
+}

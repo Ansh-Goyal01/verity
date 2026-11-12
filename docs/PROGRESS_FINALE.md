@@ -14,7 +14,7 @@ Sessions (user instructions 2026-11-12): F0-F2, then F3-F4, then F5-F7, each fol
 - [x] F6 Voice of customer from app reviews
 - [x] F7 Sarvam voice loop
 - [x] F8 Engine upgrades
-- [ ] F9 Range Passport
+- [x] F9 Range Passport
 - [ ] F10 Driver demo scenario
 - [ ] F11 One command and documents
 - [ ] F12 Wrap-up
@@ -165,3 +165,33 @@ Not done (outside F7's text): API endpoints for driver voice reports (an API_CON
   Sites); disclosed in DECISIONS F8c.
 - Tests: tests/test_f8_engine.py (13), tests/test_ridecheck_api.py (7). Full suite: 350 passed, 10 skipped (Neo4j
   parity, Aura paused).
+
+## F9 Range Passport (2026-11-13)
+
+Built engine/verity/passport.py (pure: calibration posterior -> usable capacity with 80 % / 95 % credible intervals;
+Monte Carlo range 100 -> 0 % and Wh/km on two real Indian reference routes, AC on, 2 people; JSON certificate schema
+`verity.range_passport.v1` + markdown), engine/verity/datasets/bmw_passport.py (BMW i3 trip -> logger-like observation
+with whole-percent dashboard SoC, never using current/voltage/heater; ground truth = integrated measured V x I per
+100 BMS SoC points; i3 prior = small_ecar class with the cited 21.6 kWh nominal / 18.8 kWh usable / 1,195 kg curb),
+scripts/range_passport.py (`uv run python scripts/range_passport.py`), tests/test_passport.py (7 tests).
+Outputs: results/range_passport_demo_V07.{json,md}, results/range_passport_bmw_i3.{json,md},
+results/f9_passport_validation.json.
+
+- **REAL validation (BMW i3, Germany, TRAINING-split trips only, 40 usable of 49, 728 km):** ground truth
+  22.70 kWh per 100 SoC points (61.7 Ah per 100 points). Passport with all 40 trips: 19.39 kWh (80 % CI 17.97-20.53,
+  95 % 17.19-20.99): **-14.5 %, truth outside the 95 % interval**. Learning curve (20 random subsets per k):
+  median |error| 17.3 % (k=1), 16.9 % (3), 15.4 % (5), 14.7 % (10), 14.9 % (20); 95 % coverage 0.0 at every k.
+  The estimate is biased low and overconfident on real data. Two facts behind it, both disclosed: the model's
+  usable-fraction bound caps capacity at 1.05 x nominal = 22.68 kWh (the truth sits at that ceiling because the BMS
+  counts more energy per 100 points than the nominal 21.6 kWh), and only battery and mass are i3-specific (CdA, Crr,
+  efficiencies and climate load stay at the class prior). Not tuned after seeing it (that would fit to the truth).
+- **SIMULATED validation (6 simulated cars, first k training trips vs simulator truth):** median |error| 4.3 % (k=1),
+  3.2 % (3), 3.0 % (5), 3.1 % (10); 80 % coverage 0.83 (k=1) then 1.0. Good on data from our own simulator, which
+  shares the planner's physics family: this is the optimistic case.
+- Demo certificate V07 (SIMULATED, 6 trips): 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %), truth outside the
+  80 % interval.
+- Each certificate also states the DATA-only anchor "km per 100 SoC points on the logged trips" (BMW 142.2, V07
+  166.4). The BMW passport's Indian-route ranges (177 km highway, 280 km evening urban, p50) are model outputs that
+  have NOT been validated against measured Indian driving; given the capacity bias the model likely under-predicts
+  this car's consumption (its predicted 69-108 Wh/km is below EV Database's 163 Wh/km "real range" estimate).
+- Held-out BMW test trips were not opened.

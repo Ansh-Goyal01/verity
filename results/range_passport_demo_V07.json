@@ -1,0 +1,82 @@
+{
+ "schema": "verity.range_passport.v1",
+ "label": "SIMULATED: demo fleet trips (verity.sim)",
+ "is_simulated": true,
+ "status": "OK",
+ "vehicle": {
+  "id": "V07",
+  "label": "Demo vehicle V07 (compact e-SUV, aged battery)"
+ },
+ "prior_class": "compact_esuv",
+ "nominal_kwh": 45.0,
+ "evidence": {
+  "trips": 6,
+  "km_logged": 421.1,
+  "soc_points_observed": 253.0,
+  "observed_km_per_100_soc_points": 166.4,
+  "temp_range_c": [
+   16.1,
+   37.1
+  ]
+ },
+ "capacity": {
+  "usable_kwh_p50": 37.08,
+  "ci80_kwh": [
+   33.12,
+   40.62
+  ],
+  "ci95_kwh": [
+   31.13,
+   41.97
+  ],
+  "share_of_nominal_p50": 0.824
+ },
+ "range_in_indian_conditions": [
+  {
+   "route": "noida_agra",
+   "label": "Noida -> Agra highway, afternoon",
+   "route_km": 190.8,
+   "source": "osrm route, Open-Meteo elevation, forecast for 2026-10-28T14:00:00+05:30",
+   "passengers": 2,
+   "ac_on": true,
+   "range_km": {
+    "p10": 153,
+    "p50": 185,
+    "p90": 216
+   },
+   "wh_per_km": {
+    "p10": 165,
+    "p50": 201,
+    "p90": 246
+   }
+  },
+  {
+   "route": "noida_igi_evening",
+   "label": "Noida -> IGI Airport T3, evening",
+   "route_km": 41.5,
+   "source": "osrm route, Open-Meteo elevation, forecast for 2026-11-13T19:00",
+   "passengers": 2,
+   "ac_on": true,
+   "range_km": {
+    "p10": 232,
+    "p50": 264,
+    "p90": 296
+   },
+   "wh_per_km": {
+    "p10": 118,
+    "p50": 140,
+    "p90": 166
+   }
+  }
+ ],
+ "method": "Bayesian calibration of the physics energy model on the logged trips' SoC drops (Laplace posterior), then the Monte Carlo on fixed reference routes. Usable capacity = kWh per 100 SoC points as the vehicle's own gauge counts them.",
+ "validation": {
+  "label": "SIMULATED: checked against the simulator's hidden usable capacity",
+  "estimate_kwh": 37.08,
+  "truth_kwh": 32.87,
+  "error_pct": 12.8,
+  "in_ci80": false,
+  "in_ci95": true,
+  "summary": "Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False."
+ }
+}

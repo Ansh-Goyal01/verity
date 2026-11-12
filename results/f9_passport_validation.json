@@ -1,0 +1,302 @@
+{
+ "experiment": "F9 Range Passport validation",
+ "simulated": {
+  "label": "SIMULATED: simulator cars, truth = the simulator's hidden usable capacity",
+  "by_k": {
+   "1": {
+    "n": 6,
+    "median_abs_error_pct": 4.3,
+    "mean_error_pct": 4.7,
+    "ci80_coverage": 0.83,
+    "ci95_coverage": 1.0,
+    "rows": [
+     {
+      "vehicle_id": "small_ecar-1",
+      "estimate_kwh": 22.81,
+      "truth_kwh": 22.71,
+      "error_pct": 0.5,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "small_ecar-2",
+      "estimate_kwh": 20.4,
+      "truth_kwh": 19.68,
+      "error_pct": 3.7,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "small_ecar-3",
+      "estimate_kwh": 23.0,
+      "truth_kwh": 19.96,
+      "error_pct": 15.2,
+      "in_ci80": false,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-1",
+      "estimate_kwh": 39.68,
+      "truth_kwh": 38.14,
+      "error_pct": 4.0,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-2",
+      "estimate_kwh": 39.58,
+      "truth_kwh": 41.5,
+      "error_pct": -4.6,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-3",
+      "estimate_kwh": 39.78,
+      "truth_kwh": 36.31,
+      "error_pct": 9.6,
+      "in_ci80": true,
+      "in_ci95": true
+     }
+    ]
+   },
+   "3": {
+    "n": 6,
+    "median_abs_error_pct": 3.2,
+    "mean_error_pct": 3.0,
+    "ci80_coverage": 1.0,
+    "ci95_coverage": 1.0,
+    "rows": [
+     {
+      "vehicle_id": "small_ecar-1",
+      "estimate_kwh": 22.82,
+      "truth_kwh": 22.71,
+      "error_pct": 0.5,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "small_ecar-2",
+      "estimate_kwh": 20.18,
+      "truth_kwh": 19.68,
+      "error_pct": 2.5,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "small_ecar-3",
+      "estimate_kwh": 21.99,
+      "truth_kwh": 19.96,
+      "error_pct": 10.2,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-1",
+      "estimate_kwh": 37.62,
+      "truth_kwh": 38.14,
+      "error_pct": -1.4,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-2",
+      "estimate_kwh": 39.89,
+      "truth_kwh": 41.5,
+      "error_pct": -3.9,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-3",
+      "estimate_kwh": 39.96,
+      "truth_kwh": 36.31,
+      "error_pct": 10.1,
+      "in_ci80": true,
+      "in_ci95": true
+     }
+    ]
+   },
+   "5": {
+    "n": 6,
+    "median_abs_error_pct": 3.0,
+    "mean_error_pct": 2.0,
+    "ci80_coverage": 1.0,
+    "ci95_coverage": 1.0,
+    "rows": [
+     {
+      "vehicle_id": "small_ecar-1",
+      "estimate_kwh": 23.11,
+      "truth_kwh": 22.71,
+      "error_pct": 1.8,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "small_ecar-2",
+      "estimate_kwh": 19.65,
+      "truth_kwh": 19.68,
+      "error_pct": -0.2,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "small_ecar-3",
+      "estimate_kwh": 21.76,
+      "truth_kwh": 19.96,
+      "error_pct": 9.0,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-1",
+      "estimate_kwh": 36.96,
+      "truth_kwh": 38.14,
+      "error_pct": -3.1,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-2",
+      "estimate_kwh": 40.25,
+      "truth_kwh": 41.5,
+      "error_pct": -3.0,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-3",
+      "estimate_kwh": 39.01,
+      "truth_kwh": 36.31,
+      "error_pct": 7.5,
+      "in_ci80": true,
+      "in_ci95": true
+     }
+    ]
+   },
+   "10": {
+    "n": 6,
+    "median_abs_error_pct": 3.1,
+    "mean_error_pct": 1.9,
+    "ci80_coverage": 1.0,
+    "ci95_coverage": 1.0,
+    "rows": [
+     {
+      "vehicle_id": "small_ecar-1",
+      "estimate_kwh": 22.8,
+      "truth_kwh": 22.71,
+      "error_pct": 0.4,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "small_ecar-2",
+      "estimate_kwh": 19.51,
+      "truth_kwh": 19.68,
+      "error_pct": -0.9,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "small_ecar-3",
+      "estimate_kwh": 21.91,
+      "truth_kwh": 19.96,
+      "error_pct": 9.8,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-1",
+      "estimate_kwh": 37.36,
+      "truth_kwh": 38.14,
+      "error_pct": -2.0,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-2",
+      "estimate_kwh": 39.74,
+      "truth_kwh": 41.5,
+      "error_pct": -4.2,
+      "in_ci80": true,
+      "in_ci95": true
+     },
+     {
+      "vehicle_id": "compact_esuv-3",
+      "estimate_kwh": 39.32,
+      "truth_kwh": 36.31,
+      "error_pct": 8.3,
+      "in_ci80": true,
+      "in_ci95": true
+     }
+    ]
+   }
+  }
+ },
+ "bmw_i3": {
+  "label": "REAL: BMW i3 60 Ah, Germany (TU Munich, DOI 10.21227/6jr9-5235), TRAINING-split trips only; not Indian conditions",
+  "trips_usable": 40,
+  "km": 728.2,
+  "truth": {
+   "kwh_per_100_soc_points": 22.7,
+   "ah_per_100_soc_points": 61.7,
+   "method": "integrated measured battery voltage x current over each trip's valid-SoC window, pooled over all usable training trips"
+  },
+  "prior_kwh_p50": 18.8,
+  "model_ceiling_kwh": 22.68,
+  "by_k": {
+   "1": {
+    "n": 20,
+    "median_abs_error_pct": 17.3,
+    "mean_error_pct": -17.3,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   },
+   "3": {
+    "n": 20,
+    "median_abs_error_pct": 16.9,
+    "mean_error_pct": -16.8,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   },
+   "5": {
+    "n": 20,
+    "median_abs_error_pct": 15.4,
+    "mean_error_pct": -15.7,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   },
+   "10": {
+    "n": 20,
+    "median_abs_error_pct": 14.7,
+    "mean_error_pct": -15.0,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   },
+   "20": {
+    "n": 20,
+    "median_abs_error_pct": 14.9,
+    "mean_error_pct": -14.9,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   },
+   "40": {
+    "n": 1,
+    "median_abs_error_pct": 14.5,
+    "mean_error_pct": -14.5,
+    "ci80_coverage": 0.0,
+    "ci95_coverage": 0.0
+   }
+  }
+ },
+ "demo_V07": {
+  "label": "SIMULATED: checked against the simulator's hidden usable capacity",
+  "estimate_kwh": 37.08,
+  "truth_kwh": 32.87,
+  "error_pct": 12.8,
+  "in_ci80": false,
+  "in_ci95": true,
+  "summary": "Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False."
+ },
+ "runtime_s": 31.0
+}
