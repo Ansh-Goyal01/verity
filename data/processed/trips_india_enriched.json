@@ -1,0 +1,22 @@
+{
+ "schema": "verity.trips_india_enriched.v1",
+ "is_simulated": false,
+ "label": "REAL: public self-reported Indian trips (verified=yes rows only)",
+ "generated_at": "2026-11-12T16:27:03+00:00",
+ "n_rows_in_corpus": 6,
+ "n_selected": 0,
+ "summary": {
+  "n_records": 0,
+  "n_routed": 0,
+  "n_with_weather": 0,
+  "n_with_segments": 0,
+  "n_distance_flagged": 0,
+  "by_record_type": {
+   "soc_trip": 0,
+   "consumption": 0,
+   "range_test": 0
+  }
+ },
+ "requests_made_total": 12,
+ "records": []
+}

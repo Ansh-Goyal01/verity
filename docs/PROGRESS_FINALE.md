@@ -8,7 +8,7 @@ Scope of this session (user instruction 2026-11-12): F0, F1 and F2 only, then st
 - [x] F0 Pre-flight
 - [x] F1 Collection kit for the teammate
 - [x] F2 Vehicle specs
-- [ ] F3 Enrichment
+- [x] F3 Enrichment
 - [ ] F4 E1-India (real, public, self-reported)
 - [ ] F5 Charger evidence
 - [ ] F6 Voice of customer from app reviews
@@ -62,3 +62,15 @@ manufacturer brochures (e.g. Mahindra XEV 9e brochure PDF linked on its page), a
 mass and power, and kerb mass for Tiago EV, MG ZS EV and MG Comet EV. Gross vs usable kWh and drag figures
 were not on any fetched page. Each model maps to an engine prior via verity.vehicles.classify (pinned by test);
 every make/model in trips_india.csv has a spec row (pinned by test). No engine change.
+
+## F3 Enrichment (2026-11-12)
+
+Built engine/verity/enrich.py and scripts/enrich_trips.py (`uv run python scripts/enrich_trips.py`):
+geocode (Nominatim, cached, 1 req/s), OSRM route with a >15 % distance-mismatch flag, Open-Meteo elevation
+profile, Open-Meteo archive weather at the route midpoint, 1 km physics segments; a provenance string on
+every value. Real output data/processed/trips_india_enriched.json: n_selected = 0 (no row is verified=yes
+yet), so it is empty by design and re-runs as rows are verified. Live plumbing check on draft rows
+(results/dev/, not a result) worked end to end and already flags T0001: reported 302 km vs 126 km routed
+Kolkata to Midnapore (140 % mismatch), consistent with the open question in its note. T0001 has no trip or
+publication date, so its weather is "missing" until the teammate adds one. Network note: geocoders were
+briefly unreachable over TLS from this machine, then recovered; see DECISIONS. tests/test_enrich.py: 7 tests.
