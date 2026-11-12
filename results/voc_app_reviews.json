@@ -1,0 +1,13 @@
+{
+ "experiment": "F6 voice of customer (app reviews)",
+ "is_simulated": false,
+ "label": "REAL: hand-collected public app-store reviews (text kept private)",
+ "generated_at": "2026-11-12T17:17:35+00:00",
+ "method": "sarvam-chat",
+ "model": "sarvam-105b",
+ "n_review_rows": 0,
+ "n_with_private_text": 0,
+ "paid_calls": [],
+ "status": "NOT_RUN",
+ "why": "no review rows joined with data/private/app_reviews_text.csv yet"
+}

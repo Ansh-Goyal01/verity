@@ -10,8 +10,10 @@ The API key is read from SARVAM_API_KEY (.env), sent only in a request header, a
 from __future__ import annotations
 
 import base64
+import json
 import re
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 from email import policy
 from email.parser import BytesParser
 from pathlib import Path
@@ -26,7 +28,14 @@ TTS_PATH = "/text-to-speech"  # UNVERIFIED
 KEY_HEADER = "api-subscription-key"  # UNVERIFIED
 STT_MODEL = "saaras:v3"  # per CLAUDE.md; UNVERIFIED id
 TTS_MODEL = "bulbul:v3"  # per CLAUDE.md; UNVERIFIED id
+# Verified against docs.sarvam.ai on 2026-11-12 (F6): chat completions and translation.
+CHAT_PATH = "/v1/chat/completions"  # Authorization: Bearer <key> (+ api-subscription-key)
+CHAT_MODEL = "sarvam-105b"  # also listed: sarvam-105b-conversations; "10 Indic languages along with English"
+TRANSLATE_PATH = "/translate"  # fields input, source_language_code ('auto' with mayura:v1), target_language_code
+TRANSLATE_MODEL = "mayura:v1"  # max 1000 characters of input
 TIMEOUT_S = 30.0
+CHAT_TIMEOUT_S = 90.0  # a 30 s read timed out on the first real chat call (2026-11-12)
+# reasoning_effort: the docs list none|low|medium|high|max, but the live API (2026-11-12) accepts only low|medium|high.
 
 
 class VoiceUnavailable(RuntimeError):
@@ -37,6 +46,7 @@ class VoiceUnavailable(RuntimeError):
 class SarvamClient:
     api_key: str
     client: httpx.Client
+    calls: list[dict] = field(default_factory=list)  # paid-call log: path, model, ok, ms (never text or key)
 
     @classmethod
     def from_env(cls, env_path: Path | None = None, client: httpx.Client | None = None) -> SarvamClient | None:
@@ -45,13 +55,53 @@ class SarvamClient:
             return None
         return cls(key, client or httpx.Client(base_url=SARVAM_BASE, timeout=TIMEOUT_S))
 
-    def _post(self, path: str, **kwargs) -> dict:
+    def _post(self, path: str, model: str = "", bearer: bool = False, **kwargs) -> dict:
+        headers = {KEY_HEADER: self.api_key, **({"Authorization": f"Bearer {self.api_key}"} if bearer else {})}
+        t0, status = time.perf_counter(), None
         try:
-            resp = self.client.post(path, headers={KEY_HEADER: self.api_key}, **kwargs)
+            resp = self.client.post(path, headers=headers, **kwargs)
+            status = resp.status_code
+            if 400 <= status < 500:  # the server's own message says which field is wrong; never echo the key
+                self._log(path, model, False, status, t0)
+                detail = resp.text[:300].replace(self.api_key, "***")
+                raise VoiceUnavailable(f"voice service error: HTTP {status}: {detail}")
             resp.raise_for_status()
-            return resp.json()
+            data = resp.json()
+            self._log(path, model, True, status, t0)
+            return data
         except (httpx.HTTPError, ValueError) as exc:  # the message never contains the key (it is only in a header)
-            raise VoiceUnavailable(f"voice service error: {type(exc).__name__}") from exc
+            self._log(path, model, False, status, t0)
+            raise VoiceUnavailable(f"voice service error: {type(exc).__name__}"
+                                   + (f" (HTTP {status})" if status else "")) from exc
+
+    def _log(self, path: str, model: str, ok: bool, status: int | None, t0: float) -> None:
+        self.calls.append({"path": path, "model": model, "ok": ok, "http_status": status,
+                           "ms": int(round(1000 * (time.perf_counter() - t0)))})
+
+    def chat_json(self, system: str, user: str, schema: dict, name: str = "labels") -> dict:
+        """One chat completion with Structured Outputs (json_schema); returns the parsed JSON object."""
+        body = {"model": CHAT_MODEL, "temperature": 0.0, "reasoning_effort": "low", "max_tokens": 4096,
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                "response_format": {"type": "json_schema", "json_schema": {"name": name, "schema": schema}}}
+        data = self._post(CHAT_PATH, CHAT_MODEL, bearer=True, json=body, timeout=CHAT_TIMEOUT_S)
+        try:
+            choice = data["choices"][0]
+            content = choice["message"].get("content") or ""
+        except (KeyError, IndexError, TypeError, AttributeError) as exc:
+            raise VoiceUnavailable(f"chat response has no choices ({type(exc).__name__})") from exc
+        try:
+            return json.loads(content[content.find("{"): content.rfind("}") + 1])
+        except ValueError as exc:  # sizes only: the content may echo review text
+            reasoning = choice["message"].get("reasoning_content") or ""
+            raise VoiceUnavailable(f"chat returned no JSON object (finish_reason={choice.get('finish_reason')}, "
+                                   f"content_chars={len(content)}, reasoning_chars={len(reasoning)}, "
+                                   f"usage={data.get('usage')})") from exc
+
+    def translate(self, text: str, target: str = "en-IN", source: str = "auto") -> str:
+        data = self._post(TRANSLATE_PATH, TRANSLATE_MODEL, json={
+            "input": text[:1000], "source_language_code": source, "target_language_code": target,
+            "model": TRANSLATE_MODEL})
+        return str(data.get("translated_text", ""))
 
     def tts(self, text: str, language: str) -> dict:
         """Text -> ``{"audio_base64": ..., "format": "wav"}``."""

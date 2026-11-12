@@ -11,7 +11,7 @@ Sessions (user instructions 2026-11-12): F0-F2, then F3-F4, then F5-F7, each fol
 - [x] F3 Enrichment
 - [x] F4 E1-India (real, public, self-reported)
 - [x] F5 Charger evidence
-- [ ] F6 Voice of customer from app reviews
+- [x] F6 Voice of customer from app reviews
 - [ ] F7 Sarvam voice loop
 - [ ] F8 Engine upgrades
 - [ ] F9 Range Passport
@@ -99,3 +99,16 @@ type, app 'available' within +-48 h of a dated failure, operator-app rated kW, E
 Real run today: **0 usable evidence rows, 0 snapshots, 0 reports; E3-real NOT_RUN (n=0)**. The CSVs are still
 header-only; Neo4j was not contacted (nothing to write). results/e3_real_evidence.json says so.
 tests/test_evidence.py: 10 tests (synthetic in-test rows only).
+
+## F6 Voice of customer (2026-11-12)
+
+Built engine/verity/voc.py (Asensio categories + claim types, prompt, JSON schema, strict label parser, keyword
+baseline, accuracy with Wilson CI, Cohen's kappa, category shares with CIs) and experiments/voc_app_reviews.py
+(`uv run python experiments/voc_app_reviews.py`; `--method keyword` = no paid calls; `--smoke` = one call on a
+fictional sentence). SarvamClient gained verified chat_json (POST /v1/chat/completions, sarvam-105b, Bearer +
+api-subscription-key) and translate (POST /translate, mayura:v1) plus a paid-call log (path, model, status, ms).
+Method choice (logged in DECISIONS): Sarvam's own text model on the original Hindi / Hinglish / English text.
+Paid calls this session: 5 chat calls, all on the fictional SMOKE_TEXT (timeout, two HTTP 400 that revealed the
+live reasoning_effort values, one empty 200, one success in 22.9 s); no review text was sent.
+Real run: **NOT_RUN** (app_reviews.csv has 0 rows; data/private/app_reviews_text.csv not on this machine).
+tests/test_voc.py: 7 tests (mock transport only).
