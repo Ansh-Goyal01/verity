@@ -6,7 +6,7 @@ Scope of this session (user instruction 2026-11-12): F0, F1 and F2 only, then st
 ## Checklist
 
 - [x] F0 Pre-flight
-- [ ] F1 Collection kit for the teammate
+- [x] F1 Collection kit for the teammate
 - [ ] F2 Vehicle specs
 - [ ] F3 Enrichment
 - [ ] F4 E1-India (real, public, self-reported)
@@ -40,3 +40,14 @@ Scope of this session (user instruction 2026-11-12): F0, F1 and F2 only, then st
 |---|---|---|---|
 | R4b BMW i3 evaluation | `uv run python -m verity.datasets.bmw_i3` reported the raw folder data/raw/bmw_i3/ missing or empty; the dataset is downloaded by hand from IEEE DataPort (DOI 10.21227/6jr9-5235) after sign-in. | Put the 70 TripXnn.csv files and Overview.xlsx directly in data/raw/bmw_i3/; the loader check must say `loader_ready`, `n_trips=70`. Then freeze training-only exclusions and run the held-out evaluation exactly once, keeping the fixed split. | **Raw data now present**: loader check returns `loader_ready`, `n_trips=70` (72 files in the folder). The held-out evaluation itself is still NOT DONE; it belongs to F9 in this track. |
 | R5 Sarvam verification | `SARVAM_API_KEY` absent from .env, so no endpoint, auth header, field or model-id verification and no TTS/STT call was made. | Add the key to .env locally; verify the current official endpoints, header, request fields and model ids from Sarvam's docs; make at most one TTS and one STT call; stop on authentication failure; never log the key. | **Key now present** in .env (presence checked only; value never printed). No call made yet; verification belongs to F7. |
+
+## F1 Collection kit (2026-11-12)
+
+Built: data/corpus/ with header-only templates trips_india.csv, charger_evidence.csv,
+app_status_snapshots.csv, app_reviews.csv (no review text); data/private/ gitignored for
+app_reviews_text.csv (review_id, text). Column specs, allowed values and ranges in engine/verity/corpus.py
+(single source of truth for later pipelines); scripts/validate_corpus.py prints per-row messages using
+spreadsheet row numbers and exits 1 on any ERROR. docs/DATA_COLLECTION_GUIDE.md for the teammate.
+Seeded six trips (T0001-T0006) from the task text, all verified=no; each note says what the human must check
+or fill (e.g. T0004 start SoC, T0002 route, T0001 one-way question). Validator on the committed corpus:
+0 errors, 6 rows, 0 usable in results (none verified yet). tests/test_corpus.py: 22 tests.

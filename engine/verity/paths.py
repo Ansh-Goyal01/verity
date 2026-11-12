@@ -10,5 +10,7 @@ SIM_DIR = DATA_DIR / "sim"
 SPLITS_DIR = DATA_DIR / "splits"
 CACHE_DIR = DATA_DIR / "cache"
 PROCESSED_DIR = DATA_DIR / "processed"
+CORPUS_DIR = DATA_DIR / "corpus"  # hand-collected public evidence (REAL, committed, no private text)
+PRIVATE_DIR = DATA_DIR / "private"  # gitignored: full review text and anything else never committed
 RESULTS_DIR = REPO_ROOT / "results"
 DOCS_DIR = REPO_ROOT / "docs"

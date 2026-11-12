@@ -22,3 +22,6 @@ web/dist/
 data/sim/dev/
 results/dev/
 results/logs/
+
+# Private text (full app-review text, anything with personal data): never committed
+data/private/
