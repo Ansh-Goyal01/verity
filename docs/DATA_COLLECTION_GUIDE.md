@@ -13,6 +13,7 @@ There are four files to fill in `data/corpus/`, plus one private file (vehicle s
 | `trips_india.csv` | one real trip, consumption figure or range test of an Indian EV | We test our range forecasts against real Indian driving, not just our own simulator |
 | `charger_evidence.csv` | one dated public report that a specific charger worked or failed | Our charger-trust model learns which sources to believe from real reports |
 | `app_status_snapshots.csv` | what an operator app showed for a charger at one moment | We can check how often the app said "available" when people said it was broken |
+| `charger_match_overrides.csv` | your confirmation that an evidence row or snapshot is a specific charger in our directory | Rows the computer could not match safely are listed in `data/processed/charger_evidence_review.csv`; you settle each one by hand |
 | `app_reviews.csv` | one app-store review, **paraphrased** (no review text) | We measure what drivers complain about, as published research did for the USA |
 | `data/private/app_reviews_text.csv` | the full review text | Needed to test automatic classification; it is **never** uploaded to GitHub (see step 6) |
 
@@ -118,6 +119,16 @@ Nature Sustainability 2020, who did this for 127,257 US charging-station reviews
 
 The full review text goes in a **separate** sheet with just two columns, `review_id,text`, saved as
 `app_reviews_text.csv`. It never goes to GitHub (step 6).
+
+**charger_match_overrides.csv.** After a pipeline run, open `data/processed/charger_evidence_review.csv`.
+Each line is a row the computer could not match to a charger (with the reason and the nearest candidate id).
+Open the row's link, find the charger in `data/processed/chargers_ncr.json` (search its name), and add one line
+here only if you are sure. FICTIONAL EXAMPLE:
+
+```
+row_id,charger_id,confirmed_by,notes
+E0007,CH-0042,your-initials,same map pin and same operator name
+```
 
 ## Working in Google Sheets, step by step
 

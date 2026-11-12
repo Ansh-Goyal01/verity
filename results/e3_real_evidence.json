@@ -1,0 +1,117 @@
+{
+ "experiment": "F5 real charger evidence + E3-real",
+ "is_simulated": false,
+ "label": "REAL: hand-collected public charger evidence (verified=yes rows only)",
+ "generated_at": "2026-11-12T17:03:11+00:00",
+ "inputs": {
+  "evidence_rows_usable": 0,
+  "snapshot_rows_usable": 0,
+  "match_overrides": 0,
+  "directory_chargers": 207
+ },
+ "matching": {
+  "evidence": {
+   "n_rows": 0,
+   "n_matched": 0,
+   "by_method": {}
+  },
+  "snapshots": {
+   "n_rows": 0,
+   "n_matched": 0,
+   "by_method": {}
+  },
+  "n_review": 0,
+  "review_file": "data/processed/charger_evidence_review.csv"
+ },
+ "n_reports": 0,
+ "channels": [
+  {
+   "channel": "google_review",
+   "source_id": "public:google_review",
+   "n_rows": 0,
+   "n_reports": 0,
+   "sensitivity": null,
+   "specificity": null
+  },
+  {
+   "channel": "plugshare",
+   "source_id": "public:plugshare",
+   "n_rows": 0,
+   "n_reports": 0,
+   "sensitivity": null,
+   "specificity": null
+  },
+  {
+   "channel": "operator_app",
+   "source_id": "public:operator_app",
+   "n_rows": 0,
+   "n_reports": 0,
+   "sensitivity": null,
+   "specificity": null
+  },
+  {
+   "channel": "x_post",
+   "source_id": "public:x_post",
+   "n_rows": 0,
+   "n_reports": 0,
+   "sensitivity": null,
+   "specificity": null
+  },
+  {
+   "channel": "forum",
+   "source_id": "public:forum",
+   "n_rows": 0,
+   "n_reports": 0,
+   "sensitivity": null,
+   "specificity": null
+  },
+  {
+   "channel": "news",
+   "source_id": "public:news",
+   "n_rows": 0,
+   "n_reports": 0,
+   "sensitivity": null,
+   "specificity": null
+  }
+ ],
+ "charger_trust": [],
+ "working_rates": {
+  "n_reports": 0,
+  "by_operator": [],
+  "by_site_type": []
+ },
+ "app_vs_failures": {
+  "window_hours": 48.0,
+  "n_failure_reports": 0,
+  "n_with_snapshots_in_window": 0,
+  "n_app_showed_available": 0,
+  "rate": null,
+  "ci95": null,
+  "thin": true,
+  "cases": []
+ },
+ "rated_kw_from_apps": {
+  "n_chargers": 0,
+  "file": "data/processed/charger_rated_kw_from_apps.json"
+ },
+ "graph": {
+  "in_memory": {
+   "n_chargers": 0,
+   "n_reports": 0,
+   "sources": []
+  },
+  "neo4j": "skipped: no real evidence rows yet"
+ },
+ "notes": [
+  "Rows with verified != yes and rows with validator ERRORs are excluded.",
+  "Evidence with no time is placed at 12:00 IST (+-12 h).",
+  "Groups with n_reports < 5 are marked thin: quote them as anecdotes, not rates."
+ ],
+ "e3_real": {
+  "label": "REAL trips + REAL evidence; planner inputs as in F4 (vehicle prior, AC on when unknown)",
+  "n_trips": 0,
+  "skipped": [],
+  "status": "NOT_RUN",
+  "why": "no verified soc_trip with a routed origin/destination inside the NCR / Noida-Agra boxes yet"
+ }
+}

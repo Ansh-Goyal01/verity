@@ -283,7 +283,21 @@ VEHICLES = FileSpec(
     extra_checks=(_every_value_cited,),
 )
 
-SPECS: tuple[FileSpec, ...] = (TRIPS, CHARGER_EVIDENCE, APP_SNAPSHOTS, APP_REVIEWS, VEHICLES)
+# ---------------------------------------------------------------- charger_match_overrides.csv (human-confirmed)
+# Resolves the F5 review list: a person opens the row's link, finds the charger in the directory and writes its id.
+MATCH_OVERRIDES = FileSpec(
+    filename="charger_match_overrides.csv",
+    id_column="row_id",
+    columns=(
+        Col("row_id", always=True),  # an evidence_id (E...) or snapshot_id (S...)
+        Col("charger_id", always=True),  # a directory id such as CH-0042 (data/processed/chargers_ncr.json)
+        Col("confirmed_by", always=True),
+        Col("notes"),
+    ),
+    has_verified=False,
+)
+
+SPECS: tuple[FileSpec, ...] = (TRIPS, CHARGER_EVIDENCE, APP_SNAPSHOTS, APP_REVIEWS, VEHICLES, MATCH_OVERRIDES)
 PRIVATE_REVIEW_TEXT = "app_reviews_text.csv"  # lives in data/private/ (gitignored), never data/corpus/
 PRIVATE_REVIEW_HEADER = ["review_id", "text"]
 

@@ -1,7 +1,7 @@
 # Finale build progress (F0–F12)
 
 Authority: docs/TASKS_FINALE.md. Commit directly to main, local only; one commit per milestone ("F<n>: ...").
-Scope of this session (user instruction 2026-11-12): F0, F1 and F2 only, then stop. F3+ not started.
+Sessions (user instructions 2026-11-12): F0-F2, then F3-F4, then F5-F7, each followed by a stop.
 
 ## Checklist
 
@@ -10,7 +10,7 @@ Scope of this session (user instruction 2026-11-12): F0, F1 and F2 only, then st
 - [x] F2 Vehicle specs
 - [x] F3 Enrichment
 - [x] F4 E1-India (real, public, self-reported)
-- [ ] F5 Charger evidence
+- [x] F5 Charger evidence
 - [ ] F6 Voice of customer from app reviews
 - [ ] F7 Sarvam voice loop
 - [ ] F8 Engine upgrades
@@ -86,3 +86,16 @@ regression), MAE + 50/80/90 % coverage with Wilson CIs, PRELIMINARY below held-o
 ForecastRuns.energy_kwh. tests/test_india_eval.py: 14 tests (synthetic in-test records only).
 Note for the teammate: E1-India needs verified rows from several different source pages; rows from one page
 always share a side of the split, so ~30 % of pages (not rows) become the held-out set.
+
+## F5 Charger evidence (2026-11-12)
+
+Built engine/verity/evidence.py (pure: matching, dated items, one report per row, rated kW, analyses) and
+experiments/e3_real_evidence.py (`uv run python experiments/e3_real_evidence.py`). New human-confirmation file
+data/corpus/charger_match_overrides.csv (header only; validated like the other corpus files) resolves the review
+list data/processed/charger_evidence_review.csv. One Source per channel (`public:google_review`, ...), REPORTED
+edges is_simulated=false in memory and in Neo4j when it answers; per-channel sensitivity/specificity from the
+Dawid-Skene engine (rings off for channels). Analyses with n and Wilson CIs: working rate by operator and site
+type, app 'available' within +-48 h of a dated failure, operator-app rated kW, E3-real.
+Real run today: **0 usable evidence rows, 0 snapshots, 0 reports; E3-real NOT_RUN (n=0)**. The CSVs are still
+header-only; Neo4j was not contacted (nothing to write). results/e3_real_evidence.json says so.
+tests/test_evidence.py: 10 tests (synthetic in-test rows only).
