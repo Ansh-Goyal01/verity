@@ -40,6 +40,7 @@ from .forecast import (
 )
 from .physics import total_mass_kg
 from .schemas import ChargerRecord
+from .sites import WorksSampler, assign_sites, p_all_fail
 from .trust.engine import ChargerTrust
 from .trust.graph import ChargerGraph, InMemoryGraph, Leg
 from .vehicles import get_prior
@@ -67,6 +68,14 @@ EXTRA_CHARGE_MIN = 10.0
 BINGO_SUBSAMPLE = 1000
 MIN_CALIBRATED_TRIPS = 1
 MIN_STOP_MINUTES = 4.0  # a stop that adds less charging than this is not worth its 6-minute overhead
+DETOUR_SPEED_KMH = 25.0  # speed on the access road between the route and an off-route charger (approximate - verify)
+# Minutes lost when stranded: waiting for a tow or mobile charger plus the rest of the shift. Assumption
+# (approximate - verify), used only to rank plans that already meet the confidence target.
+STRANDING_PENALTY_MIN = 240.0
+K_RELIABLE = 3  # extra candidates ranked by reliability (F8d)
+RELIABILITY_WEIGHT_MIN = 600.0  # edge weight per unit of failure probability for the reliability-ranked chains
+K_SPATIAL = 2  # extra candidates avoiding the Sites and the stretch of the cheapest chain (F8d)
+SPATIAL_SEP_KM = 15.0  # a spatially distinct chain stops at least this far (km along the route) from it
 
 BREAKDOWN_LABELS = {"rolling": "Rolling resistance", "aero": "Air drag", "grade": "Climbs", "inertia": "Stop-and-go",
                     "regen": "Regenerative braking", "aux": "AC and electronics", "charging": "Charging stops"}
@@ -85,6 +94,13 @@ class Node:
     kw: float | None
     charger: ChargerRecord | None = None
     trust: ChargerTrust | None = None
+    site: str = ""  # Site id (chargers within ~150 m); "" = a Site of its own
+    detour_min: float = 0.0  # there and back between the route and the charger
+    wait_min: float = 0.0  # expected queue wait from queue evidence
+
+    @property
+    def site_id(self) -> str:
+        return self.site or self.id
 
 
 @dataclass(frozen=True, eq=False)
@@ -144,6 +160,7 @@ class PlanEval:
     used_in: list[Array]
     trace: Array
     ctx: Ctx
+    lost_minutes: Array | None = None  # minutes + stranding penalty: the objective plans minimise (F8a)
 
     @property
     def confidence(self) -> float:
@@ -153,13 +170,20 @@ class PlanEval:
     def mean_minutes(self) -> float:
         return float(self.minutes.mean())
 
+    @property
+    def expected_lost_minutes(self) -> float:
+        return float((self.minutes if self.lost_minutes is None else self.lost_minutes).mean())
+
 
 # --- nodes, graph, candidates -----------------------------------------------------------------------------
 
 
 def make_nodes(route_chargers: Sequence[RouteCharger], trust: dict[str, ChargerTrust], *, trust_aware: bool = True,
-               prior_p: float = 0.82) -> list[Node]:
-    """Route chargers as planning nodes. A reliability-blind planner (E3) assumes every charger works."""
+               prior_p: float = 0.82, queue_wait_min: dict[str, float] | None = None) -> list[Node]:
+    """Route chargers as planning nodes. A reliability-blind planner (E3) assumes every charger works.
+    Chargers within ~150 m share a Site (correlated failures); the detour is there and back at DETOUR_SPEED_KMH."""
+    sites = assign_sites([(rc.charger.id, rc.charger.lat, rc.charger.lon) for rc in route_chargers])
+    waits = queue_wait_min or {}
     nodes = []
     for rc in route_chargers:
         t = trust.get(rc.charger.id)
@@ -170,7 +194,9 @@ def make_nodes(route_chargers: Sequence[RouteCharger], trust: dict[str, ChargerT
         else:
             p, lo, hi = prior_p, max(prior_p - 0.3, 0.05), min(prior_p + 0.1, 1.0)
         kw = max((c.kw for c in rc.charger.connectors), default=None)
-        nodes.append(Node(rc.charger.id, rc.km_along, float(p), float(lo), float(hi), kw, rc.charger, t))
+        nodes.append(Node(rc.charger.id, rc.km_along, float(p), float(lo), float(hi), kw, rc.charger, t,
+                          sites[rc.charger.id], 2.0 * rc.offset_km / DETOUR_SPEED_KMH * 60.0,
+                          float(waits.get(rc.charger.id, 0.0))))
     return sorted(nodes, key=lambda n: n.km)
 
 
@@ -296,8 +322,31 @@ def _drop_best_effort(graph: ChargerGraph, scope: str) -> None:
         log.warning("could not drop the legs of scope %s (%s); the periodic sweep will", scope, type(exc).__name__)
 
 
+def diverse_paths(adj: dict[str, dict[str, float]], nodes: Sequence[Node], k: int = K_CANDIDATES, *,
+                  diversity: bool = True) -> list[list[str]]:
+    """Candidate chains as charger-id lists: the ``k`` cheapest by expected minutes, then (F8d) reliability-ranked
+    chains (edges out of a charger cost RELIABILITY_WEIGHT_MIN more per unit of failure probability) and spatially
+    distinct chains (no stop at a Site of the cheapest chain or within SPATIAL_SEP_KM of its stops)."""
+    found = [p[1:-1] for _, p in k_shortest_paths(adj, "START", "END", k)]
+    if not diversity:
+        return found
+    by_id = {n.id: n for n in nodes}
+    risky = {a: {b: w + (RELIABILITY_WEIGHT_MIN * (1.0 - by_id[a].p_works) if a in by_id else 0.0)
+                 for b, w in out.items()} for a, out in adj.items()}
+    extra = [p[1:-1] for _, p in k_shortest_paths(risky, "START", "END", K_RELIABLE)]
+    if found and found[0]:
+        base = [by_id[i] for i in found[0]]
+        banned = {n.id for n in nodes if any(n.site_id == b.site_id or abs(n.km - b.km) < SPATIAL_SEP_KM for b in base)}
+        apart = {a: {b: w for b, w in out.items() if b not in banned} for a, out in adj.items() if a not in banned}
+        extra += [p[1:-1] for _, p in k_shortest_paths(apart, "START", "END", K_SPATIAL)]
+    for p in extra:
+        if p not in found:
+            found.append(p)
+    return found
+
+
 def propose_paths(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool, k: int = K_CANDIDATES,
-                  graph: ChargerGraph | None = None) -> tuple[list[list[Node]], ChargerGraph]:
+                  graph: ChargerGraph | None = None, diversity: bool = True) -> tuple[list[list[Node]], ChargerGraph]:
     """Candidate charging chains. With an external ``graph`` (Neo4j) the LEGs live there under a fresh scope for
     the duration of this call only and are dropped afterwards, so concurrent plans never see each other's legs."""
     scope = uuid.uuid4().hex if graph is not None else ""
@@ -305,8 +354,8 @@ def propose_paths(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool, k: int 
         leg_graph, _ = build_leg_graph(ctx, nodes, trust_aware=trust_aware, graph=graph, scope=scope)
         ids = ["START"] + [n.id for n in nodes] + ["END"]
         by_id = {n.id: n for n in nodes}
-        paths = [[by_id[i] for i in p[1:-1]]
-                 for _, p in k_shortest_paths(_adjacency(leg_graph, ids, scope), "START", "END", k)]
+        paths = [[by_id[i] for i in p]
+                 for p in diverse_paths(_adjacency(leg_graph, ids, scope), nodes, k, diversity=diversity)]
     finally:
         if graph is not None:
             _drop_best_effort(graph, scope)
@@ -322,6 +371,7 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
     else carry on if the next stop is still reachable, else stranded."""
     runs, n = ctx.runs, ctx.runs.n_runs
     p_of = lambda node: (p_override or {}).get(node.id, node.p_works)  # noqa: E731
+    sampler = WorksSampler(rng, n)  # chargers of one Site share common-cause failures (F8c)
     soc = np.full(n, ctx.start_soc)
     pos_km, pos_used = np.zeros(n), np.zeros(n)
     alive = np.ones(n, dtype=bool)
@@ -335,32 +385,37 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
         used_st = runs.used_at_km(node.km)
         arr = soc - (used_st - pos_used)
         stop_arrival.append(np.where(active, arr, np.nan))
-        works = rng.random(n) < p_of(node)
-        ok = active & (arr >= RES_STOP) & works
-        minutes = minutes + np.where(active & (arr >= RES_STOP) & ~works, FAILED_STOP_MIN, 0.0)
+        works = sampler.works(node.site_id, p_of(node))
+        tried = active & (arr >= RES_STOP)
+        ok = tried & works
+        minutes = minutes + np.where(tried, node.detour_min, 0.0) + np.where(tried & ~works, FAILED_STOP_MIN, 0.0)
         cur_km, cur_used, cur_soc = (np.where(ok, v, w) for v, w in ((node.km, pos_km), (used_st, pos_used), (arr, soc)))
+        cur_wait = np.where(ok, node.wait_min, 0.0)
         need = active & ~ok
         if use_alts:
             for alt in st.alts:
                 used_alt = runs.used_at_km(alt.km)
                 arr_alt = soc - (used_alt - pos_used)
-                can = need & (arr_alt >= RES_STOP) & (rng.random(n) < p_of(alt))
+                can = need & (arr_alt >= RES_STOP) & sampler.works(alt.site_id, p_of(alt))
                 cur_km, cur_used, cur_soc = (np.where(can, v, w) for v, w in
                                              ((alt.km, cur_km), (used_alt, cur_used), (arr_alt, cur_soc)))
+                cur_wait = np.where(can, alt.wait_min, cur_wait)
+                minutes = minutes + np.where(can, alt.detour_min, 0.0)
                 ok |= can
                 need &= ~can
         alive = alive & ~(need & (arr < RES_STOP))  # could not even reach the planned charger: stranded
         gain = np.where(ok, np.clip(st.charge_to - cur_soc, 0.0, 100.0 - cur_soc), 0.0)
         soc = np.where(ok, cur_soc + gain, soc)
         pos_km, pos_used = np.where(ok, cur_km, pos_km), np.where(ok, cur_used, pos_used)
-        minutes = minutes + np.where(ok, STOP_OVERHEAD_MIN + gain * ctx.min_per_pp(node), 0.0)
+        minutes = minutes + np.where(ok, STOP_OVERHEAD_MIN + gain * ctx.min_per_pp(node), 0.0) + cur_wait
         gains.append(gain)
     arrival = soc - (runs.total_used - pos_used)
     success = alive & (arrival >= RESERVE_PCT)
+    lost = minutes + np.where(success, 0.0, STRANDING_PENALTY_MIN)
     trace = ctx.start_soc - runs.soc_used_cum
     for st, gain in zip(stops, gains):
         trace = trace + np.where(runs.km_end >= st.node.km, 1.0, 0.0)[None, :] * gain[:, None]
-    return PlanEval(success, arrival, minutes, gains, stop_arrival, alive_in, soc_in, used_in, trace, ctx)
+    return PlanEval(success, arrival, minutes, gains, stop_arrival, alive_in, soc_in, used_in, trace, ctx, lost)
 
 
 # --- Bingo Line, point of no return -----------------------------------------------------------------------
@@ -378,15 +433,14 @@ def bingo_line(ctx: Ctx, stops: Sequence[Stop], nodes: Sequence[Node], rng: np.r
     for si, km in enumerate(runs.km_end):
         used_x = runs.soc_used_cum[sub, si]
         planned = next((s.node for s in stops if s.node.km > km), None)
-        cands: list[tuple[Array, float, float]] = [(dest_used - used_x, 1.0, RESERVE_PCT)]
+        cands: list[tuple[Array, float, float, str]] = [(dest_used - used_x, 1.0, RESERVE_PCT, "__destination__")]
         for n in nodes:
             if km < n.km <= km + ALT_AHEAD_KM or (planned is not None and n.id == planned.id):
-                cands.append((node_used[n.id] - used_x, n.p_works, RES_STOP))
+                cands.append((node_used[n.id] - used_x, n.p_works, RES_STOP, n.site_id))
         energy = np.stack([c[0] for c in cands])  # (C, n)
-        p = np.array([c[1] for c in cands])[:, None, None]
         res = np.array([c[2] for c in cands])[:, None, None]
         reach = (grid[None, None, :] - energy[:, :, None]) >= res  # (C, n, G)
-        fail = np.prod(1.0 - p * reach, axis=0)  # (n, G): probability that every candidate fails
+        fail = p_all_fail([c[1] for c in cands], [c[3] for c in cands], reach)  # (n, G), Site-correlated (F8c)
         prob = 1.0 - fail.mean(axis=0)  # (G,)
         ok = np.nonzero(prob >= ctx.target)[0]
         bingo = float(grid[ok[0]]) if len(ok) else 100.0
@@ -466,9 +520,11 @@ def _build_ctx(vehicle: VehicleContext, route: PlannedRoute, start_soc: float, t
 
 
 def _choose(ctx: Ctx, nodes: Sequence[Node], rng: np.random.Generator, *, trust_aware: bool,
-            use_alts: bool = True, graph: ChargerGraph | None = None
+            use_alts: bool = True, graph: ChargerGraph | None = None, diversity: bool = True
             ) -> tuple[list[Stop], PlanEval, list[tuple[list[Stop], PlanEval]]]:
-    paths, _ = propose_paths(ctx, nodes, trust_aware=trust_aware, graph=graph)
+    """Among plans meeting the confidence target, the one with the fewest expected lost minutes (driving, detours,
+    charging, queueing, failed stops and the stranding penalty, F8a); otherwise the most reliable one."""
+    paths, _ = propose_paths(ctx, nodes, trust_aware=trust_aware, graph=graph, diversity=diversity)
     if [] not in paths:
         paths.append([])  # the no-stop plan is always scored, even when infeasible (then it simply fails)
     scored = []
@@ -484,21 +540,21 @@ def _choose(ctx: Ctx, nodes: Sequence[Node], rng: np.random.Generator, *, trust_
     meeting = [s for s in scored if s[1].confidence >= ctx.target]
     # With nothing meeting the target, prefer the most reliable plan, but compare confidence at the Monte
     # Carlo's own resolution (2 points) so a 3-stop plan does not beat a 1-stop plan on noise alone.
-    best = (min(meeting, key=lambda s: (s[1].mean_minutes, len(s[0]))) if meeting
-            else max(scored, key=lambda s: (round(s[1].confidence / 0.02), -s[1].mean_minutes)))
+    best = (min(meeting, key=lambda s: (s[1].expected_lost_minutes, len(s[0]))) if meeting
+            else max(scored, key=lambda s: (round(s[1].confidence / 0.02), -s[1].expected_lost_minutes)))
     return best[0], best[1], scored
 
 
 def plan_only(vehicle: VehicleContext, route: PlannedRoute, route_chargers: Sequence[RouteCharger],
               trust: dict[str, ChargerTrust], *, start_soc: float, target_confidence: float = 0.9, seed: int = 0,
               cfg: ForecastConfig = ForecastConfig(), trust_aware: bool = True,
-              graph: ChargerGraph | None = None) -> tuple[list[Stop], PlanEval, Ctx]:
+              graph: ChargerGraph | None = None, diversity: bool = True) -> tuple[list[Stop], PlanEval, Ctx]:
     """Propose and score candidate chains and return the chosen plan (no Bingo Line, levers or texts):
     the light path used by the simulation experiments E3 and E4."""
     rng = np.random.default_rng(seed)
     ctx = _build_ctx(vehicle, route, start_soc, target_confidence, rng, cfg)
     stops, ev, _ = _choose(ctx, make_nodes(route_chargers, trust, trust_aware=trust_aware), rng, trust_aware=trust_aware,
-                           graph=graph)
+                           graph=graph, diversity=diversity)
     return stops, ev, ctx
 
 
@@ -518,11 +574,12 @@ def dispatch(
     compute_levers: bool = True,
     highway_speed_mps: float | None = None,
     graph: ChargerGraph | None = None,
+    queue_wait_min: dict[str, float] | None = None,
 ) -> DispatchResult:
     t0 = time.perf_counter()
     rng = np.random.default_rng(seed)
     ctx = _build_ctx(vehicle, route, start_soc, target_confidence, rng, cfg, highway_speed_mps)
-    nodes = make_nodes(route_chargers, trust, trust_aware=trust_aware)
+    nodes = make_nodes(route_chargers, trust, trust_aware=trust_aware, queue_wait_min=queue_wait_min)
     stops, ev, _ = _choose(ctx, nodes, rng, trust_aware=trust_aware, graph=graph)
     conf = ev.confidence
 

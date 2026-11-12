@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import math
+import threading
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import TypeVar
@@ -33,6 +34,13 @@ BACKEND_FAILURES = (Neo4jError, DriverError, OSError)
 
 class GraphUnavailable(RuntimeError):
     """``prefer="neo4j"`` was requested but Neo4j cannot be used."""
+
+
+def _close_quietly(graph: Neo4jGraph) -> None:
+    try:
+        graph.close()
+    except Exception:  # noqa: BLE001 - closing a dead link may fail; we are already falling back
+        pass
 
 
 def usable_alternate(p_works: float, trust_level: str) -> bool:
@@ -59,11 +67,8 @@ class GraphHandle:
         old = self.neo4j
         self.graph, self.backend, self.reason = self.mirror, "memory", reason
         log.warning("graph backend: in-memory (%s)", reason)
-        if old is not None:
-            try:
-                old.close()
-            except Exception:  # noqa: BLE001 - closing a dead link may fail; we are already falling back
-                pass
+        if old is not None:  # closing a stalled link can itself hang: do it off the request thread (F8e)
+            threading.Thread(target=_close_quietly, args=(old,), name="neo4j-close", daemon=True).start()
 
     def call(self, fn: Callable[[ChargerGraph], T]) -> T:
         """Run ``fn`` on the graph in use; if Neo4j fails, switch to the mirror and run it again from scratch."""

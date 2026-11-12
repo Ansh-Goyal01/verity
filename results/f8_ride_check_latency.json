@@ -1,0 +1,20 @@
+{
+ "what": "POST /api/ride-check service call, in-memory graph, committed route bundle",
+ "calls": 30,
+ "n_runs": 1500,
+ "p50_s": 1.521,
+ "p95_s": 1.693,
+ "max_s": 3.059,
+ "target_p95_s": 5.0,
+ "meets_target": true,
+ "decisions": {
+  "INSUFFICIENT_EVIDENCE": 30
+ },
+ "machine": {
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.13.14",
+  "cpu_count": 12
+ },
+ "is_simulated": true,
+ "note": "Vehicle is a SIMULATED demo vehicle; timings are real on this machine."
+}

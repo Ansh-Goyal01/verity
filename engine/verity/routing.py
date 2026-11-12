@@ -31,6 +31,7 @@ from .paths import CACHE_DIR, PROCESSED_DIR
 from .trips import bearing_deg, haversine_m
 
 OSRM_URL = "https://router.project-osrm.org/route/v1/driving/{coords}"
+OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/{coords}"
 ELEVATION_URL = "https://api.open-meteo.com/v1/elevation"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
@@ -279,6 +280,63 @@ def build_route_snapshot(client: CachedClient, departure: datetime, origin: tupl
         "weather_points": [{**w, "km": round(float(s) / 1000.0, 1)} for w, s in zip(weather, w_s)],
         "segments": detail, "requests_made_total": client.requests_made(),
     }
+
+
+def fetch_table(client: CachedClient, origin: tuple[float, float],
+                destinations: list[tuple[float, float]]) -> list[tuple[float, float] | None]:
+    """Road (km, minutes) from ``origin`` to each destination in ONE OSRM table request (cached); None = no route."""
+    coords = ";".join(f"{lon:.5f},{lat:.5f}" for lat, lon in [origin, *destinations])
+    payload, _ = client.get_json(OSRM_TABLE_URL.format(coords=coords), {"sources": "0", "annotations": "distance,duration"})
+    if payload.get("code") != "Ok":
+        raise NetworkUnavailable(f"router table returned {payload.get('code')}")
+    dist, dur = payload["distances"][0][1:], payload["durations"][0][1:]
+    return [None if a is None or b is None else (float(a) / 1000.0, float(b) / 60.0) for a, b in zip(dist, dur)]
+
+
+def build_ride_snapshot(client: CachedClient, departure: datetime, current: tuple[float, float],
+                        pickup: tuple[float, float], drop: tuple[float, float]) -> dict:
+    """Route current position -> pickup -> drop with elevation and forecast weather (F8b ride check)."""
+    snap = build_route_snapshot(client, departure, current, drop, via=[pickup])
+    poly, km = np.array(snap["polyline"]), np.array(snap["polyline_km"])
+    d = haversine_m(np.full(len(poly), pickup[0]), np.full(len(poly), pickup[1]), poly[:, 0], poly[:, 1])
+    snap["origin"] = {"name": "Current position", "lat": current[0], "lon": current[1]}
+    snap["pickup"] = {"name": "Pickup", "lat": pickup[0], "lon": pickup[1]}
+    snap["destination"] = {"name": "Drop", "lat": drop[0], "lon": drop[1]}
+    snap["pickup_km"] = round(float(km[int(np.argmin(d))]), 2)
+    return snap
+
+
+def build_ride_bundle(client: CachedClient, departure: datetime, current: tuple[float, float],
+                      pickup: tuple[float, float], drop: tuple[float, float],
+                      candidates: list[tuple[str, list[str], float, float]]) -> dict:
+    """Ride snapshot plus the road legs from the drop to each candidate charger (id, source ids, lat, lon).
+    Without the router, legs are straight-line km x ROAD_FACTOR at URBAN_KMH, labelled SYNTHETIC fallback."""
+    from .ridecheck import ROAD_FACTOR, URBAN_KMH  # local import: ridecheck does not depend on routing
+
+    snap = build_ride_snapshot(client, departure, current, pickup, drop)
+    pts = [(lat, lon) for _, _, lat, lon in candidates]
+    try:
+        legs, source = (fetch_table(client, drop, pts) if pts else []), "osrm table"
+    except (NetworkUnavailable, RequestBudgetExceeded) as exc:
+        straight = haversine_m(np.full(len(pts), drop[0]), np.full(len(pts), drop[1]), np.array([p[0] for p in pts]),
+                               np.array([p[1] for p in pts])) / 1000.0
+        legs = [(float(s) * ROAD_FACTOR, float(s) * ROAD_FACTOR / URBAN_KMH * 60.0) for s in straight]
+        source = f"SYNTHETIC fallback ({type(exc).__name__})"
+    snap["after_drop_legs"] = [{"charger_id": cid, "source_ids": list(sids), "km": round(leg[0], 2),
+                                "minutes": round(leg[1], 1), "source": source}
+                               for (cid, sids, _, _), leg in zip(candidates, legs) if leg is not None]
+    snap["requests_made_total"] = client.requests_made()
+    return snap
+
+
+def snapshot_to_route(snap: dict, vtype: str = "car") -> PlannedRoute:
+    """A processed snapshot dict (no network) as a ``PlannedRoute``."""
+    seg = snap["segments"]
+    km_end = np.array(seg["km_end"])
+    length = np.diff(np.concatenate([[0.0], km_end])) * 1000.0
+    return PlannedRoute(vtype, length, np.array(seg["road_class"], dtype=int),
+                        np.arctan(np.array(seg["grade_pct"]) / 100.0), np.array(seg["temp_c"]),
+                        np.array(seg["headwind_mps"]))
 
 
 def load_planned_route(path: Path = ROUTE_FILE, vtype: str = "car") -> tuple[PlannedRoute, dict]:

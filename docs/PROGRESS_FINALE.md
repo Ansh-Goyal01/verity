@@ -13,7 +13,7 @@ Sessions (user instructions 2026-11-12): F0-F2, then F3-F4, then F5-F7, each fol
 - [x] F5 Charger evidence
 - [x] F6 Voice of customer from app reviews
 - [x] F7 Sarvam voice loop
-- [ ] F8 Engine upgrades
+- [x] F8 Engine upgrades
 - [ ] F9 Range Passport
 - [ ] F10 Driver demo scenario
 - [ ] F11 One command and documents
@@ -130,3 +130,38 @@ generated from the saved V12 demo output (GO, 95 %, Bingo 11 %; demo on the SIMU
 (gitignored). No real driver voice exists yet, so no driver_voice report is is_simulated=false.
 Paid Sarvam calls F7: 9 (TTS 6, STT 2, translate 1). tests/test_voice_loop.py: 13 tests (mock transport).
 Not done (outside F7's text): API endpoints for driver voice reports (an API_CONTRACT change; propose in F8/F10).
+
+## F8 Engine upgrades (2026-11-13)
+
+- (a) Objective: plans minimise expected LOST EARNING MINUTES (driving, detours, failed stops, queue wait from
+  'occupied' evidence, heat-derated charging, 240-min stranding penalty x P(stranded)) under the confidence target;
+  minutes -> rupees at an input rate. Demo default Rs 60/hour, labelled EXAMPLE, from CIS India 2024 (median net
+  taxi earnings INR 5,000 / median 84 h week, surveys 2021-22 incl. Delhi NCR; "per week" is our reading). DECISIONS F8a.
+- (b) POST /api/ride-check (docs/API_CONTRACT.md "Contract v2 additions", additive): engine/verity/ridecheck.py
+  (pure) + api/ride.py. Ride + after-drop leg in ONE Monte Carlo, primary charger + 2 backups, decision GO / NO_GO /
+  INSUFFICIENT_EVIDENCE, reason, minutes and rupees per part, every option with why it was (not) chosen, ride
+  Bingo Line, levers (AC off, verify a stale charger). Demo route Noida Sector 62 -> Sector 18 -> IGI T3 at
+  2026-11-13 19:00 IST fetched once (OSRM route + table, Open-Meteo elevation + forecast; 16 requests total in the
+  cache log) and committed as data/processed/ride_demo_noida_t3.json (41.5 km, 48.6 min, 23.5 degC). On it today,
+  with no evidence on the airport chargers, the ride check answers INSUFFICIENT_EVIDENCE with "verify" levers.
+- (c) Sites: chargers within 150 m form one Site; beta-factor common-cause failures (beta 0.5, assumption) in the
+  dispatch Monte Carlo, its Bingo Line and the ride check (sites.py). Aerocity: Hotel Pullman + Aloft = one Site.
+- (d) Candidates: + 3 reliability-ranked + 2 spatially distinct chains. results/f8_candidate_diversity_simulated.json
+  (SIMULATED, 100 trips per rate, same seeds): stranded 2 -> 3 (10 % down), 3 -> 2 (20 %), 6 -> 5 (40 %); plan changed
+  on 6-9 % of trips; planning +6-16 % time. **No measurable decision-quality gain at this n** (kept: it costs little
+  and guards cases the cheapest-6 set misses; differences are within noise).
+- (e) Neo4j: client-side deadline (35 s) per query on a daemon thread -> Neo4jStalled (OSError) -> mirror fallback;
+  the stalled driver is closed off-thread. Tested with a fake driver that never answers.
+- (f) Latency: results/f8_ride_check_latency.json: 30 ride checks, in-memory graph, 1,500 runs: **p50 1.52 s, p95
+  1.69 s, max 3.06 s** (target p95 < 5 s: met), Windows 11, 12 logical CPUs.
+- Re-runs after the changes (SIMULATED): E3 and E4 conclusions unchanged (trust-aware/dispatch strand far less than
+  blind/fixed), numbers moved because the Monte Carlo now draws Site-correlated failures and plans differ: E4 at
+  40 % chargers down: fixed 37.5 % [31.1, 44.4] vs dispatch 3.5 % [1.7, 7.0] (before F8: 33 % vs 6 %). E3/E4 planning
+  time per plan rose from ~0.1 s to ~0.3 s and a full dispatch on the real route from 1.6 s to 3.3-3.5 s
+  (measured standalone too: 3.35 s mean, 4.05 s max): more candidates are scored. The E3/E4 timings in their JSON were
+  taken while other experiments ran in parallel. Demo tests: the three fleet decisions (V07 NO_GO, V12 GO + DIVERT,
+  V19 INSUFFICIENT_EVIDENCE) are unchanged, no re-pin needed.
+- E3/E4's simulated world now places chargers at their km (lat 28 + km/111) instead of one shared point (needed for
+  Sites); disclosed in DECISIONS F8c.
+- Tests: tests/test_f8_engine.py (13), tests/test_ridecheck_api.py (7). Full suite: 350 passed, 10 skipped (Neo4j
+  parity, Aura paused).

@@ -1,0 +1,72 @@
+{
+ "experiment": "F8d candidate diversity",
+ "is_simulated": true,
+ "trips_per_scenario": 100,
+ "scenarios": {
+  "10% chargers down": {
+   "trips": 100,
+   "stranded_cheapest_only": 2,
+   "stranded_diverse": 3,
+   "ci95_cheapest_only": [
+    0.006,
+    0.07
+   ],
+   "ci95_diverse": [
+    0.01,
+    0.085
+   ],
+   "plan_changed": 8,
+   "mean_minutes_both_arrived_cheapest_only": 208.0,
+   "mean_minutes_both_arrived_diverse": 208.2,
+   "claimed_confidence_mean_cheapest_only": 0.953,
+   "claimed_confidence_mean_diverse": 0.956,
+   "plan_ms_mean_cheapest_only": 333.0,
+   "plan_ms_mean_diverse": 386.4
+  },
+  "20% chargers down": {
+   "trips": 100,
+   "stranded_cheapest_only": 3,
+   "stranded_diverse": 2,
+   "ci95_cheapest_only": [
+    0.01,
+    0.085
+   ],
+   "ci95_diverse": [
+    0.006,
+    0.07
+   ],
+   "plan_changed": 6,
+   "mean_minutes_both_arrived_cheapest_only": 214.3,
+   "mean_minutes_both_arrived_diverse": 214.3,
+   "claimed_confidence_mean_cheapest_only": 0.954,
+   "claimed_confidence_mean_diverse": 0.956,
+   "plan_ms_mean_cheapest_only": 327.1,
+   "plan_ms_mean_diverse": 349.0
+  },
+  "40% chargers down": {
+   "trips": 100,
+   "stranded_cheapest_only": 6,
+   "stranded_diverse": 5,
+   "ci95_cheapest_only": [
+    0.028,
+    0.125
+   ],
+   "ci95_diverse": [
+    0.022,
+    0.112
+   ],
+   "plan_changed": 9,
+   "mean_minutes_both_arrived_cheapest_only": 216.3,
+   "mean_minutes_both_arrived_diverse": 216.5,
+   "claimed_confidence_mean_cheapest_only": 0.949,
+   "claimed_confidence_mean_diverse": 0.952,
+   "plan_ms_mean_cheapest_only": 330.7,
+   "plan_ms_mean_diverse": 351.6
+  }
+ },
+ "runtime_s": 516.7,
+ "notes": [
+  "SIMULATED world, chargers and reports (experiments/_world.py); same seeds for both planners.",
+  "cheapest_only = the 6 lowest expected-minute chains (before F8); diverse = plus 3 reliability-ranked and 2 spatially distinct chains, all scored by the same Monte Carlo."
+ ]
+}

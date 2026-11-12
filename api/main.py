@@ -28,6 +28,8 @@ from .models import (
     ForecastUpdateResponse,
     Health,
     ReplayResponse,
+    RideCheckRequest,
+    RideCheckResponse,
     SttResponse,
     TtsRequest,
     TtsResponse,
@@ -103,6 +105,11 @@ def demo_scenario(svc: EngineService = Depends(get_service)) -> dict:
 @app.post("/api/dispatch", response_model=DispatchResponse)
 def post_dispatch(req: DispatchRequest, svc: EngineService = Depends(get_service)) -> dict:
     return svc.dispatch(req.model_dump())
+
+
+@app.post("/api/ride-check", response_model=RideCheckResponse)
+def post_ride_check(req: RideCheckRequest, svc: EngineService = Depends(get_service)) -> dict:
+    return svc.ride_check(req.model_dump())
 
 
 @app.post("/api/forecast/update", response_model=ForecastUpdateResponse)

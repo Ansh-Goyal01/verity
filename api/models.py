@@ -270,6 +270,111 @@ class ReplayResponse(Resp):
     is_simulated: bool
 
 
+# --- ride check (contract v2, F8b) ---------------------------------------------------------------------------------
+
+
+class RideCheckRequest(Req):
+    vehicle_id: str
+    soc_pct: float = Field(ge=0, le=100)
+    current: LatLon
+    pickup: LatLon
+    drop: LatLon
+    earning_rs_per_hour: float | None = Field(default=None, gt=0, le=10000)  # None = the cited example rate
+    passengers: int = Field(default=1, ge=0, le=8)
+    ac_on: bool = True
+    target_confidence: float = Field(default=0.9, gt=0.5, le=0.99)
+    departure_time: str | None = None
+
+
+class RideSummary(Resp):
+    distance_km: float
+    pickup_km: float
+    duration_min: int
+    p_complete: float
+    drop_soc: ArrivalSoc
+
+
+class ConsideredCharger(Resp):
+    charger_id: str
+    name: str
+    lat: float | None
+    lon: float | None
+    site_id: str
+    road_km: float
+    drive_min: int
+    p_works: float
+    evidence: Evidence
+    recent_failure_days: int | None
+    confidence_as_primary: float
+    expected_lost_min: int
+    expected_lost_rs: int
+    chosen: bool
+    note: str
+
+
+class RideBackup(Resp):
+    charger_id: str
+    name: str
+    same_site_as_primary: bool
+
+
+class MinutePart(Resp):
+    part: Literal["drive", "backup_drive", "failed_stops", "waiting", "charging", "stranding"]
+    label: str
+    minutes: float
+
+
+class AfterDrop(Resp):
+    charger: ConsideredCharger
+    backups: list[RideBackup]
+    expected_lost_min: int
+    expected_lost_rs: int
+    minutes: list[MinutePart]
+
+
+class RideBingoPoint(Resp):
+    km: float
+    bingo_soc_pct: int
+    expected_soc_pct: int
+
+
+class RideLever(Resp):
+    lever_id: str
+    label: str
+    new_confidence: float
+    time_cost_min: int
+    rupee_cost: int
+
+
+class EarningRate(Resp):
+    rs_per_hour: float
+    is_example: bool
+    source: str
+
+
+class RideRoute(Resp):
+    polyline: list[list[float]]
+    source: str
+
+
+class RideCheckResponse(Resp):
+    vehicle_id: str
+    decision: Decision
+    confidence: float
+    reason: str
+    ride: RideSummary
+    after_drop: AfterDrop | None
+    considered: list[ConsideredCharger]
+    bingo_line: list[RideBingoPoint]
+    levers: list[RideLever]
+    earning_rs_per_hour: float
+    compute_ms: int
+    route: RideRoute
+    earning_rate: EarningRate
+    data_notes: list[str]
+    is_simulated: bool
+
+
 # --- voice and errors --------------------------------------------------------------------------------------------
 
 

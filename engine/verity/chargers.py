@@ -182,3 +182,15 @@ def chargers_near_route(chargers: Iterable[ChargerRecord], poly_latlon: np.ndarr
         if d[i] <= max_offset_km * 1000.0:
             out.append(RouteCharger(c, float(poly_km[i]), float(d[i] / 1000.0)))
     return sorted(out, key=lambda rc: rc.km_along)
+
+
+def chargers_near_point(chargers: Iterable[ChargerRecord], lat: float, lon: float, radius_km: float,
+                        limit: int) -> list[tuple[ChargerRecord, float]]:
+    """Up to ``limit`` chargers within ``radius_km`` (straight line) of a point, nearest first, with that distance."""
+    recs = list(chargers)
+    if not recs:
+        return []
+    d = haversine_m(np.full(len(recs), lat), np.full(len(recs), lon), np.array([c.lat for c in recs]),
+                    np.array([c.lon for c in recs])) / 1000.0
+    order = [int(i) for i in np.argsort(d) if d[i] <= radius_km]
+    return [(recs[i], float(d[i])) for i in order[:limit]]

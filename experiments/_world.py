@@ -65,7 +65,7 @@ def _reports(chargers: list[ChargerRecord], true_r: np.ndarray, rng: np.random.G
     return out
 
 
-def one_trial(fx: Fixture, failure_rate: float, seed: int) -> dict:
+def one_trial(fx: Fixture, failure_rate: float, seed: int, diversity: bool = True) -> dict:
     rng = np.random.default_rng([seed, int(round(failure_rate * 100))])
     spec = sample_trip_spec(rng, fx.truth, 30, distance_range_km=DISTANCE_KM, start_soc_pct=100.0)
     run = run_trip(rng, fx.truth, spec)
@@ -75,9 +75,12 @@ def one_trial(fx: Fixture, failure_rate: float, seed: int) -> dict:
     vehicle = dataclasses.replace(fx.vehicle, passengers=view["passengers"], ac_on=view["ac_on"], cargo_kg=view["cargo_kg"])
 
     kms = np.sort(rng.uniform(20.0, route.distance_km - 10.0, N_CHARGERS))
-    chargers = [ChargerRecord(id=f"W{i}", name=f"Simulated charger {i}", lat=28.0, lon=77.5, operator="SimOp",
-                              site_type="highway", connectors=[{"type": "CCS2", "kw": 50.0}], source_ids=["synthetic"])
-                for i in range(N_CHARGERS)]
+    # Placed at their km along a north-south road (1 deg lat ~ 111 km) so that Site clustering (150 m, F8c) sees
+    # the real spacing; before F8 every simulated charger sat at one point, which would make them one Site.
+    chargers = [ChargerRecord(id=f"W{i}", name=f"Simulated charger {i}", lat=28.0 + float(k) / 111.0, lon=77.5,
+                              operator="SimOp", site_type="highway", connectors=[{"type": "CCS2", "kw": 50.0}],
+                              source_ids=["synthetic"])
+                for i, k in enumerate(kms)]
     mean = 1.0 - failure_rate
     true_r = np.clip(rng.beta(mean * 5.0 + 0.3, (1.0 - mean) * 5.0 + 0.3, N_CHARGERS), 0.02, 0.99)
     trust = TrustEngine(chargers).estimate(_reports(chargers, true_r, rng), NOW).chargers
@@ -88,7 +91,7 @@ def one_trial(fx: Fixture, failure_rate: float, seed: int) -> dict:
                                     trust_aware=False)
     t1 = time.perf_counter()
     aware_stops, aware_ev, _ = plan_only(vehicle, route, route_chargers, trust, start_soc=START_SOC, seed=seed, cfg=CFG,
-                                         trust_aware=True)
+                                         trust_aware=True, diversity=diversity)
     t2 = time.perf_counter()
 
     works = {c.id: bool(rng.random() < r) for c, r in zip(chargers, true_r)}

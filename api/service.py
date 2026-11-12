@@ -21,7 +21,7 @@ import os
 import time
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 
@@ -39,9 +39,25 @@ from verity.trust.engine import ChargerTrust, TrustEngine
 from verity.trust.graph import TEST_PREFIX, ChargerGraph
 from verity.trust.graph_build import GraphHandle, open_graph, populate_road_network
 from verity.trust.reports_sim import NOW
+from verity.ridecheck import RideInput, ride_check
+from verity.routing import snapshot_to_route
 from verity.vehicles import get_prior
 
+from .ride import (
+    EARNING_RATE_SOURCE,
+    EXAMPLE_EARNING_RS_PER_HOUR,
+    candidates_near_drop,
+    data_notes,
+    fetch_bundle,
+    load_bundles,
+    match_bundle,
+    options_from_bundle,
+    report_signals,
+    thin_polyline,
+)
+
 log = logging.getLogger(__name__)
+AREA_MARGIN_DEG = 0.1  # ride checks serve points inside the charger directory's area plus this margin
 
 DEMO_SEED = 1028
 SWEEP_EVERY_S = 600.0  # how often to remove plan legs that a crashed or failed-cleanup request left behind
@@ -135,6 +151,7 @@ class GraphView:
     chargers: list[ChargerRecord]
     trust: dict[str, ChargerTrust]
     near: list[RouteCharger]
+    reports: tuple[Report, ...] = ()
 
 
 class EngineService:
@@ -154,6 +171,8 @@ class EngineService:
                                                             ALT_AHEAD_KM))
         self.fleet = self._build_fleet()
         self.plans: dict[str, StoredPlan] = {}
+        self.ride_bundles = load_bundles()  # committed ride routes (no network); others are fetched and cached
+        self._ride_cache: dict[tuple, dict] = {}
         self.last_graph_timing: dict = {}
         self._last_sweep = time.monotonic()  # open_graph already swept at startup
 
@@ -194,7 +213,8 @@ class EngineService:
         known = {c.id for c in chargers}
         reports = [r for r in graph.reports() if r.charger_id in known]
         trust = TrustEngine(chargers).estimate(reports, NOW).chargers
-        return GraphView(chargers, trust, chargers_near_route(chargers, self.poly, self.poly_km, CORRIDOR_KM))
+        return GraphView(chargers, trust, chargers_near_route(chargers, self.poly, self.poly_km, CORRIDOR_KM),
+                         tuple(reports))
 
     def _adopt(self, view: GraphView) -> None:
         self._view = view  # one assignment: a concurrent request sees the old view or the new one, never a mix
@@ -280,6 +300,56 @@ class EngineService:
         }
         self.plans[plan_id] = StoredPlan(result.state, response, dict(req))
         return response
+
+    # -- ride check (F8b) --------------------------------------------------------------------------------------------
+    def _check_area(self, *points: tuple[float, float]) -> None:
+        lats, lons = [c.lat for c in self.chargers], [c.lon for c in self.chargers]
+        for lat, lon in points:
+            if not (min(lats) - AREA_MARGIN_DEG <= lat <= max(lats) + AREA_MARGIN_DEG
+                    and min(lons) - AREA_MARGIN_DEG <= lon <= max(lons) + AREA_MARGIN_DEG):
+                raise ApiError(422, "unsupported_area", "This prototype checks rides inside Delhi NCR and the Noida-Agra "
+                               "corridor only (the area of its charger directory).")
+
+    def _ride_bundle(self, req: dict, cur: tuple, pick: tuple, drop: tuple, view: GraphView) -> dict:
+        bundle = match_bundle(self.ride_bundles, cur, pick, drop)
+        if bundle is not None:
+            return bundle
+        key = tuple(round(v, 4) for p in (cur, pick, drop) for v in p)
+        if key not in self._ride_cache:
+            departure = datetime.fromisoformat(req["departure_time"]) if req.get("departure_time") else datetime.now(
+                timezone.utc)
+            self._ride_cache[key] = fetch_bundle(departure, cur, pick, drop, candidates_near_drop(view.chargers, drop))
+        return self._ride_cache[key]
+
+    def ride_check(self, req: dict) -> dict:
+        """GO / NO_GO / INSUFFICIENT_EVIDENCE for a ride plus the after-drop plan to a trusted charger (F8b)."""
+        fv = self.fleet.get(req["vehicle_id"])
+        if fv is None:
+            raise ApiError(404, "unknown_vehicle", f"Unknown vehicle {req['vehicle_id']!r}; known: {sorted(self.fleet)}")
+        cur, pick, drop = ((req[k]["lat"], req[k]["lon"]) for k in ("current", "pickup", "drop"))
+        self._check_area(cur, pick, drop)
+        key = hashlib.sha1(json.dumps(req, sort_keys=True, default=str).encode()).hexdigest()
+        view = self.graph.call(self._read_view)
+        self._adopt(view)
+        bundle = self._ride_bundle(req, cur, pick, drop, view)
+        signals = report_signals(view.reports, NOW)
+        opts, notes = options_from_bundle(bundle, view.chargers, view.trust, signals)
+        rate = req.get("earning_rs_per_hour")
+        is_example = rate is None
+        rate = EXAMPLE_EARNING_RS_PER_HOUR if is_example else float(rate)
+        ctx = replace(fv.ctx, passengers=req["passengers"], ac_on=req["ac_on"])
+        inp = RideInput(ctx, snapshot_to_route(bundle), float(bundle["pickup_km"]), float(req["soc_pct"]),
+                        float(req["target_confidence"]), rate, tuple(opts))
+        result = ride_check(inp, seed=int(key[:8], 16), cfg=self.cfg)
+        ids = {o.node.id for o in opts}
+        near = [r for r in view.reports if r.charger_id in ids]
+        n_sim = sum(r.is_simulated for r in near)
+        return {"vehicle_id": req["vehicle_id"], **result,
+                "route": {"polyline": thin_polyline(bundle["polyline"]), "source": bundle["source"]},
+                "earning_rate": {"rs_per_hour": rate, "is_example": is_example,
+                                 "source": EARNING_RATE_SOURCE if is_example else "Entered by the driver"},
+                "data_notes": data_notes(bundle, opts, signals, len(near) - n_sim, n_sim) + notes,
+                "is_simulated": True}
 
     def _plan(self, plan_id: str) -> StoredPlan:
         if plan_id not in self.plans:

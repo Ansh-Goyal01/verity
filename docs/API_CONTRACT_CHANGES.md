@@ -48,3 +48,9 @@ fits the project. Nothing here is applied unless both sides agree.
 - **Everything is simulated except the route and charger directory:** the demo fleet, its trips and the charger
   reports are simulated (`is_simulated: true` on every response). The route, elevation, weather forecast and
   charger locations are real data (OpenStreetMap, Open-Meteo, OSRM).
+
+## 2026-11-13 - v2: POST /api/ride-check (F8b)
+
+- Reason: TASKS_FINALE F8b, a cab driver's ride check with an after-drop charging plan in minutes and rupees.
+- Old shape: no such endpoint. New shape: see "Contract v2 additions" in docs/API_CONTRACT.md. Additive only:
+  no v1 endpoint or field changed.

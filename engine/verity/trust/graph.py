@@ -41,6 +41,35 @@ TEST_PREFIX = "TEST-"
 RING_WINDOW_HOURS = 72.0  # reports this close in time can belong to one burst (approximate - verify)
 STALE_LEG_SECONDS = 3600.0  # scoped LEGs older than this were left behind by a crashed request
 QUERY_TIMEOUT_S = 30.0  # server-side limit per query (the driver has no socket read timeout; see DECISIONS A12)
+CLIENT_DEADLINE_S = QUERY_TIMEOUT_S + 5.0  # client-side wall clock per query: a stalled socket must not hang (F8e)
+
+
+class Neo4jStalled(TimeoutError):
+    """A query got no answer within the client deadline. A TimeoutError is an OSError, which ``GraphHandle``
+    treats as a backend failure, so the request falls back to the in-memory graph instead of hanging."""
+
+
+def run_with_deadline(fn: Any, deadline_s: float | None) -> Any:
+    """Run ``fn()`` on a daemon thread and wait at most ``deadline_s``. A stalled call is abandoned (its daemon
+    thread cannot block interpreter exit) and ``Neo4jStalled`` is raised; errors inside ``fn`` propagate."""
+    if deadline_s is None:
+        return fn()
+    box: dict[str, Any] = {}
+
+    def target() -> None:
+        try:
+            box["value"] = fn()
+        except BaseException as exc:  # noqa: BLE001 - re-raised on the caller's thread below
+            box["error"] = exc
+
+    worker = threading.Thread(target=target, name="neo4j-query", daemon=True)
+    worker.start()
+    worker.join(deadline_s)
+    if worker.is_alive():
+        raise Neo4jStalled(f"no answer from Neo4j within {deadline_s:.0f} s")
+    if "error" in box:
+        raise box["error"]
+    return box.get("value")
 
 
 @dataclass(frozen=True)
@@ -319,8 +348,9 @@ class Neo4jGraph:
 
     def __init__(self, uri: str | None = None, user: str | None = None, password: str | None = None, *,
                  driver: Any = None, database: str | None = None, connection_timeout: float = 10.0,
-                 query_timeout: float = QUERY_TIMEOUT_S) -> None:
+                 query_timeout: float = QUERY_TIMEOUT_S, deadline_s: float | None = CLIENT_DEADLINE_S) -> None:
         self._query_timeout: float | None = None  # only the real driver gets a server-side limit
+        self._deadline_s = deadline_s  # client-side, for real and fake drivers alike (F8e)
         if driver is None:
             from neo4j import GraphDatabase  # imported lazily: only needed when credentials exist
 
@@ -362,11 +392,14 @@ class Neo4jGraph:
             from neo4j import Query
 
             query = Query(query, timeout=self._query_timeout)  # type: ignore[assignment]
+        def once() -> list[dict]:
+            with self._driver.session(database=self._database) as session:
+                return [record.data() for record in session.run(query, **params)]
+
         try:
             for attempt in (1, 2):
                 try:
-                    with self._driver.session(database=self._database) as session:
-                        return [record.data() for record in session.run(query, **params)]
+                    return run_with_deadline(once, self._deadline_s)
                 except Exception as exc:
                     from neo4j.exceptions import ServiceUnavailable, SessionExpired
 

@@ -214,3 +214,73 @@ Proxied to Sarvam by the backend so the API key never reaches the browser.
   (`soc_pct` is null if no battery number was recognised)
 - Without a key both return HTTP 503 `{"error": "voice_unavailable", ...}`; the UI then falls back
   to browser speech synthesis and the keypad.
+
+---
+
+# Contract v2 additions (F8, 2026-11-13)
+
+v2 is additive: every v1 endpoint and field above is unchanged. Change log: `docs/API_CONTRACT_CHANGES.md`.
+
+## POST /api/ride-check
+
+A cab driver's "can I take this ride?" check: the ride (current position -> pickup -> drop) AND the after-drop plan
+to a trusted charger, in minutes and rupees. Request (defaults in brackets):
+
+```json
+{"vehicle_id": "V12", "soc_pct": 45,
+ "current": {"lat": 28.6280, "lon": 77.3649}, "pickup": {"lat": 28.5708, "lon": 77.3261},
+ "drop": {"lat": 28.5562, "lon": 77.0999},
+ "earning_rs_per_hour": null, "passengers": 1, "ac_on": true, "target_confidence": 0.9,
+ "departure_time": "2026-11-13T19:00:00+05:30"}
+```
+
+`earning_rs_per_hour: null` (or absent) uses the cited EXAMPLE rate (`earning_rate.is_example: true`, with its
+source); the UI must label it "example". `departure_time` (default: now) picks the weather forecast hour.
+
+Response (illustrative values, not results):
+
+```json
+{"vehicle_id": "V12", "decision": "GO", "confidence": 0.95,
+ "reason": "95% confidence of completing the ride and reaching a working charger after the drop (target 90%).",
+ "ride": {"distance_km": 41.5, "pickup_km": 11.7, "duration_min": 48, "p_complete": 1.0,
+          "drop_soc": {"p10": 34, "p50": 35, "p90": 36}},
+ "after_drop": {
+   "charger": {"charger_id": "CH-0056", "name": "...", "lat": 28.54, "lon": 77.12, "site_id": "CH-0056",
+               "road_km": 4.5, "drive_min": 7, "p_works": 0.9,
+               "evidence": {"n_reports": 6, "days_since_last": 1, "trust_level": "high"},
+               "recent_failure_days": null, "confidence_as_primary": 0.95, "expected_lost_min": 80,
+               "expected_lost_rs": 80, "chosen": true, "note": "Chosen: fewest expected lost minutes at the target confidence."},
+   "backups": [{"charger_id": "CH-0071", "name": "...", "same_site_as_primary": false}],
+   "expected_lost_min": 80, "expected_lost_rs": 80,
+   "minutes": [{"part": "drive", "label": "Drive to the charger", "minutes": 6.6},
+               {"part": "backup_drive", "label": "...", "minutes": 0.4},
+               {"part": "failed_stops", "label": "...", "minutes": 1.5},
+               {"part": "waiting", "label": "...", "minutes": 2.0},
+               {"part": "charging", "label": "Charging to 80 %", "minutes": 55.0},
+               {"part": "stranding", "label": "...", "minutes": 4.8}]},
+ "considered": [{"...same fields as after_drop.charger...": "", "chosen": false,
+                 "note": "Avoided: a failure was reported 1 days ago."}],
+ "bingo_line": [{"km": 0.0, "bingo_soc_pct": 17, "expected_soc_pct": 45}],
+ "levers": [{"lever_id": "ac_off", "label": "Ride with the AC off", "new_confidence": 0.95, "time_cost_min": 0,
+             "rupee_cost": 0}],
+ "earning_rs_per_hour": 60.0, "compute_ms": 1500,
+ "route": {"polyline": [[28.628, 77.365]], "source": "osrm"},
+ "earning_rate": {"rs_per_hour": 60.0, "is_example": true, "source": "Example: CIS India (2024) ..."},
+ "data_notes": ["Route: osrm (real router); weather: forecast for 2026-11-13T19:00.", "..."],
+ "is_simulated": true}
+```
+
+Rules the UI can rely on:
+- `decision` is GO when P(complete the ride AND reach a working charger after the drop, keeping 5 %) >= target
+  (displayed value, 5 % steps); NO_GO otherwise (also when no charger is known near the drop: then
+  `after_drop` is null); INSUFFICIENT_EVIDENCE when the vehicle has no calibrated trips or the GO only holds if
+  chargers with stale or missing reports work. `reason` always explains the decision in one sentence.
+- `after_drop.minutes` parts sum to `expected_lost_min` (+-1 for rounding); rupees = minutes x rate / 60, to the
+  nearest 10. `stranding` = 240 min penalty x P(stranded) (an assumption, documented in DECISIONS).
+- `bingo_line[i].bingo_soc_pct` = lowest battery % at that ride km from which some after-drop charger is still
+  reachable and working with probability >= target; below it, the driver should charge or decline.
+- `considered` lists every after-drop option with why it was or was not chosen. Chargers within ~150 m share a
+  `site_id`; a backup at the same Site is not independent (`same_site_as_primary`).
+- `data_notes` lists what is real, simulated or assumed for this answer; show them under the decision.
+- Errors: 404 `unknown_vehicle`; 422 `unsupported_area` (outside the charger directory: Delhi NCR and the
+  Noida-Agra corridor); 422 `invalid_request`.
