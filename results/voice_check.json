@@ -1,0 +1,80 @@
+{
+ "experiment": "F7 Sarvam voice loop check",
+ "is_simulated": true,
+ "generated_at": "2026-11-12T17:24:34+00:00",
+ "label": "SIMULATED speech: our own TTS audio read back by STT (no real driver)",
+ "stt_model": "saaras:v3",
+ "tts_model": "bulbul:v3",
+ "decision_source": "docs/api_examples/dispatch_V12.json (saved engine output, demo on the SIMULATED fleet)",
+ "steps": {
+  "driver_note_tts_then_stt": {
+   "ok": true,
+   "audio": "results/dev/voice/driver_note_hi.wav",
+   "transcript": "Battery bayaalis pratishat hai Sector baasath wala charger band hai",
+   "language_code": "hi-IN",
+   "translation_en": "The battery is forty-two percent, the sixty-two sector charger is off.",
+   "battery_pct": 42,
+   "battery_read_from": "translated",
+   "charger_report": {
+    "source_kind": "driver_voice",
+    "driver_id": "voice-check",
+    "t": "2026-11-12T17:24:31.687220+00:00",
+    "status": "broken",
+    "charger_id": null,
+    "coverage": null,
+    "candidates": [],
+    "reason": "no directory charger name was spoken clearly enough",
+    "is_simulated": true
+   },
+   "would_create_report": false,
+   "charger_report_note": "recomputed offline from the saved transcript and translation after the matcher fix (live run matched 'Battery Smart' on the word 'battery'); no new paid call"
+  },
+  "tts_decision_hi-IN": {
+   "ok": true,
+   "text": "जाइए। Agra तक पहुँचने की संभावना 95 प्रतिशत है। बैटरी 11 प्रतिशत से नीचे जाए तो रास्ता बदलें।",
+   "audio": "results/dev/voice/decision_hi-IN.wav"
+  },
+  "tts_decision_en-IN": {
+   "ok": true,
+   "text": "Go. The chance of reaching Agra is 95 percent. Divert if the battery falls below 11 percent.",
+   "audio": "results/dev/voice/decision_en-IN.wav"
+  }
+ },
+ "paid_calls": [
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 1234
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 774
+  },
+  {
+   "path": "/translate",
+   "model": "mayura:v1",
+   "ok": true,
+   "http_status": 200,
+   "ms": 1179
+  },
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 1364
+  },
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 1269
+  }
+ ]
+}

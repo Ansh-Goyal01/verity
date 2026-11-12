@@ -147,7 +147,8 @@ LEG is stored per battery band, never as one fixed probability.
 - Everything from a clean state: `uv run python scripts/run_all.py` (add `--fast` for a plumbing check)
 - Experiments: `uv run python experiments/e1_learning_curve.py` ... `e5_trust_recovery.py` -> `results/`;
   real Indian reports: `uv run python experiments/e1_india_real.py`; real charger evidence:
-  `uv run python experiments/e3_real_evidence.py`; app reviews: `uv run python experiments/voc_app_reviews.py`
+  `uv run python experiments/e3_real_evidence.py`; app reviews: `uv run python experiments/voc_app_reviews.py`;
+  Sarvam voice check (5 paid calls): `uv run python scripts/voice_check.py`
 - Corpus check (hand-collected CSVs in data/corpus/, guide in docs/DATA_COLLECTION_GUIDE.md):
   `uv run python scripts/validate_corpus.py` (`--errors` for errors only); enrichment of verified trips:
   `uv run python scripts/enrich_trips.py` (`--include-unverified` = plumbing check to results/dev/)

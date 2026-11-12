@@ -1,10 +1,11 @@
-"""Voice: Sarvam speech-to-text / text-to-speech client, battery-% parsing, and a multipart body parser.
+"""Voice: Sarvam speech-to-text / text-to-speech / translate / chat client, battery-% parsing, multipart parser.
 
-STATUS: built and tested against a MOCK transport only. Nothing here has been run against the real
-Sarvam API (no key tonight, and the plan forbids calling it). The endpoint paths, header name, model ids
-and payload fields below follow CLAUDE.md (Saaras v3 STT, Bulbul v3 TTS) plus my recollection of Sarvam's
-REST API and are UNVERIFIED: check them against the current Sarvam documentation before the first real call.
-The API key is read from SARVAM_API_KEY (.env), sent only in a request header, and never logged.
+STATUS (F7, 2026-11-12): endpoint paths, the auth header, request fields and model ids below were checked against
+the current docs at docs.sarvam.ai and exercised with a handful of logged live calls (docs/PROGRESS_FINALE.md).
+STT: POST /speech-to-text, multipart (file, model, mode, language_code; 'unknown' = auto-detect), response
+``transcript`` + ``language_code``; the synchronous endpoint is for clips under 30 s. TTS: POST /text-to-speech,
+JSON (text, language_code, model, speaker), response ``audios`` (base64 WAV), max 2500 characters on bulbul:v3.
+The API key is read from SARVAM_API_KEY (.env), sent only in request headers, and never logged.
 """
 
 from __future__ import annotations
@@ -23,12 +24,14 @@ import httpx
 from .trust.graph import load_env
 
 SARVAM_BASE = "https://api.sarvam.ai"
-STT_PATH = "/speech-to-text"  # UNVERIFIED
-TTS_PATH = "/text-to-speech"  # UNVERIFIED
-KEY_HEADER = "api-subscription-key"  # UNVERIFIED
-STT_MODEL = "saaras:v3"  # per CLAUDE.md; UNVERIFIED id
-TTS_MODEL = "bulbul:v3"  # per CLAUDE.md; UNVERIFIED id
-# Verified against docs.sarvam.ai on 2026-11-12 (F6): chat completions and translation.
+STT_PATH = "/speech-to-text"
+TTS_PATH = "/text-to-speech"
+KEY_HEADER = "api-subscription-key"
+STT_MODEL = "saaras:v3"  # the docs list saaras:v4 (default) and saaras:v3; `mode` applies to v3 only
+STT_MODES = ("transcribe", "translate", "verbatim", "translit", "codemix")
+TTS_MODEL = "bulbul:v3"  # also bulbul:v2, bulbul:v4-flash; v3 default speaker "shubh"
+TTS_LANGUAGES = ("bn-IN", "en-IN", "gu-IN", "hi-IN", "kn-IN", "ml-IN", "mr-IN", "od-IN", "pa-IN", "ta-IN", "te-IN")
+# Chat completions and translation (verified 2026-11-12, F6).
 CHAT_PATH = "/v1/chat/completions"  # Authorization: Bearer <key> (+ api-subscription-key)
 CHAT_MODEL = "sarvam-105b"  # also listed: sarvam-105b-conversations; "10 Indic languages along with English"
 TRANSLATE_PATH = "/translate"  # fields input, source_language_code ('auto' with mayura:v1), target_language_code
@@ -103,18 +106,26 @@ class SarvamClient:
             "model": TRANSLATE_MODEL})
         return str(data.get("translated_text", ""))
 
-    def tts(self, text: str, language: str) -> dict:
-        """Text -> ``{"audio_base64": ..., "format": "wav"}``."""
-        data = self._post(TTS_PATH, json={"text": text, "target_language_code": language, "model": TTS_MODEL})
+    def tts(self, text: str, language: str, speaker: str | None = None) -> dict:
+        """Text -> ``{"audio_base64": ..., "format": "wav"}`` (bulbul:v3; ``language`` e.g. hi-IN / en-IN)."""
+        body = {"text": text, "language_code": language, "model": TTS_MODEL, **({"speaker": speaker} if speaker else {})}
+        data = self._post(TTS_PATH, TTS_MODEL, json=body)
         audio = (data.get("audios") or [None])[0]
         if not audio:
             raise VoiceUnavailable("voice service returned no audio")
         return {"audio_base64": audio, "format": "wav"}
 
-    def stt(self, audio: bytes, filename: str, content_type: str, language: str) -> str:
-        data = self._post(STT_PATH, files={"file": (filename, audio, content_type)},
-                          data={"language_code": language, "model": STT_MODEL})
-        return str(data.get("transcript", ""))
+    def stt_full(self, audio: bytes, filename: str, content_type: str, language: str = "unknown",
+                 mode: str = "transcribe") -> dict:
+        """Audio -> ``{"transcript", "language_code"}`` (saaras:v3). ``language`` 'unknown' lets the model detect it."""
+        if mode not in STT_MODES:
+            raise ValueError(f"mode must be one of {STT_MODES}")
+        data = self._post(STT_PATH, STT_MODEL, files={"file": (filename, audio, content_type)},
+                          data={"language_code": language, "model": STT_MODEL, "mode": mode})
+        return {"transcript": str(data.get("transcript", "")), "language_code": data.get("language_code")}
+
+    def stt(self, audio: bytes, filename: str, content_type: str, language: str, mode: str = "transcribe") -> str:
+        return self.stt_full(audio, filename, content_type, language, mode)["transcript"]
 
 
 # --- battery percentage from a transcript -------------------------------------------------------------------
@@ -124,7 +135,7 @@ _ONES = {w: i for i, w in enumerate(
     "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen "
     "seventeen eighteen nineteen".split())}
 _TENS = {w: 10 * i for i, w in enumerate("_ _ twenty thirty forty fifty sixty seventy eighty ninety".split()) if w != "_"}
-_PERCENT = r"(?:%|percent|per cent|प्रतिशत|फीसदी|फ़ीसदी)"
+_PERCENT = r"(?:%|percent|per cent|pratishat|prateeshat|fisadi|feesadi|प्रतिशत|फीसदी|फ़ीसदी)"
 
 
 def parse_soc_percent(text: str) -> int | None:

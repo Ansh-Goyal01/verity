@@ -12,7 +12,7 @@ Sessions (user instructions 2026-11-12): F0-F2, then F3-F4, then F5-F7, each fol
 - [x] F4 E1-India (real, public, self-reported)
 - [x] F5 Charger evidence
 - [x] F6 Voice of customer from app reviews
-- [ ] F7 Sarvam voice loop
+- [x] F7 Sarvam voice loop
 - [ ] F8 Engine upgrades
 - [ ] F9 Range Passport
 - [ ] F10 Driver demo scenario
@@ -112,3 +112,21 @@ Paid calls this session: 5 chat calls, all on the fictional SMOKE_TEXT (timeout,
 live reasoning_effort values, one empty 200, one success in 22.9 s); no review text was sent.
 Real run: **NOT_RUN** (app_reviews.csv has 0 rows; data/private/app_reviews_text.csv not on this machine).
 tests/test_voc.py: 7 tests (mock transport only).
+
+## F7 Sarvam voice loop (2026-11-12) - R5 unblocked
+
+Verified endpoints, header, fields and model ids from docs.sarvam.ai and live calls (DECISIONS F7); fixed the TTS
+request field (target_language_code -> language_code). Built engine/verity/voice_loop.py (battery % incl. Hindi
+number words via Sarvam Translate; spoken charger note -> {charger match, status} as a driver_voice report;
+fixed Hindi/English decision templates) and scripts/voice_check.py (`uv run python scripts/voice_check.py`).
+Live check (results/voice_check.json, SIMULATED speech: our own TTS read back by STT): run 1 = 4 calls, all 200;
+it exposed two problems (romanized Hindi numbers, so no battery %; a false charger match on the word "sector"),
+both fixed. Run 2 = 5 calls, all 200 (TTS ~1.3 s, STT 0.8 s, translate 1.2 s): transcript "Battery bayaalis
+pratishat hai Sector baasath wala charger band hai", translation "The battery is forty-two percent, the sixty-two
+sector charger is off.", battery 42 % (via translation), status broken. Run 2 still matched "Battery Smart" on the
+word "battery"; fixed and the record recomputed offline (no new call): charger unmatched (no directory charger is
+named Sector 62), so no report is created, which is the honest outcome. Hindi and English decision audio
+generated from the saved V12 demo output (GO, 95 %, Bingo 11 %; demo on the SIMULATED fleet); WAVs in results/dev/voice/
+(gitignored). No real driver voice exists yet, so no driver_voice report is is_simulated=false.
+Paid Sarvam calls F7: 9 (TTS 6, STT 2, translate 1). tests/test_voice_loop.py: 13 tests (mock transport).
+Not done (outside F7's text): API endpoints for driver voice reports (an API_CONTRACT change; propose in F8/F10).
