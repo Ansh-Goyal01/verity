@@ -237,7 +237,53 @@ APP_REVIEWS = FileSpec(
     extra_checks=(_claim_needs_category,),
 )
 
-SPECS: tuple[FileSpec, ...] = (TRIPS, CHARGER_EVIDENCE, APP_SNAPSHOTS, APP_REVIEWS)
+# ---------------------------------------------------------------- vehicles_india.csv (cited specs)
+_VALUE_SOURCES = (("battery_nominal_kwh", "battery_source_url"), ("curb_mass_kg_low", "curb_mass_source_url"),
+                  ("claimed_range_km", "range_source_url"), ("motor_kw", "motor_source_url"),
+                  ("drag_or_efficiency_hint", "hint_source_url"))
+
+
+def _every_value_cited(row: Row) -> list[Finding]:
+    out: list[Finding] = [(ERROR, f"{value} is filled but {url} is empty; every spec value needs its source")
+                          for value, url in _VALUE_SOURCES if row.get(value) and not row.get(url)]
+    low, high = _num(row.get("curb_mass_kg_low", "")), _num(row.get("curb_mass_kg_high", ""))
+    if low is not None and high is not None and high < low:
+        out.append((ERROR, "curb_mass_kg_high is smaller than curb_mass_kg_low"))
+    return out
+
+
+VEHICLES = FileSpec(
+    filename="vehicles_india.csv",
+    id_column="vehicle_id",
+    columns=(
+        Col("vehicle_id", always=True),
+        Col("make", always=True),
+        Col("model", always=True),
+        Col("variant", always=True),
+        Col("vehicle_type", "enum", ("car", "2w", "3w"), always=True),
+        Col("battery_nominal_kwh", "number", lo=1, hi=200, always=True),
+        Col("battery_basis", "enum", ("gross", "usable", "unstated"), always=True),
+        Col("battery_usable_kwh", "number", lo=1, hi=200),
+        Col("battery_source_url", "url", always=True),
+        Col("curb_mass_kg_low", "number", lo=50, hi=4000),
+        Col("curb_mass_kg_high", "number", lo=50, hi=4000),
+        Col("curb_mass_source_url", "url"),
+        Col("claimed_range_km", "number", lo=10, hi=1500),
+        Col("range_test_cycle", "enum", ("MIDC", "ARAI", "WLTP", "unstated")),
+        Col("range_source_url", "url"),
+        Col("motor_kw", "number", lo=1, hi=1000),
+        Col("motor_source_url", "url"),
+        Col("drag_or_efficiency_hint"),
+        Col("hint_source_url", "url"),
+        Col("source_quality", "enum", ("official", "secondary"), always=True),
+        Col("engine_prior_class", always=True),
+        Col("notes"),
+    ),
+    has_verified=False,
+    extra_checks=(_every_value_cited,),
+)
+
+SPECS: tuple[FileSpec, ...] = (TRIPS, CHARGER_EVIDENCE, APP_SNAPSHOTS, APP_REVIEWS, VEHICLES)
 PRIVATE_REVIEW_TEXT = "app_reviews_text.csv"  # lives in data/private/ (gitignored), never data/corpus/
 PRIVATE_REVIEW_HEADER = ["review_id", "text"]
 

@@ -7,7 +7,7 @@ Scope of this session (user instruction 2026-11-12): F0, F1 and F2 only, then st
 
 - [x] F0 Pre-flight
 - [x] F1 Collection kit for the teammate
-- [ ] F2 Vehicle specs
+- [x] F2 Vehicle specs
 - [ ] F3 Enrichment
 - [ ] F4 E1-India (real, public, self-reported)
 - [ ] F5 Charger evidence
@@ -51,3 +51,14 @@ spreadsheet row numbers and exits 1 on any ERROR. docs/DATA_COLLECTION_GUIDE.md 
 Seeded six trips (T0001-T0006) from the task text, all verified=no; each note says what the human must check
 or fill (e.g. T0004 start SoC, T0002 route, T0001 one-way question). Validator on the committed corpus:
 0 errors, 6 rows, 0 usable in results (none verified yet). tests/test_corpus.py: 22 tests.
+
+## F2 Vehicle specs (2026-11-12)
+
+Built data/corpus/vehicles_india.csv (13 variants, every value with its own source URL, every row
+"approximate - verify") and its spec in engine/verity/corpus.py (validated by scripts/validate_corpus.py).
+Sources actually read: MG India product pages (official) and Wikipedia (secondary). Tata's EV site failed with
+an expired TLS certificate; Mahindra's site showed no specs. Manual follow-up: confirm values from the
+manufacturer brochures (e.g. Mahindra XEV 9e brochure PDF linked on its page), add the Nexon EV 45 kWh range,
+mass and power, and kerb mass for Tiago EV, MG ZS EV and MG Comet EV. Gross vs usable kWh and drag figures
+were not on any fetched page. Each model maps to an engine prior via verity.vehicles.classify (pinned by test);
+every make/model in trips_india.csv has a spec row (pinned by test). No engine change.

@@ -164,3 +164,41 @@ def test_private_folder_is_gitignored():
     result = subprocess.run(["git", "check-ignore", "-q", "data/private/app_reviews_text.csv"],
                             cwd=paths.REPO_ROOT, check=False)
     assert result.returncode == 0
+
+
+# ---------------------------------------------------------------- F2 vehicle specs
+def _vehicles() -> list[dict[str, str]]:
+    from verity.corpus import VEHICLES
+
+    _, rows = read_csv(paths.CORPUS_DIR / VEHICLES.filename)
+    return rows
+
+
+def test_vehicle_rows_map_to_the_engine_prior_classify_picks():
+    from verity.vehicles import classify
+
+    for row in _vehicles():
+        expected = classify(row["vehicle_type"], float(row["battery_nominal_kwh"])).key
+        assert row["engine_prior_class"] == expected, row["vehicle_id"]
+
+
+def test_every_vehicle_value_is_cited_and_flagged_approximate():
+    from verity.corpus import VEHICLES
+
+    for row in _vehicles():
+        assert _messages(validate_row(VEHICLES, row)) == "", row["vehicle_id"]
+        assert "approximate - verify" in row["notes"], row["vehicle_id"]
+
+
+def test_uncited_vehicle_value_is_an_error():
+    from verity.corpus import VEHICLES
+
+    row = dict(_vehicles()[0], motor_source_url="")
+    assert "motor_source_url is empty" in _messages(validate_row(VEHICLES, row))
+
+
+def test_every_trip_model_has_a_vehicle_spec_row():
+    _, trips = read_csv(paths.CORPUS_DIR / TRIPS.filename)
+    specs = {(v["make"].lower(), v["model"].lower()) for v in _vehicles()}
+    missing = {(t["make"], t["model"]) for t in trips if (t["make"].lower(), t["model"].lower()) not in specs}
+    assert missing == set()
