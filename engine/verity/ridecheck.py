@@ -214,7 +214,8 @@ def _option_row(inp: RideInput, i: int, ev: ChainEval, chosen: bool) -> dict:
     node = opt.node
     note = "Chosen: fewest expected lost minutes at the target confidence." if chosen else ""
     if not chosen and opt.recent_failure_days is not None and opt.recent_failure_days <= RECENT_FAILURE_DAYS:
-        note = f"Avoided: a failure was reported {opt.recent_failure_days:.0f} days ago."
+        days = int(round(opt.recent_failure_days))
+        note = f"Avoided: a failure was reported {days} day{'' if days == 1 else 's'} ago."
     elif not chosen and _stale(node):
         note = "Not chosen: few or no recent reports."
     elif not chosen:

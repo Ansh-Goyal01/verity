@@ -24,6 +24,7 @@ from .models import (
     DemoScenario,
     DispatchRequest,
     DispatchResponse,
+    DriverDemo,
     ForecastUpdateRequest,
     ForecastUpdateResponse,
     Health,
@@ -105,6 +106,11 @@ def demo_scenario(svc: EngineService = Depends(get_service)) -> dict:
 @app.post("/api/dispatch", response_model=DispatchResponse)
 def post_dispatch(req: DispatchRequest, svc: EngineService = Depends(get_service)) -> dict:
     return svc.dispatch(req.model_dump())
+
+
+@app.get("/api/demo/driver", response_model=DriverDemo)
+def demo_driver(svc: EngineService = Depends(get_service)) -> dict:
+    return svc.driver_demo()
 
 
 @app.post("/api/ride-check", response_model=RideCheckResponse)

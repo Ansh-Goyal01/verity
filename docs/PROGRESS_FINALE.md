@@ -15,7 +15,7 @@ Sessions (user instructions 2026-11-12): F0-F2, then F3-F4, then F5-F7, each fol
 - [x] F7 Sarvam voice loop
 - [x] F8 Engine upgrades
 - [x] F9 Range Passport
-- [ ] F10 Driver demo scenario
+- [x] F10 Driver demo scenario
 - [ ] F11 One command and documents
 - [ ] F12 Wrap-up
 
@@ -195,3 +195,29 @@ results/f9_passport_validation.json.
   have NOT been validated against measured Indian driving; given the capacity bias the model likely under-predicts
   this car's consumption (its predicted 69-108 Wh/km is below EV Database's 163 Wh/km "real range" estimate).
 - Held-out BMW test trips were not opened.
+
+## F10 Driver demo scenario (2026-11-13)
+
+Second demo: 19:00 IST, an EV cab driver in Noida Sector 62 at 45 % battery (fleet vehicle V12, SIMULATED calibration)
+gets a ride Sector 18 -> IGI Airport Terminal 3. `GET /api/demo/driver` serves the scenario; its `request` goes
+unchanged to `POST /api/ride-check`; `uv run python scripts/driver_demo.py` saves results/driver_demo_simulated.json.
+
+- REAL: route (OSRM, 41.5 km, pickup at km 11.7), elevation and the forecast for 2026-11-13 19:00 (23.5 degC), the
+  8 directory chargers within 8 km of the drop and their road legs (OSRM table). The Tesla Supercharger at Aerocity is
+  excluded for a non-Tesla car.
+- SIMULATED (flagged, `is_simulated: true`, "0 real, 14 SIMULATED" reports in data_notes): the vehicle and the reports
+  pinned in api/service.py DRIVER_PINS: CH-0089 (OSM node, nearest to the drop, 2.3 km) broken 1 and 2 days ago and
+  working 9 and 16 days ago; CH-0056 Radisson Blu Plaza Delhi Airport working 7 times in 12 days; CH-0073 Hotel Pullman
+  (same Site as Aloft) working twice and occupied once. There is no real evidence for these chargers yet
+  (charger_evidence.csv is header-only), so none is used.
+- Engine answer today: **GO, confidence shown 100 % (rounded from >= 97.5 %; target 90 %)**; after the drop it picks
+  Radisson Blu (4.5 km, trust high), with Aloft and JW Marriott as backups; it avoids the nearer CH-0089 ("Avoided: a
+  failure was reported 1 day ago"). Expected 75 lost minutes = Rs 80 at the EXAMPLE rate (charging 58.2 min, driving
+  6.6, failed stops 4.4, backup driving 0.6, stranding risk 5.3, queue 0). Without the simulated reports (F8 run) the
+  same ride is INSUFFICIENT_EVIDENCE.
+- Pins are guarded (charger id + source id + within 8 km of the drop); a directory change stops the service instead of
+  attaching the reports elsewhere. Driver-demo report sources are separate ids (ride-demo-user-*) so they do not
+  share reliability with the fleet demo's sources.
+- The original fleet demo is unchanged: V07 NO_GO, V12 GO (+ DIVERT in its replay), V19 INSUFFICIENT_EVIDENCE; no re-pin.
+- Tests: tests/test_driver_demo.py (7) pins the decision, the chosen and avoided chargers, the Site, the simulated
+  flags and the pin guards. Full suite: 357 passed, 10 skipped (Neo4j parity, Aura paused).

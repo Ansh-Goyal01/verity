@@ -54,3 +54,8 @@ fits the project. Nothing here is applied unless both sides agree.
 - Reason: TASKS_FINALE F8b, a cab driver's ride check with an after-drop charging plan in minutes and rupees.
 - Old shape: no such endpoint. New shape: see "Contract v2 additions" in docs/API_CONTRACT.md. Additive only:
   no v1 endpoint or field changed.
+
+## 2026-11-13 - v2: GET /api/demo/driver (F10)
+
+- Reason: TASKS_FINALE F10, a second demo (cab driver, airport ride, after-drop charger choice).
+- Old shape: no such endpoint. New shape: see docs/API_CONTRACT.md "GET /api/demo/driver". Additive only.

@@ -44,6 +44,7 @@ from verity.routing import snapshot_to_route
 from verity.vehicles import get_prior
 
 from .ride import (
+    AFTER_DROP_RADIUS_KM,
     EARNING_RATE_SOURCE,
     EXAMPLE_EARNING_RS_PER_HOUR,
     candidates_near_drop,
@@ -122,6 +123,58 @@ def demo_reports_for(near: Sequence[RouteCharger], pins: Sequence[ScenarioPin] =
     return out
 
 
+# --- second demo (F10): an EV cab driver in Noida in the evening gets an airport ride ----------------------------------
+# The route, weather, chargers and their positions are REAL (committed bundle data/processed/ride_demo_noida_t3.json,
+# OSM / Open Charge Map directory). The vehicle (fleet V12) and every charger REPORT below are SIMULATED scenario inputs,
+# chosen to illustrate one outcome (a GO that avoids the nearest charger because of recent failure reports and picks a
+# trusted one); they were found by trying inputs against the engine, never by changing it (docs/DECISIONS.md F10).
+DRIVER_DEMO = {"vehicle_id": "V12", "soc_pct": 45, "current": {"lat": 28.6280, "lon": 77.3649},
+               "pickup": {"lat": 28.5708, "lon": 77.3261}, "drop": {"lat": 28.5562, "lon": 77.0999},
+               "earning_rs_per_hour": None, "passengers": 1, "ac_on": True, "target_confidence": 0.9,
+               "departure_time": "2026-11-13T19:00:00+05:30"}
+DRIVER_STORY = ("19:00, Noida Sector 62: a cab driver at 45 % battery gets a ride request from Sector 18 to IGI Airport "
+                "Terminal 3. Can they take it, and where should they charge after the drop?")
+
+
+@dataclass(frozen=True)
+class PointPin:
+    """Simulated reports on one named charger near the driver demo's drop (ids are guarded like ScenarioPin)."""
+
+    charger_id: str
+    source_id: str
+    role: str
+    reports: tuple[tuple[int, str], ...]
+
+
+DRIVER_PINS: tuple[PointPin, ...] = (
+    PointPin("CH-0089", "osm:node/12973875562", "nearest to the drop, failures reported in the last days",
+             ((1, "broken"), (2, "broken"), (9, "working"), (16, "working"))),
+    PointPin("CH-0056", "ocm:306802", "well evidenced, working", tuple((a, "working") for a in (1, 2, 3, 5, 7, 9, 12))),
+    PointPin("CH-0073", "ocm:307107", "same Site as Aloft, found occupied once", ((2, "working"), (3, "occupied"),
+                                                                                 (6, "working"))),
+)
+
+
+def driver_demo_reports(chargers: Sequence[ChargerRecord], pins: Sequence[PointPin] = DRIVER_PINS) -> list[Report]:
+    """The driver demo's SIMULATED reports. A pin that no longer matches the directory raises (re-pin, never guess)."""
+    by_id = {c.id: c for c in chargers}
+    drop = (DRIVER_DEMO["drop"]["lat"], DRIVER_DEMO["drop"]["lon"])
+    out: list[Report] = []
+    for pin in pins:
+        c = by_id.get(pin.charger_id)
+        label = f"driver demo pin {pin.charger_id} ({pin.role}, {pin.source_id})"
+        if c is None or pin.source_id not in c.source_ids:
+            raise ValueError(f"{label}: the charger directory changed; re-pin the driver demo (docs/DECISIONS.md F10)")
+        far = haversine_m(np.array([c.lat]), np.array([c.lon]), np.array([drop[0]]), np.array([drop[1]]))[0] / 1000.0
+        if far > AFTER_DROP_RADIUS_KM:
+            raise ValueError(f"{label}: now {far:.1f} km from the drop; re-pin the driver demo")
+        for i, (age, status) in enumerate(pin.reports):
+            out.append(Report(charger_id=pin.charger_id, source_id=f"ride-demo-user-{pin.charger_id}-{i}", status=status,
+                              t=NOW - timedelta(days=age, hours=i), evidence="SIMULATED driver-demo report",
+                              is_simulated=True))
+    return out
+
+
 class ApiError(Exception):
     def __init__(self, status: int, code: str, message: str) -> None:
         super().__init__(message)
@@ -162,9 +215,10 @@ class EngineService:
         self.poly_km = np.array(self.snap["polyline_km"])
         directory, self.directory_meta = load_chargers()
         self.demo_reports = demo_reports_for(chargers_near_route(directory, self.poly, self.poly_km, CORRIDOR_KM))
+        self.driver_demo_reports = driver_demo_reports(directory)
         # The graph (Neo4j when it works, in-memory otherwise) is what trust and dispatch read; the directory file
         # only seeds it. VERITY_GRAPH=auto|memory|neo4j overrides the default (auto).
-        self.graph: GraphHandle = open_graph(directory, self.demo_reports,
+        self.graph: GraphHandle = open_graph(directory, self.demo_reports + self.driver_demo_reports,
                                              prefer=graph_backend or os.environ.get("VERITY_GRAPH", "auto"))
         self._adopt(self.graph.call(self._read_view))
         self.graph.populate(lambda g: populate_road_network(g, self.near, self.trust, float(self.poly_km[-1]),
@@ -349,6 +403,14 @@ class EngineService:
                 "earning_rate": {"rs_per_hour": rate, "is_example": is_example,
                                  "source": EARNING_RATE_SOURCE if is_example else "Entered by the driver"},
                 "data_notes": data_notes(bundle, opts, signals, len(near) - n_sim, n_sim) + notes,
+                "is_simulated": True}
+
+    def driver_demo(self) -> dict:
+        """The second demo's request and what is pinned (F10); the decision itself comes from POST /api/ride-check."""
+        names = {c.id: c.name for c in self.chargers}
+        return {"story": DRIVER_STORY, "request": DRIVER_DEMO,
+                "pinned_chargers": [{"charger_id": p.charger_id, "name": names.get(p.charger_id, p.charger_id),
+                                     "role": p.role, "simulated_reports": len(p.reports)} for p in DRIVER_PINS],
                 "is_simulated": True}
 
     def _plan(self, plan_id: str) -> StoredPlan:

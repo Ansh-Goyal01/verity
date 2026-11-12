@@ -375,6 +375,20 @@ class RideCheckResponse(Resp):
     is_simulated: bool
 
 
+class PinnedCharger(Resp):
+    charger_id: str
+    name: str
+    role: str
+    simulated_reports: int
+
+
+class DriverDemo(Resp):
+    story: str
+    request: RideCheckRequest  # POST it unchanged to /api/ride-check
+    pinned_chargers: list[PinnedCharger]
+    is_simulated: bool
+
+
 # --- voice and errors --------------------------------------------------------------------------------------------
 
 

@@ -135,7 +135,7 @@ def test_ride_check_avoids_the_charger_with_recent_failure_evidence() -> None:
     assert out["decision"] == "GO"
     assert out["after_drop"]["charger"]["charger_id"] == "GOOD"
     near = next(c for c in out["considered"] if c["charger_id"] == "NEAR")
-    assert not near["chosen"] and "failure was reported 1 days ago" in near["note"]
+    assert not near["chosen"] and "failure was reported 1 day ago" in near["note"]
 
 
 def test_more_battery_never_lowers_ride_confidence() -> None:

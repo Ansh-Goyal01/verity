@@ -1,0 +1,515 @@
+{
+ "label": "SIMULATED vehicle and charger reports on a REAL route, weather and charger directory",
+ "scenario": {
+  "story": "19:00, Noida Sector 62: a cab driver at 45 % battery gets a ride request from Sector 18 to IGI Airport Terminal 3. Can they take it, and where should they charge after the drop?",
+  "request": {
+   "vehicle_id": "V12",
+   "soc_pct": 45,
+   "current": {
+    "lat": 28.628,
+    "lon": 77.3649
+   },
+   "pickup": {
+    "lat": 28.5708,
+    "lon": 77.3261
+   },
+   "drop": {
+    "lat": 28.5562,
+    "lon": 77.0999
+   },
+   "earning_rs_per_hour": null,
+   "passengers": 1,
+   "ac_on": true,
+   "target_confidence": 0.9,
+   "departure_time": "2026-11-13T19:00:00+05:30"
+  },
+  "pinned_chargers": [
+   {
+    "charger_id": "CH-0089",
+    "name": "EV charging station (OpenStreetMap)",
+    "role": "nearest to the drop, failures reported in the last days",
+    "simulated_reports": 4
+   },
+   {
+    "charger_id": "CH-0056",
+    "name": "Radisson Blu Plaza Delhi Airport",
+    "role": "well evidenced, working",
+    "simulated_reports": 7
+   },
+   {
+    "charger_id": "CH-0073",
+    "name": "Hotel Pullman",
+    "role": "same Site as Aloft, found occupied once",
+    "simulated_reports": 3
+   }
+  ],
+  "is_simulated": true
+ },
+ "answer": {
+  "vehicle_id": "V12",
+  "decision": "GO",
+  "confidence": 1.0,
+  "reason": "100% confidence of completing the ride and reaching a working charger after the drop (target 90%).",
+  "ride": {
+   "distance_km": 41.5,
+   "pickup_km": 11.7,
+   "duration_min": 48,
+   "p_complete": 1.0,
+   "drop_soc": {
+    "p10": 34,
+    "p50": 35,
+    "p90": 36
+   }
+  },
+  "after_drop": {
+   "charger": {
+    "charger_id": "CH-0056",
+    "name": "Radisson Blu Plaza Delhi Airport",
+    "lat": 28.543766504559187,
+    "lon": 77.11959582440068,
+    "site_id": "CH-0056",
+    "road_km": 4.5,
+    "drive_min": 7,
+    "p_works": 0.85,
+    "evidence": {
+     "n_reports": 7,
+     "days_since_last": 1,
+     "trust_level": "high"
+    },
+    "recent_failure_days": null,
+    "confidence_as_primary": 1.0,
+    "expected_lost_min": 75,
+    "expected_lost_rs": 80,
+    "chosen": true,
+    "note": "Chosen: fewest expected lost minutes at the target confidence."
+   },
+   "backups": [
+    {
+     "charger_id": "CH-0071",
+     "name": "Aloft",
+     "same_site_as_primary": false
+    },
+    {
+     "charger_id": "CH-0072",
+     "name": "JW Marriott - Aerocity",
+     "same_site_as_primary": false
+    }
+   ],
+   "expected_lost_min": 75,
+   "expected_lost_rs": 80,
+   "minutes": [
+    {
+     "part": "drive",
+     "label": "Drive to the charger",
+     "minutes": 6.6
+    },
+    {
+     "part": "backup_drive",
+     "label": "Driving on to a backup",
+     "minutes": 0.6
+    },
+    {
+     "part": "failed_stops",
+     "label": "Stops at broken chargers",
+     "minutes": 4.4
+    },
+    {
+     "part": "waiting",
+     "label": "Expected queue",
+     "minutes": 0.0
+    },
+    {
+     "part": "charging",
+     "label": "Charging to 80 %",
+     "minutes": 58.2
+    },
+    {
+     "part": "stranding",
+     "label": "Stranding risk (penalty x probability)",
+     "minutes": 5.3
+    }
+   ]
+  },
+  "considered": [
+   {
+    "charger_id": "CH-0089",
+    "name": "EV charging station (OpenStreetMap)",
+    "lat": 28.5613597,
+    "lon": 77.0813217,
+    "site_id": "CH-0089",
+    "road_km": 2.3,
+    "drive_min": 4,
+    "p_works": 0.55,
+    "evidence": {
+     "n_reports": 4,
+     "days_since_last": 1,
+     "trust_level": "medium"
+    },
+    "recent_failure_days": 1,
+    "confidence_as_primary": 0.95,
+    "expected_lost_min": 96,
+    "expected_lost_rs": 100,
+    "chosen": false,
+    "note": "Avoided: a failure was reported 1 day ago."
+   },
+   {
+    "charger_id": "CH-0072",
+    "name": "JW Marriott - Aerocity",
+    "lat": 28.553139997543852,
+    "lon": 77.1212200291775,
+    "site_id": "CH-0072",
+    "road_km": 5.1,
+    "drive_min": 8,
+    "p_works": 0.6,
+    "evidence": {
+     "n_reports": 0,
+     "days_since_last": null,
+     "trust_level": "unknown"
+    },
+    "recent_failure_days": null,
+    "confidence_as_primary": 0.95,
+    "expected_lost_min": 93,
+    "expected_lost_rs": 90,
+    "chosen": false,
+    "note": "Not chosen: few or no recent reports."
+   },
+   {
+    "charger_id": "CH-0073",
+    "name": "Hotel Pullman",
+    "lat": 28.55336145830492,
+    "lon": 77.12361595842049,
+    "site_id": "CH-0071",
+    "road_km": 4.9,
+    "drive_min": 8,
+    "p_works": 0.75,
+    "evidence": {
+     "n_reports": 3,
+     "days_since_last": 2,
+     "trust_level": "medium"
+    },
+    "recent_failure_days": null,
+    "confidence_as_primary": 0.95,
+    "expected_lost_min": 96,
+    "expected_lost_rs": 100,
+    "chosen": false,
+    "note": "Not chosen: more expected lost minutes."
+   },
+   {
+    "charger_id": "CH-0056",
+    "name": "Radisson Blu Plaza Delhi Airport",
+    "lat": 28.543766504559187,
+    "lon": 77.11959582440068,
+    "site_id": "CH-0056",
+    "road_km": 4.5,
+    "drive_min": 7,
+    "p_works": 0.85,
+    "evidence": {
+     "n_reports": 7,
+     "days_since_last": 1,
+     "trust_level": "high"
+    },
+    "recent_failure_days": null,
+    "confidence_as_primary": 1.0,
+    "expected_lost_min": 75,
+    "expected_lost_rs": 80,
+    "chosen": true,
+    "note": "Chosen: fewest expected lost minutes at the target confidence."
+   },
+   {
+    "charger_id": "CH-0071",
+    "name": "Aloft",
+    "lat": 28.552367614043746,
+    "lon": 77.12382001094556,
+    "site_id": "CH-0071",
+    "road_km": 5.2,
+    "drive_min": 8,
+    "p_works": 0.6,
+    "evidence": {
+     "n_reports": 0,
+     "days_since_last": null,
+     "trust_level": "unknown"
+    },
+    "recent_failure_days": null,
+    "confidence_as_primary": 0.95,
+    "expected_lost_min": 95,
+    "expected_lost_rs": 90,
+    "chosen": false,
+    "note": "Not chosen: few or no recent reports."
+   },
+   {
+    "charger_id": "CH-0120",
+    "name": "Switch Delhi",
+    "lat": 28.576123,
+    "lon": 77.069508,
+    "site_id": "CH-0120",
+    "road_km": 14.5,
+    "drive_min": 17,
+    "p_works": 0.6,
+    "evidence": {
+     "n_reports": 0,
+     "days_since_last": null,
+     "trust_level": "unknown"
+    },
+    "recent_failure_days": null,
+    "confidence_as_primary": 0.95,
+    "expected_lost_min": 108,
+    "expected_lost_rs": 110,
+    "chosen": false,
+    "note": "Not chosen: few or no recent reports."
+   },
+   {
+    "charger_id": "CH-0142",
+    "name": "Tata Power EV Charging",
+    "lat": 28.5947709,
+    "lon": 77.1333487,
+    "site_id": "CH-0142",
+    "road_km": 9.2,
+    "drive_min": 14,
+    "p_works": 0.6,
+    "evidence": {
+     "n_reports": 0,
+     "days_since_last": null,
+     "trust_level": "unknown"
+    },
+    "recent_failure_days": null,
+    "confidence_as_primary": 0.95,
+    "expected_lost_min": 104,
+    "expected_lost_rs": 100,
+    "chosen": false,
+    "note": "Not chosen: few or no recent reports."
+   }
+  ],
+  "bingo_line": [
+   {
+    "km": 0.0,
+    "bingo_soc_pct": 17,
+    "expected_soc_pct": 45
+   },
+   {
+    "km": 1.0,
+    "bingo_soc_pct": 17,
+    "expected_soc_pct": 45
+   },
+   {
+    "km": 2.0,
+    "bingo_soc_pct": 17,
+    "expected_soc_pct": 45
+   },
+   {
+    "km": 3.0,
+    "bingo_soc_pct": 17,
+    "expected_soc_pct": 44
+   },
+   {
+    "km": 4.0,
+    "bingo_soc_pct": 17,
+    "expected_soc_pct": 44
+   },
+   {
+    "km": 5.0,
+    "bingo_soc_pct": 16,
+    "expected_soc_pct": 44
+   },
+   {
+    "km": 6.0,
+    "bingo_soc_pct": 16,
+    "expected_soc_pct": 44
+   },
+   {
+    "km": 7.0,
+    "bingo_soc_pct": 16,
+    "expected_soc_pct": 43
+   },
+   {
+    "km": 8.0,
+    "bingo_soc_pct": 16,
+    "expected_soc_pct": 43
+   },
+   {
+    "km": 9.0,
+    "bingo_soc_pct": 15,
+    "expected_soc_pct": 43
+   },
+   {
+    "km": 10.0,
+    "bingo_soc_pct": 15,
+    "expected_soc_pct": 43
+   },
+   {
+    "km": 11.0,
+    "bingo_soc_pct": 15,
+    "expected_soc_pct": 43
+   },
+   {
+    "km": 12.0,
+    "bingo_soc_pct": 15,
+    "expected_soc_pct": 42
+   },
+   {
+    "km": 13.0,
+    "bingo_soc_pct": 14,
+    "expected_soc_pct": 42
+   },
+   {
+    "km": 14.0,
+    "bingo_soc_pct": 14,
+    "expected_soc_pct": 42
+   },
+   {
+    "km": 15.0,
+    "bingo_soc_pct": 14,
+    "expected_soc_pct": 42
+   },
+   {
+    "km": 16.0,
+    "bingo_soc_pct": 14,
+    "expected_soc_pct": 42
+   },
+   {
+    "km": 17.0,
+    "bingo_soc_pct": 13,
+    "expected_soc_pct": 41
+   },
+   {
+    "km": 18.0,
+    "bingo_soc_pct": 13,
+    "expected_soc_pct": 41
+   },
+   {
+    "km": 19.0,
+    "bingo_soc_pct": 12,
+    "expected_soc_pct": 40
+   },
+   {
+    "km": 20.0,
+    "bingo_soc_pct": 12,
+    "expected_soc_pct": 40
+   },
+   {
+    "km": 21.0,
+    "bingo_soc_pct": 12,
+    "expected_soc_pct": 40
+   },
+   {
+    "km": 22.0,
+    "bingo_soc_pct": 12,
+    "expected_soc_pct": 40
+   },
+   {
+    "km": 23.0,
+    "bingo_soc_pct": 11,
+    "expected_soc_pct": 39
+   },
+   {
+    "km": 24.0,
+    "bingo_soc_pct": 11,
+    "expected_soc_pct": 39
+   },
+   {
+    "km": 25.0,
+    "bingo_soc_pct": 11,
+    "expected_soc_pct": 39
+   },
+   {
+    "km": 26.0,
+    "bingo_soc_pct": 11,
+    "expected_soc_pct": 39
+   },
+   {
+    "km": 27.0,
+    "bingo_soc_pct": 10,
+    "expected_soc_pct": 38
+   },
+   {
+    "km": 28.0,
+    "bingo_soc_pct": 10,
+    "expected_soc_pct": 38
+   },
+   {
+    "km": 29.0,
+    "bingo_soc_pct": 10,
+    "expected_soc_pct": 38
+   },
+   {
+    "km": 30.0,
+    "bingo_soc_pct": 9,
+    "expected_soc_pct": 38
+   },
+   {
+    "km": 31.0,
+    "bingo_soc_pct": 9,
+    "expected_soc_pct": 37
+   },
+   {
+    "km": 32.0,
+    "bingo_soc_pct": 9,
+    "expected_soc_pct": 37
+   },
+   {
+    "km": 33.0,
+    "bingo_soc_pct": 8,
+    "expected_soc_pct": 37
+   },
+   {
+    "km": 34.0,
+    "bingo_soc_pct": 8,
+    "expected_soc_pct": 36
+   },
+   {
+    "km": 35.0,
+    "bingo_soc_pct": 8,
+    "expected_soc_pct": 36
+   },
+   {
+    "km": 36.0,
+    "bingo_soc_pct": 8,
+    "expected_soc_pct": 36
+   },
+   {
+    "km": 37.0,
+    "bingo_soc_pct": 8,
+    "expected_soc_pct": 36
+   },
+   {
+    "km": 38.0,
+    "bingo_soc_pct": 7,
+    "expected_soc_pct": 36
+   },
+   {
+    "km": 39.0,
+    "bingo_soc_pct": 7,
+    "expected_soc_pct": 36
+   },
+   {
+    "km": 40.0,
+    "bingo_soc_pct": 7,
+    "expected_soc_pct": 36
+   },
+   {
+    "km": 41.0,
+    "bingo_soc_pct": 7,
+    "expected_soc_pct": 35
+   },
+   {
+    "km": 41.5,
+    "bingo_soc_pct": 7,
+    "expected_soc_pct": 35
+   }
+  ],
+  "levers": [],
+  "earning_rs_per_hour": 60.0,
+  "compute_ms": 369,
+  "earning_rate": {
+   "rs_per_hour": 60.0,
+   "is_example": true,
+   "source": "Example: CIS India (2024) median net taxi-worker earnings INR 5,000 over a median 84-hour week (surveys 2021-22, incl. Delhi NCR) = about INR 60/hour; approximate - verify. https://cis-india.org/raw/workers-experiences-in-app-based-taxi-and-delivery-sectors-key-initial-findings-from-multi-city-quantitative-surveys"
+  },
+  "data_notes": [
+   "Route: osrm (real router); weather: forecast for 2026-11-13T19:00.",
+   "After-drop legs are taken as flat urban driving (grade 0); approximate - verify.",
+   "Charger reports used near the drop: 0 real, 14 SIMULATED.",
+   "Charging power is not listed for some chargers; 25 kW is assumed for them."
+  ],
+  "is_simulated": true
+ }
+}

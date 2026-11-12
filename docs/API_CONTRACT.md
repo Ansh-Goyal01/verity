@@ -259,7 +259,7 @@ Response (illustrative values, not results):
                {"part": "charging", "label": "Charging to 80 %", "minutes": 55.0},
                {"part": "stranding", "label": "...", "minutes": 4.8}]},
  "considered": [{"...same fields as after_drop.charger...": "", "chosen": false,
-                 "note": "Avoided: a failure was reported 1 days ago."}],
+                 "note": "Avoided: a failure was reported 1 day ago."}],
  "bingo_line": [{"km": 0.0, "bingo_soc_pct": 17, "expected_soc_pct": 45}],
  "levers": [{"lever_id": "ac_off", "label": "Ride with the AC off", "new_confidence": 0.95, "time_cost_min": 0,
              "rupee_cost": 0}],
@@ -284,3 +284,21 @@ Rules the UI can rely on:
 - `data_notes` lists what is real, simulated or assumed for this answer; show them under the decision.
 - Errors: 404 `unknown_vehicle`; 422 `unsupported_area` (outside the charger directory: Delhi NCR and the
   Noida-Agra corridor); 422 `invalid_request`.
+
+## GET /api/demo/driver (v2, F10)
+
+The second demo's scenario: an EV cab driver in Noida in the evening gets an airport ride. POST `request` unchanged to
+`/api/ride-check` to get the decision.
+
+```json
+{"story": "19:00, Noida Sector 62: a cab driver at 45 % battery gets a ride request ...",
+ "request": {"vehicle_id": "V12", "soc_pct": 45, "current": {"lat": 28.628, "lon": 77.3649},
+             "pickup": {"lat": 28.5708, "lon": 77.3261}, "drop": {"lat": 28.5562, "lon": 77.0999},
+             "earning_rs_per_hour": null, "passengers": 1, "ac_on": true, "target_confidence": 0.9,
+             "departure_time": "2026-11-13T19:00:00+05:30"},
+ "pinned_chargers": [{"charger_id": "CH-0089", "name": "...", "role": "nearest to the drop, failures reported ...",
+                      "simulated_reports": 4}],
+ "is_simulated": true}
+```
+
+Route, weather and charger positions are real; the vehicle and every pinned report are SIMULATED (show the badge).
