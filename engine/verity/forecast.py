@@ -109,6 +109,7 @@ class ForecastRuns:
     soc_used_cum: Array  # (N, S): SoC points used up to the end of each segment
     terms_soc: dict[str, Array]  # (N,) per term over the whole route; regen is negative
     shared: bool
+    energy_kwh: Array | None = None  # (N,) battery energy over the whole route (for Wh/km comparisons)
 
     @property
     def n_runs(self) -> int:
@@ -188,7 +189,9 @@ def simulate_runs(
     usable_j = np.asarray(params.usable_kwh) * cap_err * J_PER_KWH
     soc_terms = {name: 100.0 * t * noise / usable_j for name, t in terms.items()}
     cum = np.cumsum(sum(soc_terms.values()), axis=1)
-    return ForecastRuns(route.km_end, cum, {name: t.sum(axis=1) for name, t in soc_terms.items()}, shared)
+    energy_kwh = sum((t * noise).sum(axis=1) for t in terms.values()) / J_PER_KWH
+    return ForecastRuns(route.km_end, cum, {name: t.sum(axis=1) for name, t in soc_terms.items()}, shared,
+                        energy_kwh)
 
 
 def round_prob(p: float) -> float:

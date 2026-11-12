@@ -9,7 +9,7 @@ Scope of this session (user instruction 2026-11-12): F0, F1 and F2 only, then st
 - [x] F1 Collection kit for the teammate
 - [x] F2 Vehicle specs
 - [x] F3 Enrichment
-- [ ] F4 E1-India (real, public, self-reported)
+- [x] F4 E1-India (real, public, self-reported)
 - [ ] F5 Charger evidence
 - [ ] F6 Voice of customer from app reviews
 - [ ] F7 Sarvam voice loop
@@ -74,3 +74,15 @@ yet), so it is empty by design and re-runs as rows are verified. Live plumbing c
 Kolkata to Midnapore (140 % mismatch), consistent with the open question in its note. T0001 has no trip or
 publication date, so its weather is "missing" until the teammate adds one. Network note: geocoders were
 briefly unreachable over TLS from this machine, then recovered; see DECISIONS. tests/test_enrich.py: 7 tests.
+
+## F4 E1-India (2026-11-12)
+
+Built engine/verity/india_eval.py and experiments/e1_india_real.py (`uv run python experiments/e1_india_real.py`):
+source-grouped fixed 30 % split (data/splits/india_trips_split.json, rule frozen, zero assignments so far),
+predictive distributions through simulate_runs for SoC used / Wh/km / range, reporting-noise model,
+per-variant Bayesian calibration (>=3 training records), baselines (claimed linear, flat -25 %, training-only
+regression), MAE + 50/80/90 % coverage with Wilson CIs, PRELIMINARY below held-out n=15. Real run:
+**NOT_RUN, n=0** (no row verified yet); results/e1_india_real.json and .png say so. Additive engine change:
+ForecastRuns.energy_kwh. tests/test_india_eval.py: 14 tests (synthetic in-test records only).
+Note for the teammate: E1-India needs verified rows from several different source pages; rows from one page
+always share a side of the split, so ~30 % of pages (not rows) become the held-out set.
