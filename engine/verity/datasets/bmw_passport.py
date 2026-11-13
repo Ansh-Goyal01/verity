@@ -19,7 +19,8 @@ import numpy as np
 
 from ..physics import Segments, total_mass_kg
 from ..trips import TripObservation
-from ..vehicles import VehiclePrior, model_prior
+from ..passport import model_prior
+from ..vehicles import VehiclePrior
 from .bmw_i3 import BmwTrip
 
 # BMW i3 60 Ah (2013-2017), EV Database https://ev-database.org/car/1004/BMW-i3-60-Ah (read 2026-11-13):

@@ -1,0 +1,146 @@
+{
+ "generated_at": "2026-11-13T12:58:51+00:00",
+ "is_simulated": false,
+ "note": "Corpus sizes and step statuses for the REAL-data track; the numbers live in each step's result file.",
+ "corpus": {
+  "trips_india.csv": {
+   "rows": 6,
+   "usable": 0,
+   "errors": 0
+  },
+  "charger_evidence.csv": {
+   "rows": 0,
+   "usable": 0,
+   "errors": 0
+  },
+  "app_status_snapshots.csv": {
+   "rows": 0,
+   "usable": 0,
+   "errors": 0
+  },
+  "app_reviews.csv": {
+   "rows": 0,
+   "usable": 0,
+   "errors": 0
+  },
+  "vehicles_india.csv": {
+   "rows": 13,
+   "usable": 13,
+   "errors": 0
+  },
+  "charger_match_overrides.csv": {
+   "rows": 0,
+   "usable": 0,
+   "errors": 0
+  }
+ },
+ "private_review_texts": 0,
+ "no_paid": false,
+ "all_ok": true,
+ "steps": [
+  {
+   "step": "validate",
+   "ok": true,
+   "returncode": 0,
+   "seconds": 0.2,
+   "missing_outputs": [],
+   "last_line": "All files pass (no errors).",
+   "headline": null
+  },
+  {
+   "step": "F3",
+   "ok": true,
+   "returncode": 0,
+   "seconds": 2.3,
+   "missing_outputs": [],
+   "last_line": "}",
+   "headline": {
+    "n_selected": 0,
+    "n_records": 0,
+    "n_routed": 0,
+    "n_with_weather": 0,
+    "n_with_segments": 0,
+    "n_distance_flagged": 0,
+    "by_record_type": {
+     "soc_trip": 0,
+     "consumption": 0,
+     "range_test": 0
+    }
+   }
+  },
+  {
+   "step": "F4",
+   "ok": true,
+   "returncode": 0,
+   "seconds": 3.1,
+   "missing_outputs": [],
+   "last_line": "}",
+   "headline": {
+    "status": "NOT_RUN",
+    "label": "REAL: public self-reported Indian trips, n=0",
+    "reason": "no verified held-out records yet",
+    "counts": {
+     "enriched_records": 0,
+     "evaluable": 0,
+     "skipped": {},
+     "excluded_distance_mismatch": [],
+     "train": 0,
+     "test": 0,
+     "test_by_type": {},
+     "source_groups_train": 0,
+     "source_groups_test": 0
+    }
+   }
+  },
+  {
+   "step": "F5",
+   "ok": true,
+   "returncode": 0,
+   "seconds": 22.6,
+   "missing_outputs": [],
+   "last_line": " -> D:\\hackfront-verity\\results\\e3_real_evidence.json",
+   "headline": {
+    "inputs": {
+     "evidence_rows_usable": 0,
+     "snapshot_rows_usable": 0,
+     "match_overrides": 0,
+     "directory_chargers": 207
+    },
+    "n_reports": 0,
+    "e3_real": {
+     "status": "NOT_RUN",
+     "n_trips": 0
+    }
+   }
+  },
+  {
+   "step": "F6",
+   "ok": true,
+   "returncode": 0,
+   "seconds": 0.8,
+   "missing_outputs": [],
+   "last_line": "REAL: hand-collected public app-store reviews (text kept private): NOT_RUN | rows 0, with text 0, classified 0, paid calls 0 -> D:\\hackfront-verity\\results\\voc_app_reviews.json",
+   "headline": {
+    "status": "NOT_RUN",
+    "method": "sarvam-chat",
+    "n_review_rows": 0,
+    "n_with_private_text": 0,
+    "n_human_labelled": null,
+    "paid_calls": 0
+   }
+  },
+  {
+   "step": "F9",
+   "ok": true,
+   "returncode": 0,
+   "seconds": 42.1,
+   "missing_outputs": [],
+   "last_line": "demo V07: Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False.  (32.9 s)",
+   "headline": {
+    "bmw_i3_trips_usable": 40,
+    "bmw_i3_label": "REAL: BMW i3 60 Ah, Germany (TU Munich, DOI 10.21227/6jr9-5235), TRAINING-split trips only; not Indian conditions",
+    "demo_V07": "Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False."
+   }
+  }
+ ]
+}

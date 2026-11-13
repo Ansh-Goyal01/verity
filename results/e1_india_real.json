@@ -4,7 +4,7 @@
  "label": "REAL: public self-reported Indian trips, n=0",
  "status": "NOT_RUN",
  "reason": "no verified held-out records yet",
- "generated_at": "2026-11-12T16:36:01+00:00",
+ "generated_at": "2026-11-13T12:57:45+00:00",
  "counts": {
   "enriched_records": 0,
   "evaluable": 0,

@@ -1,4 +1,44 @@
-# Results for deck (script generated)
+# Results for deck
+
+## Finale numbers (F4-F11, 2026-11-13) - quote these first
+
+Hand-maintained from the result files named in each row (re-run: `uv run python scripts/run_real_data.py` for REAL,
+`uv run python scripts/run_all.py` for SIMULATED). Machine: Windows 11 (10.0.26300), 12 logical CPUs, Python 3.13.
+95 % intervals are Wilson unless stated. Every URL is in [SOURCES.md](SOURCES.md).
+
+| Claim | Value | n and 95% CI | REAL or SIMULATED | Source file |
+|---|---|---|---|---|
+| Hand-collected corpus size | trips 6 rows (0 verified), charger evidence 0, app snapshots 0, app reviews 0, vehicle specs 13 | counts on 2026-11-13 | REAL (empty so far) | results/real_data_summary.json |
+| E1-India (SoC / Wh/km / range on public Indian trips) | NOT_RUN: no verified held-out record | n=0 | REAL | results/e1_india_real.json |
+| Charger evidence, channel trust, E3-real | NOT_RUN: 0 usable evidence rows, 0 snapshots, 0 reports | n=0 | REAL | results/e3_real_evidence.json |
+| Voice of customer (app reviews) | NOT_RUN: 0 reviews | n=0 | REAL | results/voc_app_reviews.json |
+| Range Passport capacity, BMW i3 (all 40 usable TRAINING trips, 728 km) | 19.39 kWh per 100 SoC points vs measured 22.70 (V x I): **-14.5 %** | 80 % CrI 17.97-20.53, 95 % CrI 17.19-20.99; truth OUTSIDE the 95 % interval | REAL (Germany, not India) | results/range_passport_bmw_i3.json, results/f9_passport_validation.json |
+| Range Passport learning curve, BMW i3 | median abs error 17.3 % (k=1), 16.9 % (3), 15.4 % (5), 14.7 % (10), 14.9 % (20); mean error always negative | 20 random subsets per k from 40 trips (not independent); 95 % coverage 0.0 at every k | REAL (Germany) | results/f9_passport_validation.json |
+| BMW i3 observed efficiency (data only, no model) | 142.2 km per 100 SoC points | 40 trips, 512 SoC points, -3.3 to 30.8 degC | REAL (Germany) | results/range_passport_bmw_i3.json |
+| Range Passport, simulated cars | median abs error 4.3 % (k=1), 3.2 % (3), 3.0 % (5), 3.1 % (10); 80 % coverage 0.83 then 1.0 | 6 cars; no CI at n=6 | SIMULATED (optimistic: same physics family) | results/f9_passport_validation.json |
+| Range Passport demo V07 | 37.08 kWh vs simulator truth 32.87 (+12.8 %), truth outside the 80 % CrI | 6 trips | SIMULATED | results/range_passport_demo_V07.json |
+| BMW i3 Indian-route range (model output) | Noida-Agra p50 177 km (p10 147, p90 211); Noida-IGI evening p50 280 km | Monte Carlo, NOT validated; likely optimistic given the -14.5 % capacity bias | SIMULATED on REAL routes | results/range_passport_bmw_i3.json |
+| E3 trust-aware vs reliability-blind, 40 % chargers down | stranded 3.5 % vs 16.0 % (only-blind 26, only-aware 1) | 7/200 [0.017, 0.070] vs 32/200 [0.116, 0.217] | SIMULATED | results/e3_reliability_planning_simulated.json |
+| E3, 20 % chargers down | stranded 2.5 % vs 9.5 % | 5/200 [0.011, 0.057] vs 19/200 [0.062, 0.144] | SIMULATED | results/e3_reliability_planning_simulated.json |
+| E4 dispatch vs fixed shortest path, 40 % chargers down | stranded 3.5 % vs 37.5 % (only-fixed 68, only-dispatch 0); minutes 218.9 vs 217.0 when both arrive | 7/200 [0.017, 0.070] vs 75/200 [0.311, 0.444] | SIMULATED | results/e4_dispatch_vs_fixed_simulated.json |
+| E4, 0 / 10 / 20 % chargers down | dispatch 3.5 / 3.0 / 2.5 % vs fixed 9.0 / 14.5 / 20.5 % | 200 trips each; CIs in the JSON | SIMULATED | results/e4_dispatch_vs_fixed_simulated.json |
+| Candidate diversity (F8d) | stranded 2 -> 3, 3 -> 2, 6 -> 5 at 10 / 20 / 40 % down; plan changed on 6-9 % of trips; +6-16 % planning time | 100 trips per rate; e.g. 40 %: [0.028, 0.125] vs [0.022, 0.112]: **no measurable gain** | SIMULATED | results/f8_candidate_diversity_simulated.json |
+| Ride-check latency | p50 1.52 s, p95 1.69 s, max 3.06 s (target p95 < 5 s) | 30 calls, 1,500 MC runs, in-memory graph; timings real on this laptop | SIMULATED vehicle | results/f8_ride_check_latency.json |
+| Driver demo (Noida 19:00, 45 %, ride to IGI T3) | GO, shown 100 % (target 90 %); after the drop: Radisson Blu (4.5 km, 7 reports), avoids the nearer CH-0089 (failure 1 day ago); 75 expected lost minutes = Rs 80 at the EXAMPLE rate | one scenario, 1,500 MC runs; pinned by tests | SIMULATED vehicle and reports on a REAL route, forecast, directory | results/driver_demo_simulated.json |
+| Example earning rate | Rs 60/hour, labelled EXAMPLE | from CIS India 2024 survey medians ("per week" is our reading) | REAL source, our derivation | api/ride.py, docs/SOURCES.md |
+| Fleet demo decisions | V07 NO_GO (rounded 0.80), V12 GO (0.95), V19 INSUFFICIENT_EVIDENCE (0.90) | one export, 1,500 MC runs; decisions pinned by tests | SIMULATED | docs/api_examples/dispatch_V*.json |
+| Sarvam voice loop | Hindi note -> transcript -> "battery 42 %", status broken; TTS ~1.3 s, STT 0.8 s, translate 1.2 s | one round trip (n=1) of our own TTS, not a real driver | SIMULATED speech, REAL API | results/voice_check.json |
+| Tests and full run | pytest 364 passed, 10 skipped (live Neo4j); run_all: tests, E1-E5, api_examples OK; neo4j_smoke FAILED (Aura host does not resolve) | 2026-11-13 | SOFTWARE CHECK | results/run_all_summary.json |
+
+**Superseded rows in the 29 Oct table below:** E3 and E4 numbers (F8 added Site-correlated failures and diverse
+candidates; use the rows above), the Demo V07 confidence (now 0.80, decision unchanged), the "Uncached memory full
+dispatch" timing (F8 standalone: 3.35 s mean, 4.05 s max, more candidates scored), the Tests and Full run_all rows,
+and the "Do not claim" items "BMW validation done here" and "Sarvam live verified here": the BMW Range Passport
+validation (training trips) and the Sarvam endpoint checks are now done, with the limits stated above. Still do not
+claim: validation in India, audited chargers, real driver feedback, or that the BMW-based passport is accurate (it
+is biased low).
+
+## Historical table (script generated by scripts/finish_report.py, 29 Oct 2026)
 
 Machine: `{"os": "Windows-11-10.0.26200-SP0", "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel", "logical_cpus": 12, "python": "3.12.10"}`. Recorded 2026-10-29T18:51:00.520292+00:00.
 

@@ -736,10 +736,10 @@
    "operator": "",
    "site_type": "unknown",
    "connectors": [],
-   "p_works": 0.6,
-   "trust_level": "unknown",
-   "n_reports": 0,
-   "days_since_last": null,
+   "p_works": 0.85,
+   "trust_level": "high",
+   "n_reports": 7,
+   "days_since_last": 1,
    "source": "ocm"
   },
   {
@@ -974,10 +974,10 @@
    "operator": "",
    "site_type": "hotel",
    "connectors": [],
-   "p_works": 0.6,
-   "trust_level": "unknown",
-   "n_reports": 0,
-   "days_since_last": null,
+   "p_works": 0.75,
+   "trust_level": "medium",
+   "n_reports": 3,
+   "days_since_last": 2,
    "source": "ocm"
   },
   {
@@ -1211,10 +1211,10 @@
    "operator": "",
    "site_type": "unknown",
    "connectors": [],
-   "p_works": 0.6,
-   "trust_level": "unknown",
-   "n_reports": 0,
-   "days_since_last": null,
+   "p_works": 0.55,
+   "trust_level": "medium",
+   "n_reports": 4,
+   "days_since_last": 1,
    "source": "osm"
   },
   {

@@ -2,7 +2,7 @@
  "experiment": "F6 voice of customer (app reviews)",
  "is_simulated": false,
  "label": "REAL: hand-collected public app-store reviews (text kept private)",
- "generated_at": "2026-11-12T17:17:35+00:00",
+ "generated_at": "2026-11-13T12:58:08+00:00",
  "method": "sarvam-chat",
  "model": "sarvam-105b",
  "n_review_rows": 0,

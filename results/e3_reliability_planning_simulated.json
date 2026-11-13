@@ -15,8 +15,8 @@
    "mean_minutes_blind_not_stranded": 215.8,
    "mean_minutes_aware_not_stranded": 215.4,
    "mean_minutes_lost_by_being_aware": -0.4,
-   "plan_ms_blind_mean": 385.0,
-   "plan_ms_aware_mean": 356.0
+   "plan_ms_blind_mean": 294.0,
+   "plan_ms_aware_mean": 276.0
   },
   "40% chargers down": {
    "trips": 200,
@@ -29,11 +29,11 @@
    "mean_minutes_blind_not_stranded": 217.0,
    "mean_minutes_aware_not_stranded": 217.0,
    "mean_minutes_lost_by_being_aware": -0.0,
-   "plan_ms_blind_mean": 369.0,
-   "plan_ms_aware_mean": 354.0
+   "plan_ms_blind_mean": 251.0,
+   "plan_ms_aware_mean": 233.0
   }
  },
- "runtime_s": 345.1,
+ "runtime_s": 249.9,
  "notes": [
   "Chargers, reports and failures are SIMULATED; energy truth comes from verity.sim.",
   "Failure rates 20 % / 40 % follow PLAN s3 figures (approximate - verify)."

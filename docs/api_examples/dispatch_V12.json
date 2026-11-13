@@ -10,7 +10,7 @@
  },
  "route": {
   "distance_km": 190.8,
-  "duration_min": 176,
+  "duration_min": 177,
   "polyline": [
    [
     28.53552,
@@ -6109,7 +6109,7 @@
   },
   {
    "km": 22.0,
-   "bingo_soc_pct": 42,
+   "bingo_soc_pct": 43,
    "expected_soc_pct": 55,
    "expected_soc_p10": 54,
    "expected_soc_p90": 56
@@ -6144,7 +6144,7 @@
   },
   {
    "km": 27.0,
-   "bingo_soc_pct": 40,
+   "bingo_soc_pct": 41,
    "expected_soc_pct": 53,
    "expected_soc_p10": 51,
    "expected_soc_p90": 54
@@ -6242,7 +6242,7 @@
   },
   {
    "km": 41.0,
-   "bingo_soc_pct": 70,
+   "bingo_soc_pct": 69,
    "expected_soc_pct": 47,
    "expected_soc_p10": 45,
    "expected_soc_p90": 49
@@ -6417,7 +6417,7 @@
   },
   {
    "km": 66.0,
-   "bingo_soc_pct": 31,
+   "bingo_soc_pct": 32,
    "expected_soc_pct": 38,
    "expected_soc_p10": 33,
    "expected_soc_p90": 41
@@ -6431,7 +6431,7 @@
   },
   {
    "km": 68.0,
-   "bingo_soc_pct": 30,
+   "bingo_soc_pct": 31,
    "expected_soc_pct": 37,
    "expected_soc_p10": 32,
    "expected_soc_p90": 41
@@ -6445,7 +6445,7 @@
   },
   {
    "km": 70.0,
-   "bingo_soc_pct": 29,
+   "bingo_soc_pct": 30,
    "expected_soc_pct": 36,
    "expected_soc_p10": 31,
    "expected_soc_p90": 40
@@ -6522,7 +6522,7 @@
   },
   {
    "km": 81.0,
-   "bingo_soc_pct": 24,
+   "bingo_soc_pct": 25,
    "expected_soc_pct": 32,
    "expected_soc_p10": 26,
    "expected_soc_p90": 37
@@ -6536,7 +6536,7 @@
   },
   {
    "km": 83.0,
-   "bingo_soc_pct": 23,
+   "bingo_soc_pct": 24,
    "expected_soc_pct": 32,
    "expected_soc_p10": 25,
    "expected_soc_p90": 36
@@ -6662,7 +6662,7 @@
   },
   {
    "km": 101.0,
-   "bingo_soc_pct": 15,
+   "bingo_soc_pct": 16,
    "expected_soc_pct": 25,
    "expected_soc_p10": 17,
    "expected_soc_p90": 30
@@ -6697,7 +6697,7 @@
   },
   {
    "km": 106.0,
-   "bingo_soc_pct": 13,
+   "bingo_soc_pct": 14,
    "expected_soc_pct": 23,
    "expected_soc_p10": 15,
    "expected_soc_p90": 29
@@ -6938,7 +6938,7 @@
    "bingo_soc_pct": 30,
    "expected_soc_pct": 37,
    "expected_soc_p10": 35,
-   "expected_soc_p90": 40
+   "expected_soc_p90": 39
   },
   {
    "km": 141.0,
@@ -6959,7 +6959,7 @@
    "bingo_soc_pct": 29,
    "expected_soc_pct": 36,
    "expected_soc_p10": 33,
-   "expected_soc_p90": 39
+   "expected_soc_p90": 38
   },
   {
    "km": 144.0,
@@ -6972,7 +6972,7 @@
    "km": 145.0,
    "bingo_soc_pct": 28,
    "expected_soc_pct": 35,
-   "expected_soc_p10": 33,
+   "expected_soc_p10": 32,
    "expected_soc_p90": 38
   },
   {
@@ -7063,7 +7063,7 @@
    "km": 158.0,
    "bingo_soc_pct": 23,
    "expected_soc_pct": 31,
-   "expected_soc_p10": 27,
+   "expected_soc_p10": 26,
    "expected_soc_p90": 33
   },
   {
@@ -7120,7 +7120,7 @@
    "bingo_soc_pct": 19,
    "expected_soc_pct": 27,
    "expected_soc_p10": 23,
-   "expected_soc_p90": 31
+   "expected_soc_p90": 30
   },
   {
    "km": 167.0,
@@ -7141,7 +7141,7 @@
    "bingo_soc_pct": 18,
    "expected_soc_pct": 26,
    "expected_soc_p10": 21,
-   "expected_soc_p90": 30
+   "expected_soc_p90": 29
   },
   {
    "km": 170.0,
@@ -7162,7 +7162,7 @@
    "bingo_soc_pct": 17,
    "expected_soc_pct": 25,
    "expected_soc_p10": 20,
-   "expected_soc_p90": 29
+   "expected_soc_p90": 28
   },
   {
    "km": 173.0,
@@ -7190,13 +7190,13 @@
    "bingo_soc_pct": 16,
    "expected_soc_pct": 24,
    "expected_soc_p10": 19,
-   "expected_soc_p90": 28
+   "expected_soc_p90": 27
   },
   {
    "km": 177.0,
    "bingo_soc_pct": 16,
    "expected_soc_pct": 24,
-   "expected_soc_p10": 19,
+   "expected_soc_p10": 18,
    "expected_soc_p90": 27
   },
   {
@@ -7218,7 +7218,7 @@
    "bingo_soc_pct": 15,
    "expected_soc_pct": 23,
    "expected_soc_p10": 18,
-   "expected_soc_p90": 27
+   "expected_soc_p90": 26
   },
   {
    "km": 181.0,
@@ -7260,7 +7260,7 @@
    "bingo_soc_pct": 13,
    "expected_soc_pct": 21,
    "expected_soc_p10": 15,
-   "expected_soc_p90": 25
+   "expected_soc_p90": 24
   },
   {
    "km": 187.0,
@@ -7281,7 +7281,7 @@
    "bingo_soc_pct": 11,
    "expected_soc_pct": 20,
    "expected_soc_p10": 14,
-   "expected_soc_p90": 24
+   "expected_soc_p90": 23
   },
   {
    "km": 190.0,
@@ -7352,6 +7352,6 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 3019,
+ "compute_ms": 7993,
  "is_simulated": true
 }

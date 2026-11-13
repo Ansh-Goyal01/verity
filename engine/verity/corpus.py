@@ -470,3 +470,14 @@ def read_csv(path: Path) -> tuple[list[str], list[Row]]:
         rows = [row for row in reader
                 if any(isinstance(v, str) and v.strip() for v in row.values())]
     return header, rows
+
+
+def check_file(spec: FileSpec, folder: Path) -> tuple[list[Issue], int, int]:
+    """Return (issues, n_rows, n_usable) for one corpus file; a missing file is one ERROR with zero rows."""
+    path = folder / spec.filename
+    if not path.exists():
+        return [Issue(spec.filename, 0, "", ERROR, f"file not found in {folder}; upload it without renaming")], 0, 0
+    header, rows = read_csv(path)
+    issues = validate_table(spec, header, rows)
+    usable = 0 if any(i.sheet_row == 0 for i in issues) else len(usable_rows(spec, rows))
+    return issues, len(rows), usable

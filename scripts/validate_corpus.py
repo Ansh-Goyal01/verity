@@ -21,24 +21,11 @@ from verity.corpus import (
     PRIVATE_REVIEW_TEXT,
     SPECS,
     WARN,
-    FileSpec,
     Issue,
+    check_file,
     read_csv,
-    usable_rows,
-    validate_table,
 )
 from verity.paths import CORPUS_DIR, PRIVATE_DIR
-
-
-def check_file(spec: FileSpec, folder: Path) -> tuple[list[Issue], int, int]:
-    """Return (issues, n_rows, n_usable) for one corpus file."""
-    path = folder / spec.filename
-    if not path.exists():
-        return [Issue(spec.filename, 0, "", ERROR, f"file not found in {folder}; upload it without renaming")], 0, 0
-    header, rows = read_csv(path)
-    issues = validate_table(spec, header, rows)
-    usable = 0 if any(i.sheet_row == 0 for i in issues) else len(usable_rows(spec, rows))
-    return issues, len(rows), usable
 
 
 def check_private_reviews(corpus_folder: Path, private_folder: Path) -> list[Issue]:

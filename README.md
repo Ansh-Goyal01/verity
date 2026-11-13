@@ -65,6 +65,10 @@ Every endpoint in the contract is served and validated against it (`api/models.p
 Real engine responses for the demo scenario are saved in [`docs/api_examples/`](docs/api_examples/)
 (regenerate with `uv run python scripts/export_api_examples.py`), so the frontend can swap its mocks for them.
 
+Contract v2 adds `POST /api/ride-check` (can a cab driver take this ride, and where to charge after the drop, in
+minutes and rupees) and `GET /api/demo/driver` (the evening airport-ride demo whose `request` goes unchanged to
+ride-check). `uv run python scripts/driver_demo.py` saves its answer to `results/driver_demo_simulated.json`.
+
 The demo runs 1500 Monte Carlo runs per forecast (`VERITY_N_RUNS` changes it).
 For measured dispatch timings and machine details, see [the final numbers pack](docs/RESULTS_FOR_DECK.md).
 Historical Aura timings in engine progress notes are not measurements on this machine.
@@ -85,7 +89,28 @@ uv run python scripts/run_all.py --fast         # the same steps with tiny sizes
 | E4 fixed shortest path vs dispatch policy | `uv run python experiments/e4_dispatch_vs_fixed.py` | `e4_dispatch_vs_fixed_simulated.*` |
 | E5 trust recovery from noisy and fake reports | `uv run python experiments/e5_trust_recovery.py` | `e5_trust_recovery_simulated.*` |
 
-Every chart title says "(simulated)". Other scripts: `uv run python -m verity.sim` (simulated trips),
+Every chart title says "(simulated)".
+
+**REAL-data track (finale).** The teammate fills the CSVs in `data/corpus/` by hand from public sources
+([guide](docs/DATA_COLLECTION_GUIDE.md); every URL used is in [SOURCES.md](docs/SOURCES.md)). One command
+re-validates them and re-runs every real-data pipeline; each reports its n honestly (NOT_RUN / PRELIMINARY / OK):
+
+```powershell
+uv run python scripts/run_real_data.py            # validate, F3 enrich, F4 E1-India, F5 charger evidence, F6 reviews, F9 passport
+uv run python scripts/run_real_data.py --no-paid  # same, reviews classified by the keyword baseline (no Sarvam calls)
+```
+
+| Step | Script | Output |
+|---|---|---|
+| validate | `scripts/validate_corpus.py` | per-row messages; rows with errors are left out of every result |
+| F3 | `scripts/enrich_trips.py` | `data/processed/trips_india_enriched.json` |
+| F4 | `experiments/e1_india_real.py` | `results/e1_india_real.{json,png}` |
+| F5 | `experiments/e3_real_evidence.py` | `results/e3_real_evidence.json` |
+| F6 | `experiments/voc_app_reviews.py` | `results/voc_app_reviews.json` (no review text) |
+| F9 | `scripts/range_passport.py` | `results/range_passport_*.{json,md}`, `results/f9_passport_validation.json` |
+| summary | | `results/real_data_summary.json` (corpus sizes and each step's status) |
+
+Other scripts: `uv run python -m verity.sim` (simulated trips),
 `uv run python -m verity.splits` (the fixed held-out split: written once, never rewritten),
 `uv run python -m verity.routing` (cached Noida-Agra route), `uv run python scripts/import_chargers.py`
 (OpenStreetMap chargers), `uv run python scripts/neo4j_smoke_test.py`,
@@ -95,13 +120,19 @@ Every chart title says "(simulated)". Other scripts: `uv run python -m verity.si
 
 - **Real:** the Noida-Agra route, elevation and weather forecast (OSRM, Open-Meteo; cached in `data/cache/`,
   processed copy in `data/processed/`) and the OpenStreetMap / Open Charge Map charger location directory.
-- **Simulated (labelled `is_simulated: true`):** all trips (`data/sim/`), the demo fleet, the charger reports,
-  and E1-sim through E5. There is no real Indian trip validation, field audit, driver interview or fleet pilot.
-- **Needs a download (the raw files are not in git):** the BMW i3 dataset in `data/raw/bmw_i3/`. Its loader, notes
-  (`docs/BMW_I3_NOTES.md`) and fixed 70/30 split (`data/splits/bmw_i3_split.json`) are done; E1 on it is not.
-  BMW evaluation: **NOT DONE (dataset not on this machine)**. Sarvam live verification is blocked by a missing key.
-  The committed charger directory already includes OCM; refreshing it needs a key.
-  Neo4j credentials are optional; current status is in [FINAL_REPORT.md](docs/FINAL_REPORT.md).
+  The ride-check demo route Noida Sector 62 -> Sector 18 -> IGI T3 (OSRM route and table, Open-Meteo elevation and
+  forecast) is committed in `data/processed/ride_demo_noida_t3.json`.
+- **Real, hand-collected (filling up):** `data/corpus/` trips, charger evidence, app snapshots and app reviews from
+  public sources; only rows marked `verified=yes` are used. On 2026-11-13 no row was verified yet, so every
+  real-data result says NOT_RUN with n=0.
+- **Simulated (labelled `is_simulated: true`):** all trips (`data/sim/`), the demo fleet, the driver-demo vehicle,
+  every charger report used in demos, and E1-sim through E5. There is no real Indian trip validation, field audit,
+  driver interview or fleet pilot.
+- **Needs a download (the raw files are not in git):** the BMW i3 dataset in `data/raw/bmw_i3/`. With it present,
+  `scripts/range_passport.py` validates the Range Passport on TRAINING-split trips (REAL, German driving); the
+  held-out test trips have not been opened. Sarvam endpoints were verified live (F7). The committed charger
+  directory already includes OCM; refreshing it needs a key. Neo4j credentials are optional; status in
+  [EVIDENCE_STATUS.md](docs/EVIDENCE_STATUS.md).
 
 ## Layout
 
@@ -125,7 +156,7 @@ reach probability. Sync sets `p_works` and explicitly removes obsolete `p_reach`
 `mean(midpoint - sampled_leg_energy >= arrival_reserve)`, using the destination/stop reserve as appropriate.
 It is conditional on the forecast and does not include charger reliability or guarantee a whole trip.
 The API's per-vehicle alternate `p_reach` is also unchanged. Live Aura migration is not verified on
-this machine because Neo4j credentials are absent; fake-driver tests verify the Cypher write/read/filter.
+this machine because the Aura instance is paused (credentials are present); fake-driver tests verify the Cypher write/read/filter.
 
 ## Evidence status and limitations
 
@@ -133,12 +164,11 @@ See [EVIDENCE_STATUS.md](docs/EVIDENCE_STATUS.md) for REAL / SIMULATED / NOT DON
 There is **no real Indian validation data**. The three demo vehicles are constructed scenarios whose
 inputs were selected from a sweep to show three outcomes (DECISIONS A13); charger reports are simulated.
 Almost no directory charger has tagged power, so dispatch assumes 25 kW (approximate - verify).
-Only K_CANDIDATES=6 chains ranked by cost are scored; denser networks can crowd out better plans.
-Same-site backups are treated as independent (optional R9 not performed), so common power/gate/closure
-failures can overstate success. BMW i3 data describes German driving with heater/AC load, not Indian
-conditions; its real-data experiment has not run here. The voice client is mock-tested only: no Sarvam
-key, live endpoint verification or TTS/STT calls in this run. The plan cache is unbounded, HTTP endpoints
-are not rate-limited, and the Neo4j driver has no socket read timeout.
+Chargers within 150 m form one Site with common-cause failures (beta 0.5, an assumption). BMW i3 data describes
+German driving with heater/AC load, not Indian conditions; on it the Range Passport's capacity is biased low by
+about 15 % and over-confident (see RESULTS_FOR_DECK). The voice loop has only heard our own TTS, not a real
+driver. The plan cache is unbounded and HTTP endpoints are not rate-limited; Neo4j queries have a 35 s
+client-side deadline with in-memory fallback.
 
 R4a's training-only E1 widening still undercovers individual-subset forecasts. Its mixture coverage is
 a different quantity and must be labelled as such. This experiment-only correction does not change live

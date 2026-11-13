@@ -2,7 +2,7 @@
  "schema": "verity.trips_india_enriched.v1",
  "is_simulated": false,
  "label": "REAL: public self-reported Indian trips (verified=yes rows only)",
- "generated_at": "2026-11-12T16:27:03+00:00",
+ "generated_at": "2026-11-13T12:57:42+00:00",
  "n_rows_in_corpus": 6,
  "n_selected": 0,
  "summary": {
@@ -17,6 +17,6 @@
    "range_test": 0
   }
  },
- "requests_made_total": 12,
+ "requests_made_total": 16,
  "records": []
 }

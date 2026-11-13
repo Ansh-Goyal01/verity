@@ -2,7 +2,7 @@
  "experiment": "F5 real charger evidence + E3-real",
  "is_simulated": false,
  "label": "REAL: hand-collected public charger evidence (verified=yes rows only)",
- "generated_at": "2026-11-12T17:03:11+00:00",
+ "generated_at": "2026-11-13T12:58:07+00:00",
  "inputs": {
   "evidence_rows_usable": 0,
   "snapshot_rows_usable": 0,

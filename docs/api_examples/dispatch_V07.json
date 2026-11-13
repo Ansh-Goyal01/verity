@@ -2,15 +2,15 @@
  "plan_id": "PL-5f72",
  "vehicle_id": "V07",
  "decision": "NO_GO",
- "confidence": 0.85,
+ "confidence": 0.8,
  "arrival_soc": {
   "p10": 0,
-  "p50": 22,
+  "p50": 21,
   "p90": 28
  },
  "route": {
   "distance_km": 190.8,
-  "duration_min": 206,
+  "duration_min": 208,
   "polyline": [
    [
     28.53552,
@@ -5928,7 +5928,7 @@
    "lat": 27.61204701128193,
    "lon": 77.74185073192439,
    "km_along_route": 118.6,
-   "arrive_soc_p50": 18,
+   "arrive_soc_p50": 17,
    "charge_minutes": 38,
    "p_works": 0.7,
    "evidence": {
@@ -5945,7 +5945,7 @@
    "name": "Tata Power Yamuna Expressway Mathura Exit LHS",
    "lat": 27.55039596637711,
    "lon": 77.75506264207092,
-   "p_reach": 0.8,
+   "p_reach": 0.75,
    "p_works": 0.7
   },
   {
@@ -5954,7 +5954,7 @@
    "name": "EV charging station (OpenStreetMap)",
    "lat": 27.5495366,
    "lon": 77.7557237,
-   "p_reach": 0.8,
+   "p_reach": 0.75,
    "p_works": 0.95
   },
   {
@@ -6012,7 +6012,7 @@
   },
   {
    "km": 6.0,
-   "bingo_soc_pct": 12,
+   "bingo_soc_pct": 11,
    "expected_soc_pct": 68,
    "expected_soc_p10": 67,
    "expected_soc_p90": 68
@@ -6173,7 +6173,7 @@
   },
   {
    "km": 29.0,
-   "bingo_soc_pct": 99,
+   "bingo_soc_pct": 100,
    "expected_soc_pct": 55,
    "expected_soc_p10": 52,
    "expected_soc_p90": 57
@@ -6224,7 +6224,7 @@
    "km": 36.0,
    "bingo_soc_pct": 100,
    "expected_soc_pct": 67,
-   "expected_soc_p10": 52,
+   "expected_soc_p10": 51,
    "expected_soc_p90": 68
   },
   {
@@ -6273,7 +6273,7 @@
    "km": 43.0,
    "bingo_soc_pct": 100,
    "expected_soc_pct": 63,
-   "expected_soc_p10": 48,
+   "expected_soc_p10": 47,
    "expected_soc_p90": 64
   },
   {
@@ -6285,9 +6285,9 @@
   },
   {
    "km": 45.0,
-   "bingo_soc_pct": 99,
+   "bingo_soc_pct": 98,
    "expected_soc_pct": 62,
-   "expected_soc_p10": 47,
+   "expected_soc_p10": 46,
    "expected_soc_p90": 63
   },
   {
@@ -6300,7 +6300,7 @@
   {
    "km": 47.0,
    "bingo_soc_pct": 97,
-   "expected_soc_pct": 61,
+   "expected_soc_pct": 60,
    "expected_soc_p10": 45,
    "expected_soc_p90": 62
   },
@@ -6320,9 +6320,9 @@
   },
   {
    "km": 50.0,
-   "bingo_soc_pct": 96,
+   "bingo_soc_pct": 95,
    "expected_soc_pct": 59,
-   "expected_soc_p10": 44,
+   "expected_soc_p10": 43,
    "expected_soc_p90": 60
   },
   {
@@ -6335,13 +6335,13 @@
   {
    "km": 52.0,
    "bingo_soc_pct": 94,
-   "expected_soc_pct": 58,
-   "expected_soc_p10": 43,
+   "expected_soc_pct": 57,
+   "expected_soc_p10": 42,
    "expected_soc_p90": 59
   },
   {
    "km": 53.0,
-   "bingo_soc_pct": 94,
+   "bingo_soc_pct": 93,
    "expected_soc_pct": 57,
    "expected_soc_p10": 42,
    "expected_soc_p90": 59
@@ -6350,7 +6350,7 @@
    "km": 54.0,
    "bingo_soc_pct": 93,
    "expected_soc_pct": 56,
-   "expected_soc_p10": 42,
+   "expected_soc_p10": 41,
    "expected_soc_p90": 58
   },
   {
@@ -6364,19 +6364,19 @@
    "km": 56.0,
    "bingo_soc_pct": 92,
    "expected_soc_pct": 55,
-   "expected_soc_p10": 41,
+   "expected_soc_p10": 40,
    "expected_soc_p90": 57
   },
   {
    "km": 57.0,
    "bingo_soc_pct": 91,
-   "expected_soc_pct": 55,
-   "expected_soc_p10": 40,
+   "expected_soc_pct": 54,
+   "expected_soc_p10": 39,
    "expected_soc_p90": 57
   },
   {
    "km": 58.0,
-   "bingo_soc_pct": 91,
+   "bingo_soc_pct": 90,
    "expected_soc_pct": 54,
    "expected_soc_p10": 39,
    "expected_soc_p90": 56
@@ -6385,62 +6385,62 @@
    "km": 59.0,
    "bingo_soc_pct": 90,
    "expected_soc_pct": 53,
-   "expected_soc_p10": 39,
+   "expected_soc_p10": 38,
    "expected_soc_p90": 56
   },
   {
    "km": 60.0,
    "bingo_soc_pct": 89,
-   "expected_soc_pct": 53,
+   "expected_soc_pct": 52,
    "expected_soc_p10": 38,
    "expected_soc_p90": 55
   },
   {
    "km": 61.0,
-   "bingo_soc_pct": 89,
+   "bingo_soc_pct": 88,
    "expected_soc_pct": 52,
-   "expected_soc_p10": 38,
+   "expected_soc_p10": 37,
    "expected_soc_p90": 55
   },
   {
    "km": 62.0,
-   "bingo_soc_pct": 88,
-   "expected_soc_pct": 52,
-   "expected_soc_p10": 37,
-   "expected_soc_p90": 54
-  },
-  {
-   "km": 63.0,
    "bingo_soc_pct": 88,
    "expected_soc_pct": 51,
    "expected_soc_p10": 37,
    "expected_soc_p90": 54
   },
   {
+   "km": 63.0,
+   "bingo_soc_pct": 87,
+   "expected_soc_pct": 51,
+   "expected_soc_p10": 36,
+   "expected_soc_p90": 54
+  },
+  {
    "km": 64.0,
    "bingo_soc_pct": 87,
    "expected_soc_pct": 50,
-   "expected_soc_p10": 36,
+   "expected_soc_p10": 35,
    "expected_soc_p90": 53
   },
   {
    "km": 65.0,
    "bingo_soc_pct": 86,
-   "expected_soc_pct": 50,
-   "expected_soc_p10": 36,
+   "expected_soc_pct": 49,
+   "expected_soc_p10": 35,
    "expected_soc_p90": 53
   },
   {
    "km": 66.0,
    "bingo_soc_pct": 45,
    "expected_soc_pct": 49,
-   "expected_soc_p10": 35,
+   "expected_soc_p10": 34,
    "expected_soc_p90": 52
   },
   {
    "km": 67.0,
-   "bingo_soc_pct": 44,
-   "expected_soc_pct": 49,
+   "bingo_soc_pct": 45,
+   "expected_soc_pct": 48,
    "expected_soc_p10": 34,
    "expected_soc_p90": 52
   },
@@ -6448,7 +6448,7 @@
    "km": 68.0,
    "bingo_soc_pct": 44,
    "expected_soc_pct": 48,
-   "expected_soc_p10": 34,
+   "expected_soc_p10": 33,
    "expected_soc_p90": 51
   },
   {
@@ -6461,15 +6461,15 @@
   {
    "km": 70.0,
    "bingo_soc_pct": 42,
-   "expected_soc_pct": 47,
-   "expected_soc_p10": 33,
+   "expected_soc_pct": 46,
+   "expected_soc_p10": 32,
    "expected_soc_p90": 50
   },
   {
    "km": 71.0,
-   "bingo_soc_pct": 41,
+   "bingo_soc_pct": 42,
    "expected_soc_pct": 46,
-   "expected_soc_p10": 32,
+   "expected_soc_p10": 31,
    "expected_soc_p90": 50
   },
   {
@@ -6482,8 +6482,8 @@
   {
    "km": 73.0,
    "bingo_soc_pct": 40,
-   "expected_soc_pct": 45,
-   "expected_soc_p10": 31,
+   "expected_soc_pct": 44,
+   "expected_soc_p10": 30,
    "expected_soc_p90": 49
   },
   {
@@ -6496,7 +6496,7 @@
   {
    "km": 75.0,
    "bingo_soc_pct": 39,
-   "expected_soc_pct": 44,
+   "expected_soc_pct": 43,
    "expected_soc_p10": 29,
    "expected_soc_p90": 48
   },
@@ -6504,21 +6504,21 @@
    "km": 76.0,
    "bingo_soc_pct": 38,
    "expected_soc_pct": 43,
-   "expected_soc_p10": 29,
+   "expected_soc_p10": 28,
    "expected_soc_p90": 47
   },
   {
    "km": 77.0,
    "bingo_soc_pct": 37,
-   "expected_soc_pct": 43,
+   "expected_soc_pct": 42,
    "expected_soc_p10": 28,
    "expected_soc_p90": 47
   },
   {
    "km": 78.0,
    "bingo_soc_pct": 37,
-   "expected_soc_pct": 42,
-   "expected_soc_p10": 28,
+   "expected_soc_pct": 41,
+   "expected_soc_p10": 27,
    "expected_soc_p90": 46
   },
   {
@@ -6531,7 +6531,7 @@
   {
    "km": 80.0,
    "bingo_soc_pct": 35,
-   "expected_soc_pct": 41,
+   "expected_soc_pct": 40,
    "expected_soc_p10": 26,
    "expected_soc_p90": 45
   },
@@ -6539,26 +6539,26 @@
    "km": 81.0,
    "bingo_soc_pct": 35,
    "expected_soc_pct": 40,
-   "expected_soc_p10": 26,
+   "expected_soc_p10": 25,
    "expected_soc_p90": 45
   },
   {
    "km": 82.0,
    "bingo_soc_pct": 34,
-   "expected_soc_pct": 40,
+   "expected_soc_pct": 39,
    "expected_soc_p10": 25,
    "expected_soc_p90": 44
   },
   {
    "km": 83.0,
    "bingo_soc_pct": 33,
-   "expected_soc_pct": 39,
-   "expected_soc_p10": 25,
+   "expected_soc_pct": 38,
+   "expected_soc_p10": 24,
    "expected_soc_p90": 44
   },
   {
    "km": 84.0,
-   "bingo_soc_pct": 32,
+   "bingo_soc_pct": 33,
    "expected_soc_pct": 38,
    "expected_soc_p10": 24,
    "expected_soc_p90": 43
@@ -6566,7 +6566,7 @@
   {
    "km": 85.0,
    "bingo_soc_pct": 32,
-   "expected_soc_pct": 38,
+   "expected_soc_pct": 37,
    "expected_soc_p10": 23,
    "expected_soc_p90": 43
   },
@@ -6580,14 +6580,14 @@
   {
    "km": 87.0,
    "bingo_soc_pct": 30,
-   "expected_soc_pct": 37,
+   "expected_soc_pct": 36,
    "expected_soc_p10": 22,
    "expected_soc_p90": 42
   },
   {
    "km": 88.0,
    "bingo_soc_pct": 30,
-   "expected_soc_pct": 36,
+   "expected_soc_pct": 35,
    "expected_soc_p10": 21,
    "expected_soc_p90": 41
   },
@@ -6601,7 +6601,7 @@
   {
    "km": 90.0,
    "bingo_soc_pct": 28,
-   "expected_soc_pct": 35,
+   "expected_soc_pct": 34,
    "expected_soc_p10": 20,
    "expected_soc_p90": 40
   },
@@ -6609,20 +6609,20 @@
    "km": 91.0,
    "bingo_soc_pct": 28,
    "expected_soc_pct": 34,
-   "expected_soc_p10": 20,
+   "expected_soc_p10": 19,
    "expected_soc_p90": 40
   },
   {
    "km": 92.0,
    "bingo_soc_pct": 27,
-   "expected_soc_pct": 34,
+   "expected_soc_pct": 33,
    "expected_soc_p10": 19,
    "expected_soc_p90": 39
   },
   {
    "km": 93.0,
    "bingo_soc_pct": 26,
-   "expected_soc_pct": 33,
+   "expected_soc_pct": 32,
    "expected_soc_p10": 18,
    "expected_soc_p90": 39
   },
@@ -6636,7 +6636,7 @@
   {
    "km": 95.0,
    "bingo_soc_pct": 25,
-   "expected_soc_pct": 32,
+   "expected_soc_pct": 31,
    "expected_soc_p10": 17,
    "expected_soc_p90": 38
   },
@@ -6644,20 +6644,20 @@
    "km": 96.0,
    "bingo_soc_pct": 24,
    "expected_soc_pct": 31,
-   "expected_soc_p10": 17,
+   "expected_soc_p10": 16,
    "expected_soc_p90": 37
   },
   {
    "km": 97.0,
    "bingo_soc_pct": 23,
-   "expected_soc_pct": 31,
+   "expected_soc_pct": 30,
    "expected_soc_p10": 16,
    "expected_soc_p90": 37
   },
   {
    "km": 98.0,
    "bingo_soc_pct": 23,
-   "expected_soc_pct": 30,
+   "expected_soc_pct": 29,
    "expected_soc_p10": 15,
    "expected_soc_p90": 36
   },
@@ -6671,9 +6671,9 @@
   {
    "km": 100.0,
    "bingo_soc_pct": 22,
-   "expected_soc_pct": 29,
+   "expected_soc_pct": 28,
    "expected_soc_p10": 14,
-   "expected_soc_p90": 36
+   "expected_soc_p90": 35
   },
   {
    "km": 101.0,
@@ -6685,14 +6685,14 @@
   {
    "km": 102.0,
    "bingo_soc_pct": 20,
-   "expected_soc_pct": 28,
+   "expected_soc_pct": 27,
    "expected_soc_p10": 13,
    "expected_soc_p90": 34
   },
   {
    "km": 103.0,
    "bingo_soc_pct": 20,
-   "expected_soc_pct": 27,
+   "expected_soc_pct": 26,
    "expected_soc_p10": 12,
    "expected_soc_p90": 34
   },
@@ -6706,7 +6706,7 @@
   {
    "km": 105.0,
    "bingo_soc_pct": 18,
-   "expected_soc_pct": 26,
+   "expected_soc_pct": 25,
    "expected_soc_p10": 11,
    "expected_soc_p90": 33
   },
@@ -6715,89 +6715,89 @@
    "bingo_soc_pct": 18,
    "expected_soc_pct": 25,
    "expected_soc_p10": 10,
-   "expected_soc_p90": 33
+   "expected_soc_p90": 32
   },
   {
    "km": 107.0,
    "bingo_soc_pct": 17,
-   "expected_soc_pct": 25,
-   "expected_soc_p10": 9,
+   "expected_soc_pct": 24,
+   "expected_soc_p10": 10,
    "expected_soc_p90": 32
   },
   {
    "km": 108.0,
-   "bingo_soc_pct": 16,
-   "expected_soc_pct": 24,
+   "bingo_soc_pct": 17,
+   "expected_soc_pct": 23,
    "expected_soc_p10": 9,
-   "expected_soc_p90": 32
+   "expected_soc_p90": 31
   },
   {
    "km": 109.0,
    "bingo_soc_pct": 16,
-   "expected_soc_pct": 24,
+   "expected_soc_pct": 23,
    "expected_soc_p10": 8,
    "expected_soc_p90": 31
   },
   {
    "km": 110.0,
    "bingo_soc_pct": 15,
-   "expected_soc_pct": 23,
-   "expected_soc_p10": 7,
-   "expected_soc_p90": 31
+   "expected_soc_pct": 22,
+   "expected_soc_p10": 8,
+   "expected_soc_p90": 30
   },
   {
    "km": 111.0,
-   "bingo_soc_pct": 14,
-   "expected_soc_pct": 22,
+   "bingo_soc_pct": 15,
+   "expected_soc_pct": 21,
    "expected_soc_p10": 7,
    "expected_soc_p90": 30
   },
   {
    "km": 112.0,
    "bingo_soc_pct": 14,
-   "expected_soc_pct": 22,
+   "expected_soc_pct": 21,
    "expected_soc_p10": 6,
    "expected_soc_p90": 29
   },
   {
    "km": 113.0,
    "bingo_soc_pct": 13,
-   "expected_soc_pct": 21,
-   "expected_soc_p10": 5,
+   "expected_soc_pct": 20,
+   "expected_soc_p10": 6,
    "expected_soc_p90": 29
   },
   {
    "km": 114.0,
    "bingo_soc_pct": 13,
-   "expected_soc_pct": 21,
+   "expected_soc_pct": 20,
    "expected_soc_p10": 5,
    "expected_soc_p90": 28
   },
   {
    "km": 115.0,
    "bingo_soc_pct": 12,
-   "expected_soc_pct": 20,
+   "expected_soc_pct": 19,
    "expected_soc_p10": 4,
    "expected_soc_p90": 28
   },
   {
    "km": 116.0,
    "bingo_soc_pct": 11,
-   "expected_soc_pct": 19,
-   "expected_soc_p10": 3,
+   "expected_soc_pct": 18,
+   "expected_soc_p10": 4,
    "expected_soc_p90": 27
   },
   {
    "km": 117.0,
    "bingo_soc_pct": 11,
-   "expected_soc_pct": 19,
+   "expected_soc_pct": 18,
    "expected_soc_p10": 3,
    "expected_soc_p90": 27
   },
   {
    "km": 118.0,
    "bingo_soc_pct": 10,
-   "expected_soc_pct": 18,
+   "expected_soc_pct": 17,
    "expected_soc_p10": 2,
    "expected_soc_p90": 26
   },
@@ -6805,7 +6805,7 @@
    "km": 119.0,
    "bingo_soc_pct": 10,
    "expected_soc_pct": 61,
-   "expected_soc_p10": 1,
+   "expected_soc_p10": 2,
    "expected_soc_p90": 65
   },
   {
@@ -6826,14 +6826,14 @@
    "km": 122.0,
    "bingo_soc_pct": 8,
    "expected_soc_pct": 59,
-   "expected_soc_p10": -1,
+   "expected_soc_p10": 0,
    "expected_soc_p90": 63
   },
   {
    "km": 123.0,
    "bingo_soc_pct": 7,
    "expected_soc_pct": 59,
-   "expected_soc_p10": -2,
+   "expected_soc_p10": -1,
    "expected_soc_p90": 63
   },
   {
@@ -6847,126 +6847,126 @@
    "km": 125.0,
    "bingo_soc_pct": 6,
    "expected_soc_pct": 58,
-   "expected_soc_p10": -3,
+   "expected_soc_p10": -2,
    "expected_soc_p90": 62
   },
   {
    "km": 126.0,
    "bingo_soc_pct": 49,
    "expected_soc_pct": 57,
-   "expected_soc_p10": -4,
+   "expected_soc_p10": -3,
    "expected_soc_p90": 61
   },
   {
    "km": 127.0,
    "bingo_soc_pct": 48,
    "expected_soc_pct": 57,
-   "expected_soc_p10": -5,
+   "expected_soc_p10": -4,
    "expected_soc_p90": 61
   },
   {
    "km": 128.0,
    "bingo_soc_pct": 47,
    "expected_soc_pct": 56,
-   "expected_soc_p10": -5,
+   "expected_soc_p10": -4,
    "expected_soc_p90": 60
   },
   {
    "km": 129.0,
    "bingo_soc_pct": 47,
    "expected_soc_pct": 55,
-   "expected_soc_p10": -6,
+   "expected_soc_p10": -5,
    "expected_soc_p90": 59
   },
   {
    "km": 130.0,
    "bingo_soc_pct": 46,
    "expected_soc_pct": 55,
-   "expected_soc_p10": -7,
+   "expected_soc_p10": -5,
    "expected_soc_p90": 59
   },
   {
    "km": 131.0,
    "bingo_soc_pct": 46,
    "expected_soc_pct": 54,
-   "expected_soc_p10": -7,
+   "expected_soc_p10": -6,
    "expected_soc_p90": 58
   },
   {
    "km": 132.0,
    "bingo_soc_pct": 45,
    "expected_soc_pct": 54,
-   "expected_soc_p10": -8,
+   "expected_soc_p10": -7,
    "expected_soc_p90": 58
   },
   {
    "km": 133.0,
    "bingo_soc_pct": 44,
    "expected_soc_pct": 53,
-   "expected_soc_p10": -9,
+   "expected_soc_p10": -7,
    "expected_soc_p90": 57
   },
   {
    "km": 134.0,
    "bingo_soc_pct": 44,
    "expected_soc_pct": 53,
-   "expected_soc_p10": -9,
+   "expected_soc_p10": -8,
    "expected_soc_p90": 57
   },
   {
    "km": 135.0,
    "bingo_soc_pct": 43,
    "expected_soc_pct": 52,
-   "expected_soc_p10": -10,
+   "expected_soc_p10": -9,
    "expected_soc_p90": 56
   },
   {
    "km": 136.0,
    "bingo_soc_pct": 42,
    "expected_soc_pct": 52,
-   "expected_soc_p10": -11,
+   "expected_soc_p10": -9,
    "expected_soc_p90": 56
   },
   {
    "km": 137.0,
    "bingo_soc_pct": 42,
    "expected_soc_pct": 51,
-   "expected_soc_p10": -11,
+   "expected_soc_p10": -10,
    "expected_soc_p90": 55
   },
   {
    "km": 138.0,
    "bingo_soc_pct": 41,
    "expected_soc_pct": 50,
-   "expected_soc_p10": -12,
+   "expected_soc_p10": -11,
    "expected_soc_p90": 54
   },
   {
    "km": 139.0,
    "bingo_soc_pct": 41,
    "expected_soc_pct": 50,
-   "expected_soc_p10": -13,
+   "expected_soc_p10": -12,
    "expected_soc_p90": 54
   },
   {
    "km": 140.0,
    "bingo_soc_pct": 40,
    "expected_soc_pct": 49,
-   "expected_soc_p10": -13,
+   "expected_soc_p10": -12,
    "expected_soc_p90": 53
   },
   {
    "km": 141.0,
    "bingo_soc_pct": 39,
    "expected_soc_pct": 49,
-   "expected_soc_p10": -14,
+   "expected_soc_p10": -13,
    "expected_soc_p90": 53
   },
   {
    "km": 142.0,
    "bingo_soc_pct": 39,
    "expected_soc_pct": 48,
-   "expected_soc_p10": -15,
+   "expected_soc_p10": -14,
    "expected_soc_p90": 52
   },
   {
@@ -6978,16 +6978,16 @@
   },
   {
    "km": 144.0,
-   "bingo_soc_pct": 38,
+   "bingo_soc_pct": 37,
    "expected_soc_pct": 47,
-   "expected_soc_p10": -16,
+   "expected_soc_p10": -15,
    "expected_soc_p90": 51
   },
   {
    "km": 145.0,
    "bingo_soc_pct": 37,
-   "expected_soc_pct": 47,
-   "expected_soc_p10": -17,
+   "expected_soc_pct": 46,
+   "expected_soc_p10": -16,
    "expected_soc_p90": 51
   },
   {
@@ -7001,14 +7001,14 @@
    "km": 147.0,
    "bingo_soc_pct": 36,
    "expected_soc_pct": 45,
-   "expected_soc_p10": -18,
+   "expected_soc_p10": -17,
    "expected_soc_p90": 49
   },
   {
    "km": 148.0,
    "bingo_soc_pct": 35,
    "expected_soc_pct": 45,
-   "expected_soc_p10": -19,
+   "expected_soc_p10": -18,
    "expected_soc_p90": 49
   },
   {
@@ -7022,294 +7022,294 @@
    "km": 150.0,
    "bingo_soc_pct": 34,
    "expected_soc_pct": 44,
-   "expected_soc_p10": -20,
+   "expected_soc_p10": -19,
    "expected_soc_p90": 48
   },
   {
    "km": 151.0,
    "bingo_soc_pct": 33,
    "expected_soc_pct": 43,
-   "expected_soc_p10": -21,
+   "expected_soc_p10": -20,
    "expected_soc_p90": 47
   },
   {
    "km": 152.0,
    "bingo_soc_pct": 33,
-   "expected_soc_pct": 43,
-   "expected_soc_p10": -22,
+   "expected_soc_pct": 42,
+   "expected_soc_p10": -21,
    "expected_soc_p90": 47
   },
   {
    "km": 153.0,
    "bingo_soc_pct": 32,
    "expected_soc_pct": 42,
-   "expected_soc_p10": -22,
+   "expected_soc_p10": -21,
    "expected_soc_p90": 46
   },
   {
    "km": 154.0,
    "bingo_soc_pct": 31,
    "expected_soc_pct": 41,
-   "expected_soc_p10": -23,
+   "expected_soc_p10": -22,
    "expected_soc_p90": 46
   },
   {
    "km": 155.0,
    "bingo_soc_pct": 31,
    "expected_soc_pct": 41,
-   "expected_soc_p10": -24,
+   "expected_soc_p10": -23,
    "expected_soc_p90": 45
   },
   {
    "km": 156.0,
    "bingo_soc_pct": 30,
    "expected_soc_pct": 40,
-   "expected_soc_p10": -24,
+   "expected_soc_p10": -23,
    "expected_soc_p90": 45
   },
   {
    "km": 157.0,
-   "bingo_soc_pct": 30,
+   "bingo_soc_pct": 29,
    "expected_soc_pct": 40,
-   "expected_soc_p10": -25,
+   "expected_soc_p10": -24,
    "expected_soc_p90": 44
   },
   {
    "km": 158.0,
    "bingo_soc_pct": 29,
    "expected_soc_pct": 39,
-   "expected_soc_p10": -26,
+   "expected_soc_p10": -25,
    "expected_soc_p90": 44
   },
   {
    "km": 159.0,
    "bingo_soc_pct": 28,
    "expected_soc_pct": 39,
-   "expected_soc_p10": -27,
+   "expected_soc_p10": -25,
    "expected_soc_p90": 43
   },
   {
    "km": 160.0,
    "bingo_soc_pct": 28,
    "expected_soc_pct": 38,
-   "expected_soc_p10": -27,
+   "expected_soc_p10": -26,
    "expected_soc_p90": 43
   },
   {
    "km": 161.0,
    "bingo_soc_pct": 27,
-   "expected_soc_pct": 38,
-   "expected_soc_p10": -28,
+   "expected_soc_pct": 37,
+   "expected_soc_p10": -26,
    "expected_soc_p90": 42
   },
   {
    "km": 162.0,
    "bingo_soc_pct": 26,
    "expected_soc_pct": 37,
-   "expected_soc_p10": -29,
+   "expected_soc_p10": -27,
    "expected_soc_p90": 42
   },
   {
    "km": 163.0,
    "bingo_soc_pct": 26,
    "expected_soc_pct": 36,
-   "expected_soc_p10": -29,
+   "expected_soc_p10": -28,
    "expected_soc_p90": 41
   },
   {
    "km": 164.0,
    "bingo_soc_pct": 25,
    "expected_soc_pct": 36,
-   "expected_soc_p10": -30,
+   "expected_soc_p10": -28,
    "expected_soc_p90": 41
   },
   {
    "km": 165.0,
    "bingo_soc_pct": 24,
    "expected_soc_pct": 35,
-   "expected_soc_p10": -31,
+   "expected_soc_p10": -29,
    "expected_soc_p90": 40
   },
   {
    "km": 166.0,
    "bingo_soc_pct": 24,
    "expected_soc_pct": 34,
-   "expected_soc_p10": -32,
+   "expected_soc_p10": -30,
    "expected_soc_p90": 39
   },
   {
    "km": 167.0,
    "bingo_soc_pct": 23,
    "expected_soc_pct": 34,
-   "expected_soc_p10": -32,
+   "expected_soc_p10": -30,
    "expected_soc_p90": 39
   },
   {
    "km": 168.0,
    "bingo_soc_pct": 23,
    "expected_soc_pct": 33,
-   "expected_soc_p10": -33,
-   "expected_soc_p90": 38
+   "expected_soc_p10": -31,
+   "expected_soc_p90": 39
   },
   {
    "km": 169.0,
    "bingo_soc_pct": 22,
    "expected_soc_pct": 33,
-   "expected_soc_p10": -34,
+   "expected_soc_p10": -32,
    "expected_soc_p90": 38
   },
   {
    "km": 170.0,
    "bingo_soc_pct": 21,
    "expected_soc_pct": 32,
-   "expected_soc_p10": -34,
+   "expected_soc_p10": -32,
    "expected_soc_p90": 37
   },
   {
    "km": 171.0,
    "bingo_soc_pct": 21,
    "expected_soc_pct": 31,
-   "expected_soc_p10": -35,
+   "expected_soc_p10": -33,
    "expected_soc_p90": 37
   },
   {
    "km": 172.0,
    "bingo_soc_pct": 20,
    "expected_soc_pct": 31,
-   "expected_soc_p10": -35,
+   "expected_soc_p10": -34,
    "expected_soc_p90": 37
   },
   {
    "km": 173.0,
    "bingo_soc_pct": 20,
-   "expected_soc_pct": 31,
-   "expected_soc_p10": -36,
+   "expected_soc_pct": 30,
+   "expected_soc_p10": -34,
    "expected_soc_p90": 36
   },
   {
    "km": 174.0,
    "bingo_soc_pct": 19,
    "expected_soc_pct": 30,
-   "expected_soc_p10": -36,
+   "expected_soc_p10": -35,
    "expected_soc_p90": 36
   },
   {
    "km": 175.0,
    "bingo_soc_pct": 20,
    "expected_soc_pct": 30,
-   "expected_soc_p10": -37,
+   "expected_soc_p10": -35,
    "expected_soc_p90": 35
   },
   {
    "km": 176.0,
-   "bingo_soc_pct": 19,
+   "bingo_soc_pct": 20,
    "expected_soc_pct": 29,
-   "expected_soc_p10": -37,
+   "expected_soc_p10": -36,
    "expected_soc_p90": 35
   },
   {
    "km": 177.0,
    "bingo_soc_pct": 19,
    "expected_soc_pct": 29,
-   "expected_soc_p10": -38,
+   "expected_soc_p10": -36,
    "expected_soc_p90": 35
   },
   {
    "km": 178.0,
    "bingo_soc_pct": 19,
    "expected_soc_pct": 28,
-   "expected_soc_p10": -38,
+   "expected_soc_p10": -36,
    "expected_soc_p90": 34
   },
   {
    "km": 179.0,
    "bingo_soc_pct": 18,
    "expected_soc_pct": 28,
-   "expected_soc_p10": -38,
+   "expected_soc_p10": -37,
    "expected_soc_p90": 34
   },
   {
    "km": 180.0,
    "bingo_soc_pct": 18,
-   "expected_soc_pct": 28,
-   "expected_soc_p10": -39,
+   "expected_soc_pct": 27,
+   "expected_soc_p10": -37,
    "expected_soc_p90": 33
   },
   {
    "km": 181.0,
    "bingo_soc_pct": 17,
    "expected_soc_pct": 27,
-   "expected_soc_p10": -39,
+   "expected_soc_p10": -38,
    "expected_soc_p90": 33
   },
   {
    "km": 182.0,
    "bingo_soc_pct": 17,
    "expected_soc_pct": 27,
-   "expected_soc_p10": -40,
+   "expected_soc_p10": -38,
    "expected_soc_p90": 33
   },
   {
    "km": 183.0,
    "bingo_soc_pct": 16,
    "expected_soc_pct": 26,
-   "expected_soc_p10": -40,
+   "expected_soc_p10": -38,
    "expected_soc_p90": 32
   },
   {
    "km": 184.0,
    "bingo_soc_pct": 16,
    "expected_soc_pct": 26,
-   "expected_soc_p10": -41,
+   "expected_soc_p10": -39,
    "expected_soc_p90": 32
   },
   {
    "km": 185.0,
    "bingo_soc_pct": 15,
    "expected_soc_pct": 25,
-   "expected_soc_p10": -42,
+   "expected_soc_p10": -40,
    "expected_soc_p90": 31
   },
   {
    "km": 186.0,
    "bingo_soc_pct": 14,
    "expected_soc_pct": 24,
-   "expected_soc_p10": -42,
-   "expected_soc_p90": 31
+   "expected_soc_p10": -41,
+   "expected_soc_p90": 30
   },
   {
    "km": 187.0,
    "bingo_soc_pct": 13,
    "expected_soc_pct": 24,
-   "expected_soc_p10": -43,
+   "expected_soc_p10": -41,
    "expected_soc_p90": 30
   },
   {
    "km": 188.0,
    "bingo_soc_pct": 12,
    "expected_soc_pct": 23,
-   "expected_soc_p10": -44,
+   "expected_soc_p10": -42,
    "expected_soc_p90": 29
   },
   {
    "km": 189.0,
    "bingo_soc_pct": 12,
    "expected_soc_pct": 23,
-   "expected_soc_p10": -45,
+   "expected_soc_p10": -43,
    "expected_soc_p90": 29
   },
   {
    "km": 190.0,
    "bingo_soc_pct": 11,
    "expected_soc_pct": 22,
-   "expected_soc_p10": -45,
+   "expected_soc_p10": -43,
    "expected_soc_p90": 28
   },
   {
    "km": 190.8,
    "bingo_soc_pct": 10,
-   "expected_soc_pct": 22,
-   "expected_soc_p10": -46,
+   "expected_soc_pct": 21,
+   "expected_soc_p10": -44,
    "expected_soc_p90": 28
   }
  ],
@@ -7318,12 +7318,12 @@
   {
    "term": "rolling",
    "label": "Rolling resistance",
-   "soc_pct": -50
+   "soc_pct": -52
   },
   {
    "term": "aero",
    "label": "Air drag",
-   "soc_pct": -49
+   "soc_pct": -50
   },
   {
    "term": "grade",
@@ -7343,12 +7343,12 @@
   {
    "term": "aux",
    "label": "AC and electronics",
-   "soc_pct": -9
+   "soc_pct": -8
   },
   {
    "term": "charging",
    "label": "Charging stops",
-   "soc_pct": 60
+   "soc_pct": 61
   }
  ],
  "levers": [
@@ -7356,13 +7356,13 @@
    "lever_id": "cruise_80",
    "label": "Cruise at 80 km/h on the highway",
    "new_confidence": 0.9,
-   "time_cost_min": 7
+   "time_cost_min": 11
   },
   {
    "lever_id": "vehicle_V12",
    "label": "Use V12 instead",
-   "new_confidence": 0.95,
-   "time_cost_min": -30
+   "new_confidence": 0.9,
+   "time_cost_min": -31
   },
   {
    "lever_id": "verify_CH-0015",
@@ -7394,6 +7394,6 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 3282,
+ "compute_ms": 10068,
  "is_simulated": true
 }

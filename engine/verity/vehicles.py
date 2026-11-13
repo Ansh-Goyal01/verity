@@ -183,19 +183,6 @@ VEHICLE_CLASSES: dict[str, VehiclePrior] = {
 }
 
 
-def model_prior(class_key: str, key: str, label: str, *, nominal_kwh: float, curb_mass_kg: float,
-                usable_frac: float) -> VehiclePrior:
-    """A specific model's prior: the class prior with the model's cited battery and mass. Every other parameter
-    (CdA, Crr, efficiencies, aux) stays at the class value. Not registered in VEHICLE_CLASSES."""
-    base = get_prior(class_key)
-    b, u_sd = base.base, base.u_sd
-    return _make_prior(key, label, base.vtype, nominal_kwh=nominal_kwh, claimed_range_km=base.claimed_range_km,
-                       curb_mass_kg=curb_mass_kg, cda_m2=float(b.cda_m2), crr=float(b.crr),
-                       eta_drive=float(b.eta_drive), eta_regen=float(b.eta_regen), max_regen_kw=float(b.max_regen_kw),
-                       base_w=float(b.base_w), aux_w_per_k=float(b.aux_w_per_k), usable_frac=usable_frac,
-                       sd_cda=float(u_sd[0]), sd_crr=float(u_sd[1]), sd_aux=float(u_sd[3]), sd_k=float(u_sd[5]))
-
-
 def get_prior(key: str) -> VehiclePrior:
     try:
         return VEHICLE_CLASSES[key]

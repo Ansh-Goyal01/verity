@@ -16,7 +16,7 @@ Sessions (user instructions 2026-11-12): F0-F2, then F3-F4, then F5-F7, each fol
 - [x] F8 Engine upgrades
 - [x] F9 Range Passport
 - [x] F10 Driver demo scenario
-- [ ] F11 One command and documents
+- [x] F11 One command and documents
 - [ ] F12 Wrap-up
 
 ## F0 Pre-flight (2026-11-12)
@@ -221,3 +221,24 @@ unchanged to `POST /api/ride-check`; `uv run python scripts/driver_demo.py` save
 - The original fleet demo is unchanged: V07 NO_GO, V12 GO (+ DIVERT in its replay), V19 INSUFFICIENT_EVIDENCE; no re-pin.
 - Tests: tests/test_driver_demo.py (7) pins the decision, the chosen and avoided chargers, the Site, the simulated
   flags and the pin guards. Full suite: 357 passed, 10 skipped (Neo4j parity, Aura paused).
+
+## F11 One command and documents (2026-11-13)
+
+- `uv run python scripts/run_real_data.py` (new): validate corpus -> F3 enrich -> F4 E1-India -> F5 charger evidence
+  -> F6 app reviews -> F9 Range Passport, each in its own process (logs results/logs/real_<step>.log), summary with the
+  corpus sizes in results/real_data_summary.json. `--no-paid` (F6 keyword baseline), `--only`. Corpus errors don't
+  stop later steps but make the exit code 1. Run today: ALL STEPS OK; every REAL result NOT_RUN at n=0; outputs were
+  identical to the committed ones apart from timestamps and runtimes. check_file moved into verity.corpus.
+  tests/test_run_real_data.py (7).
+- Docs: RESULTS_FOR_DECK.md finale section on top (every quotable number with n, CI, REAL/SIMULATED, file; superseded
+  29 Oct rows listed), EVIDENCE_STATUS.md rewritten for the current state, docs/SOURCES.md (new, every URL grouped),
+  AI_USAGE.md, README.md (real-data track, ride-check endpoints, corrected stale BMW/Sarvam/limits text), CLAUDE.md
+  commands.
+- E1 guard found broken and fixed without re-evaluation (DECISIONS F11 E1 guard): F9's model_prior() moved from
+  vehicles.py to passport.py (vehicles.py restored to R4a bytes) and the five fingerprinted files re-checked-out with
+  CRLF. E1 now verifies its frozen evaluation and replots.
+- `uv run pytest`: 364 passed, 10 skipped (live Neo4j). `uv run python scripts/run_all.py`: tests, E1-E5 and
+  api_examples OK; **neo4j_smoke FAILED** (Aura host does not resolve; see EVIDENCE_STATUS), so the summary says
+  SOME STEPS FAILED. E2-E5 numbers unchanged versus F8; only timings moved. API examples re-exported: fleet decisions
+  unchanged (V07 NO_GO, V12 GO, V19 INSUFFICIENT_EVIDENCE); V07's rounded confidence 0.85 -> 0.80 versus the 29 Oct
+  export (F8 Sites); chargers.json now shows the F10 driver-demo SIMULATED reports (response is_simulated=true).

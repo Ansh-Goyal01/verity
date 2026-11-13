@@ -298,5 +298,5 @@
   "in_ci95": true,
   "summary": "Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False."
  },
- "runtime_s": 31.0
+ "runtime_s": 32.9
 }
