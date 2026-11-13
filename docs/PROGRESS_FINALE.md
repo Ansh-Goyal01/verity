@@ -17,7 +17,7 @@ Sessions (user instructions 2026-11-12): F0-F2, then F3-F4, then F5-F7, each fol
 - [x] F9 Range Passport
 - [x] F10 Driver demo scenario
 - [x] F11 One command and documents
-- [ ] F12 Wrap-up
+- [x] F12 Wrap-up
 
 ## F0 Pre-flight (2026-11-12)
 
@@ -242,3 +242,39 @@ unchanged to `POST /api/ride-check`; `uv run python scripts/driver_demo.py` save
   SOME STEPS FAILED. E2-E5 numbers unchanged versus F8; only timings moved. API examples re-exported: fleet decisions
   unchanged (V07 NO_GO, V12 GO, V19 INSUFFICIENT_EVIDENCE); V07's rounded confidence 0.85 -> 0.80 versus the 29 Oct
   export (F8 Sites); chargers.json now shows the F10 driver-demo SIMULATED reports (response is_simulated=true).
+
+## F12 Wrap-up (2026-11-13)
+
+**Done:** F0-F11, one commit each, local main only (never pushed). Final state: pytest 364 passed / 10 skipped;
+run_all all steps OK except neo4j_smoke; run_real_data ALL STEPS OK.
+
+**Corpus sizes reached (results/real_data_summary.json):** trips_india 6 rows / 0 verified; charger_evidence 0;
+app_status_snapshots 0; app_reviews 0; private review texts 0; vehicles_india 13 (all cited); match overrides 0.
+Targets were 40-60 trips, 40-60 chargers, app snapshots 2-3 a day for 6 days, 200-300 reviews (50 labelled).
+
+**Blocked, with the manual step:**
+1. Every REAL Indian result (E1-India, charger evidence, E3-real, voice of customer) is NOT_RUN at n=0. Teammate:
+   open each seed link, check every number, fill T0002 route, T0004 start SoC, settle T0001 one way or not, set
+   verified=yes, then collect more rows from several different source pages (the split is by page; held-out n < 15
+   is labelled PRELIMINARY); upload via the GitHub website without renaming. Then `git pull` and
+   `uv run python scripts/run_real_data.py`.
+2. Review text: put data/private/app_reviews_text.csv (review_id,text) on the machine that runs F6; never commit it.
+3. Neo4j: the Aura instance host does not resolve. Resume or recreate it in the Aura console, update .env, run
+   `uv run python scripts/neo4j_smoke_test.py`, then `uv run pytest tests/test_graph_parity.py`.
+4. Vehicle specs: confirm from manufacturer brochures (Tata's site had an expired certificate; several values are
+   Wikipedia); add Nexon EV 45 kWh range/mass/power and kerb mass for Tiago EV, MG ZS EV, MG Comet EV.
+5. AI_USAGE.md: the teammate's AI tool names and the A13 attribution are still unconfirmed.
+6. E1 verification needs a CRLF checkout of its five fingerprinted files (DECISIONS F11 E1 guard).
+7. Housekeeping: the untracked verity/ folder is an old clone (owner decides); `git push` is the owner's.
+
+**Five numbers to handle with care:**
+1. Driver demo "100 % confidence, GO": a rounding of >= 97.5 % on SIMULATED reports and a SIMULATED vehicle; without
+   those reports the same ride is INSUFFICIENT_EVIDENCE. Never say "certain".
+2. E4 "3.5 % vs 37.5 % stranded" (and E3 3.5 % vs 16.0 %): SIMULATED worlds built on the planner's own assumptions;
+   they moved from 6 % vs 33 % when F8 changed the failure model. A relative claim inside the simulator, not a field rate.
+3. BMW Range Passport Indian ranges (177 km Noida-Agra, 280 km evening urban): model outputs never checked against
+   Indian driving; the same model under-estimates the BMW's capacity by 14.5 % with 0 % interval coverage.
+4. Rs 60/hour and "Rs 80 lost": an EXAMPLE rate derived from CIS India medians with our "per week" reading; the
+   rupee figure is minutes x that example, not a measured cost.
+5. Range Passport "~3 % error": SIMULATED cars from a simulator in the planner's physics family (the optimistic case);
+   the only REAL check (BMW) is ~15 % biased.
