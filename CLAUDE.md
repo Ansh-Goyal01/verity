@@ -158,6 +158,8 @@ LEG is stored per battery band, never as one fixed probability.
   `uv run python scripts/enrich_trips.py` (`--include-unverified` = plumbing check to results/dev/)
 - Data: `uv run python -m verity.sim`, `-m verity.splits` (written once), `-m verity.routing`,
   `uv run python scripts/import_chargers.py`, `scripts/export_api_examples.py`, `scripts/neo4j_smoke_test.py`, `scripts/graph_insights.py`
+- Aura keep-alive (one write-and-delete, log in data/cache/aura_keepalive.log): `uv run python scripts/aura_keepalive.py`;
+  scheduled 10:00 + 22:00 daily until 2026-11-23 as Windows task `VerityAuraKeepAlive`
 
 ## How to work in this repo
 
