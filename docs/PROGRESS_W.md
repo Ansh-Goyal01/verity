@@ -29,6 +29,8 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
   `demo_reports` drops REPORTED 28 -> 14 and Source 24 -> 10 (likely the service's own reports, e.g. the
   driver-demo scenario, being removed by the replace-style sync). Probably never run live before (skips when
   Neo4j is unreachable). **S6: diagnose first, decide sync-vs-test, log in DECISIONS.md.** Until fixed, the
-  full `uv run pytest` is red whenever Neo4j is reachable; `VERITY_GRAPH=memory` keeps it green.
+  full `uv run pytest` is red whenever Neo4j is reachable. `VERITY_GRAPH=memory` does NOT skip these tests (checked). Sessions S1-S5
+  run the suite with an empty URI, which skips the 10 parity tests (checked): bash `NEO4J_URI= uv run pytest`,
+  PowerShell `$env:NEO4J_URI=''; uv run pytest`. Report that the parity tests were skipped this way.
 
 ## Handoff notes (newest last, at most 15 lines per session)
