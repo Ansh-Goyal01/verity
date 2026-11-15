@@ -3,6 +3,7 @@
  "vehicle_id": "V07",
  "decision": "NO_GO",
  "confidence": 0.8,
+ "confidence_display": "80%",
  "arrival_soc": {
   "p10": 0,
   "p50": 21,
@@ -7394,6 +7395,6 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 2091,
+ "compute_ms": 2311,
  "is_simulated": true
 }

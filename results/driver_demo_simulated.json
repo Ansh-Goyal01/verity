@@ -48,8 +48,9 @@
  "answer": {
   "vehicle_id": "V12",
   "decision": "GO",
-  "confidence": 1.0,
-  "reason": "100% confidence of completing the ride and reaching a working charger after the drop (target 90%).",
+  "confidence": 0.95,
+  "confidence_display": "95%+",
+  "reason": "95%+ confidence of completing the ride and reaching a working charger after the drop (target 90%).",
   "ride": {
    "distance_km": 41.5,
    "pickup_km": 11.7,
@@ -77,8 +78,8 @@
      "trust_level": "high"
     },
     "recent_failure_days": null,
-    "confidence_as_primary": 1.0,
-    "expected_lost_min": 75,
+    "confidence_as_primary": 0.95,
+    "expected_lost_min": 79,
     "expected_lost_rs": 80,
     "chosen": true,
     "note": "Chosen: fewest expected lost minutes at the target confidence."
@@ -95,7 +96,7 @@
      "same_site_as_primary": false
     }
    ],
-   "expected_lost_min": 75,
+   "expected_lost_min": 79,
    "expected_lost_rs": 80,
    "minutes": [
     {
@@ -106,12 +107,12 @@
     {
      "part": "backup_drive",
      "label": "Driving on to a backup",
-     "minutes": 0.6
+     "minutes": 0.7
     },
     {
      "part": "failed_stops",
      "label": "Stops at broken chargers",
-     "minutes": 4.4
+     "minutes": 5.7
     },
     {
      "part": "waiting",
@@ -121,12 +122,12 @@
     {
      "part": "charging",
      "label": "Charging to 80 %",
-     "minutes": 58.2
+     "minutes": 57.5
     },
     {
      "part": "stranding",
      "label": "Stranding risk (penalty x probability)",
-     "minutes": 5.3
+     "minutes": 8.0
     }
    ]
   },
@@ -146,8 +147,8 @@
      "trust_level": "medium"
     },
     "recent_failure_days": 1,
-    "confidence_as_primary": 0.95,
-    "expected_lost_min": 96,
+    "confidence_as_primary": 0.9,
+    "expected_lost_min": 102,
     "expected_lost_rs": 100,
     "chosen": false,
     "note": "Avoided: a failure was reported 1 day ago."
@@ -189,7 +190,7 @@
     },
     "recent_failure_days": null,
     "confidence_as_primary": 0.95,
-    "expected_lost_min": 96,
+    "expected_lost_min": 95,
     "expected_lost_rs": 100,
     "chosen": false,
     "note": "Not chosen: more expected lost minutes."
@@ -209,8 +210,8 @@
      "trust_level": "high"
     },
     "recent_failure_days": null,
-    "confidence_as_primary": 1.0,
-    "expected_lost_min": 75,
+    "confidence_as_primary": 0.95,
+    "expected_lost_min": 79,
     "expected_lost_rs": 80,
     "chosen": true,
     "note": "Chosen: fewest expected lost minutes at the target confidence."
@@ -231,7 +232,7 @@
     },
     "recent_failure_days": null,
     "confidence_as_primary": 0.95,
-    "expected_lost_min": 95,
+    "expected_lost_min": 92,
     "expected_lost_rs": 90,
     "chosen": false,
     "note": "Not chosen: few or no recent reports."
@@ -252,7 +253,7 @@
     },
     "recent_failure_days": null,
     "confidence_as_primary": 0.95,
-    "expected_lost_min": 108,
+    "expected_lost_min": 111,
     "expected_lost_rs": 110,
     "chosen": false,
     "note": "Not chosen: few or no recent reports."
@@ -273,7 +274,7 @@
     },
     "recent_failure_days": null,
     "confidence_as_primary": 0.95,
-    "expected_lost_min": 104,
+    "expected_lost_min": 101,
     "expected_lost_rs": 100,
     "chosen": false,
     "note": "Not chosen: few or no recent reports."
@@ -498,7 +499,7 @@
   ],
   "levers": [],
   "earning_rs_per_hour": 60.0,
-  "compute_ms": 369,
+  "compute_ms": 458,
   "earning_rate": {
    "rs_per_hour": 60.0,
    "is_example": true,

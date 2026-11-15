@@ -165,6 +165,7 @@ class DispatchResponse(Resp):
     vehicle_id: str
     decision: Decision
     confidence: float
+    confidence_display: str  # "95%+" | "under 5%" | the rounded percent (W0.2)
     arrival_soc: ArrivalSoc
     route: Route
     stops: list[Stop]
@@ -361,6 +362,7 @@ class RideCheckResponse(Resp):
     vehicle_id: str
     decision: Decision
     confidence: float
+    confidence_display: str  # "95%+" | "under 5%" | the rounded percent (W0.2)
     reason: str
     ride: RideSummary
     after_drop: AfterDrop | None

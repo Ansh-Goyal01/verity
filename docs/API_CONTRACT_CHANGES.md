@@ -59,3 +59,9 @@ fits the project. Nothing here is applied unless both sides agree.
 
 - Reason: TASKS_FINALE F10, a second demo (cab driver, airport ride, after-drop charger choice).
 - Old shape: no such endpoint. New shape: see docs/API_CONTRACT.md "GET /api/demo/driver". Additive only.
+
+## 2026-11-16 - v3: `confidence_display` on dispatch and ride-check (W0.2, F8)
+
+- Reason: guide W0.2 / finding F8. A headline result read "100% confidence"; the Monte Carlo cannot support it.
+- Old shape: `confidence` (number) only. New shape: plus `confidence_display` (string: "95%+", "under 5%" or the
+  rounded percent). Additive; the frontend should show the string. Ride-check `reason` text now uses it too.

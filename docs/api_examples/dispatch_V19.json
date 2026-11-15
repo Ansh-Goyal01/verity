@@ -3,6 +3,7 @@
  "vehicle_id": "V19",
  "decision": "INSUFFICIENT_EVIDENCE",
  "confidence": 0.9,
+ "confidence_display": "90%",
  "arrival_soc": {
   "p10": 8,
   "p50": 19,
@@ -7390,6 +7391,6 @@
   }
  ],
  "refusal_reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
- "compute_ms": 1986,
+ "compute_ms": 2270,
  "is_simulated": true
 }

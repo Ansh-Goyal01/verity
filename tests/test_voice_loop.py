@@ -70,11 +70,20 @@ def test_voice_report_is_simulated_unless_from_a_real_person() -> None:
 
 def test_decision_templates_take_numbers_only_from_the_engine() -> None:
     hi = render_decision("GO", "hi-IN", destination="Agra", confidence=0.95, bingo=11)
-    assert "95 प्रतिशत" in hi and "11 प्रतिशत" in hi and "Agra" in hi
+    assert "95 प्रतिशत या उससे अधिक" in hi and "11 प्रतिशत" in hi and "Agra" in hi
     assert "85 percent" in render_decision("NO_GO", "en-IN", destination="Agra", confidence=0.85)
     assert "evidence" in render_decision("INSUFFICIENT_EVIDENCE", "en-IN")
     with pytest.raises(ValueError):
         render_decision("GO", "en-IN", destination="Agra")
+
+
+def test_spoken_confidence_never_promises_certainty() -> None:
+    """W0.2: speech follows confidence_display ("95%+", "under 5%"), never "100 percent" or "0 percent"."""
+    go = render_decision("GO", "en-IN", destination="Agra", confidence=1.0, bingo=20)
+    assert "95 percent or more" in go and "100" not in go
+    no = render_decision("NO_GO", "en-IN", destination="Agra", confidence=0.0)
+    assert "under 5 percent" in no and " 0 percent" not in no
+    assert "5 प्रतिशत से कम" in render_decision("NO_GO", "hi-IN", destination="Agra", confidence=0.02)
 
 
 def test_tts_and_stt_send_the_documented_fields() -> None:

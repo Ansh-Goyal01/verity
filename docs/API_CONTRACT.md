@@ -302,3 +302,18 @@ The second demo's scenario: an EV cab driver in Noida in the evening gets an air
 ```
 
 Route, weather and charger positions are real; the vehicle and every pinned report are SIMULATED (show the badge).
+
+# Contract v3 additions (finale build W, 2026-11-16)
+
+Additive only: no existing field changed meaning.
+
+## `confidence_display` on POST /api/dispatch and POST /api/ride-check (W0.2)
+
+`confidence_display` is the confidence as the screen and the voice show it: `"95%+"` when the rounded
+confidence is 0.95 or more, `"under 5%"` when it is 0.05 or less, otherwise the rounded percent (`"80%"`).
+The Monte Carlo cannot tell 95 % from certainty, so no screen shows "100%" or "0%". `confidence` (the 5 %-step
+number) is unchanged; show `confidence_display` wherever a person reads the number.
+
+```json
+{"decision": "GO", "confidence": 0.95, "confidence_display": "95%+", "...": "..."}
+```

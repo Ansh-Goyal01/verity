@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from api.main import app
+from api.main import app, get_service
 from api.service import DRIVER_DEMO, DRIVER_PINS, PointPin, driver_demo_reports
 from verity.schemas import ChargerRecord
 
@@ -40,6 +40,18 @@ def test_the_scenario_endpoint_serves_the_pinned_request(client: TestClient) -> 
 def test_the_driver_can_take_the_airport_ride(answer: dict) -> None:
     assert answer["decision"] == "GO" and answer["confidence"] >= 0.9
     assert answer["ride"]["p_complete"] >= 0.9 and answer["route"]["source"] == "osrm"
+
+
+def test_the_confidence_is_pinned_and_never_shown_as_certain(answer: dict) -> None:
+    """W0.2 (F8): the saved result said 100 % and a live call 95 %; both now show 95%+ and no reason says 100 %."""
+    assert answer["confidence"] == 0.95 and answer["confidence_display"] == "95%+"
+    assert "95%+ confidence" in answer["reason"] and "100%" not in answer["reason"]
+
+
+def test_the_script_and_the_api_seed_the_same_ride_identically(client: TestClient, answer: dict) -> None:
+    """F8 cause: scripts/driver_demo.py hashed soc_pct 45 (int), the API 45.0 (validated), so the seeds differed."""
+    direct = get_service().ride_check(dict(DRIVER_DEMO))
+    assert direct["confidence"] == answer["confidence"] and direct["reason"] == answer["reason"]
 
 
 def test_after_the_drop_it_picks_the_trusted_charger(answer: dict) -> None:

@@ -29,7 +29,7 @@ from verity import __version__
 from verity.calibrate import calibrate
 from verity.chargers import RouteCharger, chargers_near_route, load_chargers, source_of
 from verity.dispatch import ALT_AHEAD_KM, PlanState, VehicleContext, dispatch, live_update_plan
-from verity.forecast import ForecastConfig, round_prob
+from verity.forecast import ForecastConfig, confidence_display, round_prob
 from verity.paths import SIM_DIR
 from verity.routing import load_planned_route
 from verity.schemas import ChargerRecord, Report
@@ -43,6 +43,7 @@ from verity.ridecheck import RideInput, ride_check
 from verity.routing import snapshot_to_route
 from verity.vehicles import get_prior
 
+from .models import DispatchRequest, RideCheckRequest
 from .ride import (
     AFTER_DROP_RADIUS_KM,
     EARNING_RATE_SOURCE,
@@ -207,6 +208,12 @@ class GraphView:
     reports: tuple[Report, ...] = ()
 
 
+def canonical_request(model: type, req: dict) -> dict:
+    """The request exactly as the API hands it over (validated, defaults filled, 45 -> 45.0), so the seed hashed from
+    it is the same for a script and an HTTP call (F8: the driver demo's saved 100 % vs live 95 % was this)."""
+    return model.model_validate(req).model_dump()
+
+
 class EngineService:
     def __init__(self, n_runs: int | None = None, graph_backend: str | None = None) -> None:
         self.cfg = ForecastConfig(n_runs=n_runs or int(os.environ.get("VERITY_N_RUNS", "1500")))
@@ -312,6 +319,7 @@ class EngineService:
                            f"(origin and destination must be within {ENDPOINT_TOLERANCE_KM:.0f} km of them).")
 
     def dispatch(self, req: dict) -> dict:
+        req = canonical_request(DispatchRequest, req)
         fv = self.fleet.get(req["vehicle_id"])
         if fv is None:
             raise ApiError(404, "unknown_vehicle", f"Unknown vehicle {req['vehicle_id']!r}; known: {sorted(self.fleet)}")
@@ -343,7 +351,8 @@ class EngineService:
                  self.last_graph_timing["total_s"], self.graph.backend)
         response = {
             "plan_id": plan_id, "vehicle_id": result.vehicle_id, "decision": result.decision,
-            "confidence": result.confidence, "arrival_soc": result.arrival_soc,
+            "confidence": result.confidence, "confidence_display": confidence_display(result.confidence),
+            "arrival_soc": result.arrival_soc,
             "route": {"distance_km": result.distance_km, "duration_min": result.duration_min,
                       "polyline": self.snap["polyline"]},
             "stops": [{k: v for k, v in s.items() if k != "power_assumed"} for s in result.stops],
@@ -377,6 +386,7 @@ class EngineService:
 
     def ride_check(self, req: dict) -> dict:
         """GO / NO_GO / INSUFFICIENT_EVIDENCE for a ride plus the after-drop plan to a trusted charger (F8b)."""
+        req = canonical_request(RideCheckRequest, req)
         fv = self.fleet.get(req["vehicle_id"])
         if fv is None:
             raise ApiError(404, "unknown_vehicle", f"Unknown vehicle {req['vehicle_id']!r}; known: {sorted(self.fleet)}")

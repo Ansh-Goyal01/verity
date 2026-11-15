@@ -9,6 +9,7 @@ from verity.calibrate import calibrate
 from verity.forecast import (
     ForecastConfig,
     build_route,
+    confidence_display,
     live_update,
     round_prob,
     simulate_runs,
@@ -103,6 +104,13 @@ def test_live_update_reacts_to_a_battery_reading() -> None:
 def test_round_prob_is_nearest_five_percent() -> None:
     assert [round_prob(p) for p in (0.0, 0.02, 0.03, 0.83, 0.9, 0.971, 0.98, 1.0)] == [
         0.0, 0.0, 0.05, 0.85, 0.9, 0.95, 1.0, 1.0]
+
+
+def test_confidence_display_never_shows_certainty() -> None:
+    """W0.2 (F8): the Monte Carlo cannot tell 95 % from 100 %, so the screen never says 100 % or 0 %."""
+    cases = {1.0: "95%+", 0.999: "95%+", 0.95: "95%+", 0.94: "95%+", 0.92: "90%", 0.9: "90%", 0.5: "50%",
+             0.08: "10%", 0.07: "under 5%", 0.05: "under 5%", 0.0: "under 5%"}
+    assert {p: confidence_display(p) for p in cases} == cases
 
 
 def test_build_route_cuts_segments_assigns_road_classes_and_grade() -> None:

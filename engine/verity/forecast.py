@@ -199,6 +199,21 @@ def round_prob(p: float) -> float:
     return round(round(float(p) * 20.0) / 20.0, 2) + 0.0
 
 
+DISPLAY_CEILING = 0.95  # a shown 95 % or more reads "95%+": the Monte Carlo cannot tell 95 % from certainty (W0.2)
+DISPLAY_FLOOR = 0.05  # a shown 5 % or less reads "under 5%"
+
+
+def confidence_display(p: float) -> str:
+    """The confidence as the screen and the voice show it (W0.2, F8): never "100%" and never "0%".
+    The thresholds apply to the ROUNDED value, so the text always agrees with the 5 %-step ``confidence`` field."""
+    shown = round_prob(p)
+    if shown >= DISPLAY_CEILING - 1e-9:
+        return "95%+"
+    if shown <= DISPLAY_FLOOR + 1e-9:
+        return "under 5%"
+    return f"{shown:.0%}"
+
+
 def weighted_quantiles(values: Array, weights: Array, qs: tuple[float, ...]) -> Array:
     order = np.argsort(values)
     v, w = values[order], weights[order]

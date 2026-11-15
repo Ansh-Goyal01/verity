@@ -39,7 +39,7 @@ from .dispatch import (
     _stale,
     drive_cum_minutes,
 )
-from .forecast import ForecastConfig, PlannedRoute, round_prob, simulate_runs
+from .forecast import ForecastConfig, PlannedRoute, confidence_display, round_prob, simulate_runs
 from .physics import total_mass_kg
 from .sites import WorksSampler, p_all_fail
 from .trips import haversine_m
@@ -231,22 +231,22 @@ def _option_row(inp: RideInput, i: int, ev: ChainEval, chosen: bool) -> dict:
 
 def _decide(inp: RideInput, ctx: Ctx, best: ChainEval, seed: int) -> tuple[str, str]:
     """(decision, reason): the reason is built from the engine's own numbers."""
-    target, shown = inp.target, round_prob(best.confidence)
+    target, shown, said = inp.target, round_prob(best.confidence), confidence_display(best.confidence)
     stale = [inp.options[i].node for i in best.chain if _stale(inp.options[i].node)]
     if inp.vehicle.trips_calibrated < MIN_CALIBRATED_TRIPS:
         return "INSUFFICIENT_EVIDENCE", ("This vehicle has no calibrated trips yet, so its real range is unknown. "
                                          "Log one or two trips before relying on a ride check.")
     if shown < target - 1e-9:
-        return "NO_GO", (f"Only {shown:.0%} confidence of completing the ride and reaching a working charger after "
-                         f"the drop (target {target:.0%}). Charge first, or decline this ride.")
+        return "NO_GO", (f"Confidence of completing the ride and reaching a working charger after the drop is only "
+                         f"{said} (target {target:.0%}). Charge first, or decline this ride.")
     if stale:
         pess = evaluate_chain(ctx, inp, best.chain, np.random.default_rng(seed + 1), {n.id: n.p_lo for n in stale})
         if round_prob(pess.confidence) < target - 1e-9:
             names = ", ".join(sorted({_name(n) for n in stale}))
             return "INSUFFICIENT_EVIDENCE", (
                 f"The plan only meets the {target:.0%} target if chargers with stale or missing reports ({names}) work; "
-                f"read pessimistically, confidence falls to about {round_prob(pess.confidence):.0%}.")
-    return "GO", (f"{shown:.0%} confidence of completing the ride and reaching a working charger after the drop "
+                f"read pessimistically, confidence falls to {confidence_display(pess.confidence)}.")
+    return "GO", (f"{said} confidence of completing the ride and reaching a working charger after the drop "
                   f"(target {target:.0%}).")
 
 
@@ -269,7 +269,8 @@ def ride_check(inp: RideInput, *, seed: int = 0, cfg: ForecastConfig = ForecastC
     primary = {e.chain[0]: e for e in evals}
     lost = best.expected_lost
     out = {
-        "decision": decision, "confidence": round_prob(best.confidence), "reason": reason, "ride": ride,
+        "decision": decision, "confidence": round_prob(best.confidence),
+        "confidence_display": confidence_display(best.confidence), "reason": reason, "ride": ride,
         "after_drop": {
             "charger": _option_row(inp, best.chain[0], best, True),
             "backups": [{"charger_id": inp.options[i].node.id, "name": _name(inp.options[i].node),
@@ -312,7 +313,8 @@ def _levers(inp: RideInput, ctx: Ctx, best: ChainEval, decision: str, seed: int,
 
 def _no_charger(inp: RideInput, ride: dict, t0: float) -> dict:
     """No charger is known near the drop: the after-drop plan cannot be checked, so the engine refuses a GO."""
-    return {"decision": "NO_GO", "confidence": 0.0, "reason": "No known charger near the drop, so the after-drop "
+    return {"decision": "NO_GO", "confidence": 0.0, "confidence_display": confidence_display(0.0),
+            "reason": "No known charger near the drop, so the after-drop "
             "plan cannot be checked. Decline, or charge before taking the ride.", "ride": ride,
             "after_drop": None, "considered": [], "bingo_line": [], "levers": [],
             "earning_rs_per_hour": inp.earning_rs_per_hour, "compute_ms": int(round(1000 * (time.perf_counter() - t0)))}

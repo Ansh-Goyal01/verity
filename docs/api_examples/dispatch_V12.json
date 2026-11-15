@@ -3,6 +3,7 @@
  "vehicle_id": "V12",
  "decision": "GO",
  "confidence": 0.95,
+ "confidence_display": "95%+",
  "arrival_soc": {
   "p10": 13,
   "p50": 19,
@@ -7352,6 +7353,6 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 2118,
+ "compute_ms": 2285,
  "is_simulated": true
 }

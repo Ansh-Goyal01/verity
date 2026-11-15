@@ -8,7 +8,8 @@ Pure functions over transcripts (the Sarvam calls live in voice.SarvamClient):
   is ``is_simulated=False`` only when the caller says it came from a real person; synthetic speech (our own TTS
   round trip) is always simulated. source_kind is ``driver_voice``.
 * ``render_decision`` speaks a decision from FIXED templates (hi-IN, en-IN); every number in it comes from the
-  engine's output (confidence already rounded to 5 %), never from the template.
+  engine's output (confidence already rounded to 5 %), never from the template. Confidence is spoken as
+  ``confidence_display`` shows it (W0.2): "95 percent or more", "under 5 percent", never certainty.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from datetime import datetime
 
 import numpy as np
 
+from .forecast import confidence_display
 from .schemas import ChargerRecord, Report
 from .trips import haversine_m
 from .voice import parse_soc_percent
@@ -46,18 +48,29 @@ _SPOKEN_STOP = frozenset("ev charging charge charger chargers station point hub 
 
 DECISION_TEMPLATES: dict[str, dict[str, str]] = {
     "hi-IN": {
-        "GO": "जाइए। {destination} तक पहुँचने की संभावना {confidence} प्रतिशत है। "
+        "GO": "जाइए। {destination} तक पहुँचने की संभावना {confidence} है। "
               "बैटरी {bingo} प्रतिशत से नीचे जाए तो रास्ता बदलें।",
-        "NO_GO": "अभी न जाएँ। {destination} तक पहुँचने की संभावना केवल {confidence} प्रतिशत है।",
+        "NO_GO": "अभी न जाएँ। {destination} तक पहुँचने की संभावना केवल {confidence} है।",
         "INSUFFICIENT_EVIDENCE": "पक्का कहने के लिए अभी पर्याप्त जानकारी नहीं है, इसलिए हम कोई वादा नहीं कर रहे।",
     },
     "en-IN": {
-        "GO": "Go. The chance of reaching {destination} is {confidence} percent. "
+        "GO": "Go. The chance of reaching {destination} is {confidence}. "
               "Divert if the battery falls below {bingo} percent.",
-        "NO_GO": "Do not start yet. The chance of reaching {destination} is only {confidence} percent.",
+        "NO_GO": "Do not start yet. The chance of reaching {destination} is only {confidence}.",
         "INSUFFICIENT_EVIDENCE": "There is not enough evidence to promise this trip yet, so we will not guess.",
     },
 }
+# How each language says confidence_display's three forms; {p} is the engine's rounded percent.
+SPOKEN_CONFIDENCE: dict[str, dict[str, str]] = {
+    "hi-IN": {"95%+": "95 प्रतिशत या उससे अधिक", "under 5%": "5 प्रतिशत से कम", "pct": "{p} प्रतिशत"},
+    "en-IN": {"95%+": "95 percent or more", "under 5%": "under 5 percent", "pct": "{p} percent"},
+}
+
+
+def spoken_confidence(confidence: float, language: str) -> str:
+    """``confidence_display`` in words for ``language`` (W0.2): the same three forms, never "100 percent"."""
+    shown, forms = confidence_display(confidence), SPOKEN_CONFIDENCE[language]
+    return forms[shown] if shown in forms else forms["pct"].format(p=shown.rstrip("%"))
 
 
 def soc_from_transcript(text: str, translate: Callable[[str], str] | None = None,
@@ -140,5 +153,5 @@ def render_decision(decision: str, language: str, *, destination: str = "", conf
     if missing:
         raise ValueError(f"{decision} needs {', '.join(missing)} from the engine")
     return template.format(destination=destination,
-                           confidence=None if confidence is None else int(round(confidence * 100)),
+                           confidence=None if confidence is None else spoken_confidence(confidence, language),
                            bingo=None if bingo is None else int(round(bingo)))
