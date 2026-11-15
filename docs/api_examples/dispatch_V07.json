@@ -4,6 +4,7 @@
  "decision": "NO_GO",
  "confidence": 0.8,
  "confidence_display": "80%",
+ "reason": "NO_GO because the best plan relies on planned stop Tata (85% likely to work, 1 report) and reaches only 80% confidence (target 90%).",
  "arrival_soc": {
   "p10": 0,
   "p50": 21,
@@ -7395,6 +7396,6 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 2311,
+ "compute_ms": 2574,
  "is_simulated": true
 }

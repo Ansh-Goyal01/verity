@@ -6,7 +6,7 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 ## Sessions
 
 - [x] S1 Bingo Line agrees with the plan (W0.1) + deadline line (W0.0)
-- [ ] S2 No certainty on screen + reason sentence (W0.2, W0.6)
+- [x] S2 No certainty on screen + reason sentence (W0.2, W0.6)
 - [ ] S3 Green on every machine + hardening (W0.4, W0.7)
 - [ ] S4 One source of truth + offline (W0.3, W0.5)
 - [ ] S5 Sarvam client + spoken ride-check (W3.1, W3.2)
@@ -50,3 +50,17 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
   E3/E4 outcomes identical; only timing fields changed.
 - Manual step for Ansh: the frontend snapshot (`web/js/snapshot.js`) still holds the old V12 line; regenerate it
   with `uv run python scripts/export_web_snapshot.py` when convenient (S4 adds the engine-side snapshot).
+
+### S2 (2026-11-16) — done
+- W0.2 `696edd5`: `confidence_display` ("95%+" / "under 5%" / rounded %) on dispatch + ride-check (contract v3);
+  ride-check reasons and both voice templates use it ("95 percent or more", "95 प्रतिशत या उससे अधिक").
+- F8 cause found: not machine noise. `driver_demo.py` hashed `soc_pct` 45 (int), the API 45.0, so the seeds differed.
+  Requests are now canonicalised through their pydantic model before hashing (API seeds unchanged). Pinned 0.95 / "95%+".
+- W0.6: dispatch `reason` names the charger that carries the decision (Ansh's rule: most depended-on, falling back to
+  most-used when no single failure costs > 4 points); `PlanEval.charged_at` records where each run charged (no new
+  random draws). Spoken via `render_decision(..., reason_facts=...)` in en-IN and hi-IN.
+- Numbers: V12 reason = backup "EV charging station (OpenStreetMap)", 95%+ works, 10 reports, reach 90%. Pinned decisions
+  unchanged (V07 NO_GO 80%, V12 GO 95%+, V19 IE 90%). No "100%" in results/*.json or docs/api_examples/ (results/logs/tests.log
+  has pytest's own "[100%]" progress marker only). Suite: 379 passed, 10 skipped (parity skipped with `NEO4J_URI=`).
+- Manual for Ansh: check the Hindi reason templates in `voice_loop.py` (`REASON_TEMPLATES["hi-IN"]`); regenerate
+  `web/js/snapshot.js` (`scripts/export_web_snapshot.py`) and show `confidence_display` + `reason` in the frontend.

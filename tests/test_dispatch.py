@@ -15,12 +15,15 @@ from verity.calibrate import calibrate
 from verity.chargers import RouteCharger
 from verity.dispatch import (
     CHARGE_CAP,
+    NOT_CHARGED,
+    PLANNED,
     RESERVE_PCT,
     Ctx,
     Stop,
     VehicleContext,
     _build_ctx,
     bingo_line,
+    carrying_charger,
     dispatch,
     evaluate_plan,
     execute_trip,
@@ -29,7 +32,7 @@ from verity.dispatch import (
     make_nodes,
     make_stops,
 )
-from verity.forecast import ForecastConfig, PlannedRoute
+from verity.forecast import ForecastConfig, PlannedRoute, confidence_display, round_prob
 from verity.schemas import ChargerRecord
 from verity.trust.engine import ChargerTrust
 from verity.vehicles import get_prior
@@ -348,3 +351,60 @@ def test_execute_trip_strands_without_alternates_and_survives_with_one() -> None
     stranded = execute_trip(stops, used, 50.0, down, 100.0, ctx.min_per_pp, 190.0, use_alts=False)
     saved = execute_trip(stops, used, 50.0, down, 100.0, ctx.min_per_pp, 190.0, use_alts=True)
     assert stranded.stranded and not saved.stranded and saved.stops_used == 1 and saved.minutes > 100.0
+
+
+# --- the reason sentence (W0.6, F11) --------------------------------------------------------------------------
+
+WEAK_STOP_STRONG_BACKUP = scenario(("P", 118.0, 0.3), ("Q", 126.0, 0.95))
+
+
+def _plan(specs, start: float = 80.0):
+    chargers, trust = specs
+    ctx = _build_ctx(vehicle(), ROUTE, start, 0.9, np.random.default_rng(3), CFG)
+    nodes = make_nodes(chargers, trust)
+    stops = make_stops(ctx, [nodes[0]], nodes)
+    return ctx, stops, evaluate_plan(ctx, stops, np.random.default_rng(4))
+
+
+def _without(ctx, stops):
+    return lambda node: evaluate_plan(ctx, stops, np.random.default_rng(9), p_override=None if node is None else {node.id: 0.0}).confidence
+
+
+def test_charged_at_records_where_each_run_charged() -> None:
+    ctx, stops, ev = _plan(BACKUPS_BEYOND_WINDOW)
+    where = ev.charged_at[0]
+    assert set(np.unique(where)) <= {PLANNED, NOT_CHARGED, 0, 1}
+    assert 0.6 < float(np.mean(where == PLANNED)) < 0.8  # P works 70 % and is always reachable from 80 %
+    assert float(np.mean(where == 0)) > float(np.mean(where == 1))  # Q is tried before R
+
+
+def test_a_weak_planned_stop_is_carried_by_its_strong_backup() -> None:
+    """F11's shape: a 30 %-reliable planned stop backed by a 95 % charger; the backup carries the GO."""
+    ctx, stops, ev = _plan(WEAK_STOP_STRONG_BACKUP)
+    i, node = carrying_charger(stops, ev, _without(ctx, stops))
+    assert i == 0 and node.id == "Q" and node is not stops[0].node
+
+
+def test_the_reason_names_a_charger_of_the_plan_with_its_own_numbers() -> None:
+    r = run(start=60.0)
+    assert r.decision == "GO" and r.reason.startswith("GO because") and "100%" not in r.reason
+    f = r.reason_facts
+    named = {s["charger_id"]: s for s in r.stops} | {a["charger_id"]: a for a in r.alternates}
+    assert f["charger_id"] in named and f["name"] in r.reason
+    assert confidence_display(f["p_works"]) in r.reason and confidence_display(f["p_reach"]) in r.reason
+    assert round_prob(f["p_works"]) == named[f["charger_id"]]["p_works"]
+
+
+def test_reasons_for_direct_trips_no_go_and_insufficient_evidence() -> None:
+    chargers, trust = scenario(("A", 50.0, 0.9))
+    short = PlannedRoute("car", np.full(60, 1000.0), np.zeros(60, dtype=int), np.zeros(60), np.full(60, 33.0),
+                         np.zeros(60))
+    direct = dispatch(vehicle(), short, chargers, trust, start_soc=90.0, seed=1, cfg=CFG)
+    assert direct.decision == "GO" and not direct.stops
+    assert direct.reason == "GO because the destination is reached with reserve, without charging, in 95%+ of runs."
+    stuck = run(start=98.0, specs=(chargers, trust))  # 190 km; a charger at km 50 is too early to help
+    assert stuck.decision == "NO_GO" and stuck.reason.startswith("NO_GO because no charging plan reaches the 90%")
+    no_go = run(start=20.0)
+    assert no_go.decision == "NO_GO" and no_go.reason.startswith("NO_GO because")
+    thin = run(veh=vehicle(trips=0))
+    assert thin.decision == "INSUFFICIENT_EVIDENCE" and thin.reason == thin.refusal_reason

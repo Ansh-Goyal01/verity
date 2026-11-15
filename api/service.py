@@ -352,7 +352,7 @@ class EngineService:
         response = {
             "plan_id": plan_id, "vehicle_id": result.vehicle_id, "decision": result.decision,
             "confidence": result.confidence, "confidence_display": confidence_display(result.confidence),
-            "arrival_soc": result.arrival_soc,
+            "reason": result.reason, "arrival_soc": result.arrival_soc,
             "route": {"distance_km": result.distance_km, "duration_min": result.duration_min,
                       "polyline": self.snap["polyline"]},
             "stops": [{k: v for k, v in s.items() if k != "power_assumed"} for s in result.stops],

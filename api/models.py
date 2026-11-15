@@ -166,6 +166,7 @@ class DispatchResponse(Resp):
     decision: Decision
     confidence: float
     confidence_display: str  # "95%+" | "under 5%" | the rounded percent (W0.2)
+    reason: str  # one sentence naming the charger that carries the decision (W0.6)
     arrival_soc: ArrivalSoc
     route: Route
     stops: list[Stop]

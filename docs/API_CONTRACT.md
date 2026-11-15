@@ -317,3 +317,17 @@ number) is unchanged; show `confidence_display` wherever a person reads the numb
 ```json
 {"decision": "GO", "confidence": 0.95, "confidence_display": "95%+", "...": "..."}
 ```
+
+## `reason` on POST /api/dispatch (W0.6)
+
+One plain sentence naming the charger the decision rests on, built from the plan's own Monte Carlo; the voice
+speaks the same sentence (en-IN) or its Hindi template. `INSUFFICIENT_EVIDENCE` repeats `refusal_reason`.
+
+```json
+{"decision": "GO", "confidence_display": "95%+",
+ "reason": "GO because backup Charger X (95%+ likely to work, 10 reports) is reachable 90% of the time."}
+```
+
+Other forms: "NO_GO because the best plan relies on planned stop X (...) and reaches only 80% confidence (target
+90%).", and, for plans without a charging stop, "GO because the destination is reached with reserve, without
+charging, in 95%+ of runs." / "NO_GO because no charging plan reaches the 90% target; the best reaches 70%."

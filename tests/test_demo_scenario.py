@@ -140,3 +140,15 @@ def test_the_go_vehicles_replay_ends_in_a_divert_and_the_trip_still_succeeds(svc
     outcome = execute_trip(state.stops, lambda km: float(runs.used_at_km(km)[idx]), ctx.start_soc, works,
                            ctx.minutes_at(ctx.total_km), ctx.min_per_pp, ctx.total_km, use_alts=True)
     assert not outcome.stranded and outcome.stops_used >= 1
+
+
+def test_the_hero_release_says_which_charger_carries_it(plans: dict[str, dict]) -> None:
+    """W0.6 (F11): V12 is GO with an unreported planned stop; the reason names the charger the GO rests on and
+    quotes the same rounded numbers the response shows for it."""
+    p = plans["V12"]
+    assert p["decision"] == "GO" and p["reason"].startswith("GO because") and "100%" not in p["reason"]
+    rows = p["stops"] + p["alternates"]
+    named = [r for r in rows if r["name"] in p["reason"]]
+    assert named, p["reason"]
+    assert any(f"{r['p_works']:.0%}" in p["reason"] or "95%+" in p["reason"] for r in named)
+    assert plans["V19"]["reason"] == plans["V19"]["refusal_reason"]  # INSUFFICIENT_EVIDENCE explains itself

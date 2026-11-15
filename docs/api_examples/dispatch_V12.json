@@ -4,6 +4,7 @@
  "decision": "GO",
  "confidence": 0.95,
  "confidence_display": "95%+",
+ "reason": "GO because backup EV charging station (OpenStreetMap) (95%+ likely to work, 10 reports) is reachable 90% of the time.",
  "arrival_soc": {
   "p10": 13,
   "p50": 19,
@@ -7353,6 +7354,6 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 2285,
+ "compute_ms": 2488,
  "is_simulated": true
 }

@@ -65,3 +65,8 @@ fits the project. Nothing here is applied unless both sides agree.
 - Reason: guide W0.2 / finding F8. A headline result read "100% confidence"; the Monte Carlo cannot support it.
 - Old shape: `confidence` (number) only. New shape: plus `confidence_display` (string: "95%+", "under 5%" or the
   rounded percent). Additive; the frontend should show the string. Ride-check `reason` text now uses it too.
+
+## 2026-11-16 - v3: `reason` on dispatch (W0.6, F11)
+
+- Reason: guide W0.6 / finding F11. V12 was GO with an unreported planned stop and nothing said why.
+- Old shape: no `reason` on dispatch. New shape: `reason` (string, always present). Additive.

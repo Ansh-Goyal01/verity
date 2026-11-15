@@ -23,7 +23,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field, replace
-from typing import Sequence
+from typing import Callable, Sequence
 
 import numpy as np
 
@@ -35,6 +35,7 @@ from .forecast import (
     ForecastConfig,
     ForecastRuns,
     PlannedRoute,
+    confidence_display,
     round_prob,
     simulate_runs,
 )
@@ -161,6 +162,7 @@ class PlanEval:
     trace: Array
     ctx: Ctx
     lost_minutes: Array | None = None  # minutes + stranding penalty: the objective plans minimise (F8a)
+    charged_at: list[Array] | None = None  # per stop, per run: PLANNED, the backup's index, or NOT_CHARGED (W0.6)
 
     @property
     def confidence(self) -> float:
@@ -365,6 +367,9 @@ def propose_paths(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool, k: int 
 # --- Monte Carlo with backups -----------------------------------------------------------------------------
 
 
+PLANNED, NOT_CHARGED = -1, -2  # PlanEval.charged_at codes; 0, 1, ... = that stop's backup index
+
+
 def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, use_alts: bool = True,
                   p_override: dict[str, float] | None = None) -> PlanEval:
     """Run every Monte Carlo run through the plan: planned charger, else a reachable working alternate ahead,
@@ -376,7 +381,7 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
     pos_km, pos_used = np.zeros(n), np.zeros(n)
     alive = np.ones(n, dtype=bool)
     minutes = np.full(n, ctx.minutes_at(ctx.total_km))
-    gains, stop_arrival, alive_in, soc_in, used_in = [], [], [], [], []
+    gains, stop_arrival, alive_in, soc_in, used_in, charged_at = [], [], [], [], [], []
     for st in stops:
         node = st.node
         soc_in.append(soc.copy()); used_in.append(pos_used.copy()); alive_in.append(alive.copy())
@@ -391,15 +396,17 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
         minutes = minutes + np.where(tried, node.detour_min, 0.0) + np.where(tried & ~works, FAILED_STOP_MIN, 0.0)
         cur_km, cur_used, cur_soc = (np.where(ok, v, w) for v, w in ((node.km, pos_km), (used_st, pos_used), (arr, soc)))
         cur_wait = np.where(ok, node.wait_min, 0.0)
+        where = np.where(ok, PLANNED, NOT_CHARGED)
         need = active & ~ok
         if use_alts:
-            for alt in st.alts:
+            for j, alt in enumerate(st.alts):
                 used_alt = runs.used_at_km(alt.km)
                 arr_alt = soc - (used_alt - pos_used)
                 can = need & (arr_alt >= RES_STOP) & sampler.works(alt.site_id, p_of(alt))
                 cur_km, cur_used, cur_soc = (np.where(can, v, w) for v, w in
                                              ((alt.km, cur_km), (used_alt, cur_used), (arr_alt, cur_soc)))
                 cur_wait = np.where(can, alt.wait_min, cur_wait)
+                where = np.where(can, j, where)
                 minutes = minutes + np.where(can, alt.detour_min, 0.0)
                 ok |= can
                 need &= ~can
@@ -409,13 +416,15 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
         pos_km, pos_used = np.where(ok, cur_km, pos_km), np.where(ok, cur_used, pos_used)
         minutes = minutes + np.where(ok, STOP_OVERHEAD_MIN + gain * ctx.min_per_pp(node), 0.0) + cur_wait
         gains.append(gain)
+        charged_at.append(where)
     arrival = soc - (runs.total_used - pos_used)
     success = alive & (arrival >= RESERVE_PCT)
     lost = minutes + np.where(success, 0.0, STRANDING_PENALTY_MIN)
     trace = ctx.start_soc - runs.soc_used_cum
     for st, gain in zip(stops, gains):
         trace = trace + np.where(runs.km_end >= st.node.km, 1.0, 0.0)[None, :] * gain[:, None]
-    return PlanEval(success, arrival, minutes, gains, stop_arrival, alive_in, soc_in, used_in, trace, ctx, lost)
+    return PlanEval(success, arrival, minutes, gains, stop_arrival, alive_in, soc_in, used_in, trace, ctx, lost,
+                    charged_at)
 
 
 # --- Bingo Line, point of no return -----------------------------------------------------------------------
@@ -500,6 +509,8 @@ class DispatchResult:
     refusal_reason: str | None
     compute_ms: int
     state: "PlanState | None" = field(default=None, repr=False)
+    reason: str = ""  # one sentence naming the charger that carries the decision (W0.6)
+    reason_facts: dict | None = None  # the numbers behind it, for speech in other languages
 
 
 @dataclass(frozen=True, eq=False)
@@ -618,6 +629,13 @@ def dispatch(
                    "Ask the community to verify them before departure.")
 
     result = _assemble(vehicle, ctx, stops, ev, nodes, decision, refusal, polyline or [], rng)
+    if compute_levers:  # lever re-plans read only the confidence; skip their reason
+        without = lambda node: evaluate_plan(ctx, stops, np.random.default_rng(seed + 4),  # noqa: E731
+                                             p_override=None if node is None else {node.id: 0.0}).confidence
+        facts = reason_facts(ctx, stops, ev, decision, carrying_charger(stops, ev, without))
+        result.reason_facts = facts
+        result.reason = (refusal or "") if facts is None else render_reason(facts, REASON_TEMPLATES_EN, confidence_display,
+                                                                     reports_en, ROLE_EN)
     if compute_levers:
         result.levers = _levers(vehicle, route, route_chargers, trust, ctx, stops, ev, nodes, start_soc, target_confidence,
                                 seed, cfg, trust_aware, other_vehicles, stale, conf, decision, graph)
@@ -680,6 +698,84 @@ def _assemble(vehicle: VehicleContext, ctx: Ctx, stops: Sequence[Stop], ev: Plan
         vehicle.vehicle_id, decision, round_prob(ev.confidence), ev.confidence, arrival_soc, round(ctx.total_km, 1),
         int(round(ev.mean_minutes)), stop_dicts, alt_dicts, bingo, point_of_no_return_km(ev, stops), breakdown, [],
         risks, refusal, 0, state)
+
+
+# --- the reason sentence (W0.6, F11) ---------------------------------------------------------------------------
+
+# One plain sentence per decision naming the charger that carries it; every number comes from the plan's own
+# Monte Carlo. voice_loop speaks the same templates (en-IN) or its Hindi ones. INSUFFICIENT_EVIDENCE uses refusal.
+REASON_TEMPLATES_EN: dict[str, str] = {
+    "GO": "GO because {role} {name} ({p_works} likely to work, {reports}) is reachable {p_reach} of the time.",
+    "GO_direct": "GO because the destination is reached with reserve, without charging, in {confidence} of runs.",
+    "NO_GO": "NO_GO because the best plan relies on {role} {name} ({p_works} likely to work, {reports}) and reaches "
+             "only {confidence} confidence (target {target}).",
+    "NO_GO_direct": "NO_GO because no charging plan reaches the {target} target; the best reaches {confidence}.",
+}
+ROLE_EN = {"stop": "planned stop", "backup": "backup"}
+
+
+def reports_en(n: int) -> str:
+    return "no reports" if n == 0 else f"{n} report{'' if n == 1 else 's'}"
+
+
+def carrying_charger(stops: Sequence[Stop], ev: PlanEval,
+                     confidence_without: Callable[[Node | None], float]) -> tuple[int, Node] | None:
+    """The charger the decision rests on, as (stop index, node); node is ``stops[i].node`` or one of
+    ``stops[i].alts``. None when the plan has no charging stop.
+
+    Available evidence:
+    * ``ev.charged_at[i]``: per run, where it charged at stop i (PLANNED, a backup index j, or NOT_CHARGED);
+      ``ev.success`` marks the runs that arrived with reserve.
+    * ``confidence_without(node)``: the plan's confidence if that charger never works (one more Monte Carlo
+      pass over the same runs, ~10-30 ms each); ``confidence_without(None)`` is the same-seed baseline. Every
+      call shares one seed (common random numbers), so compare the calls with EACH OTHER; against
+      ``ev.confidence`` they also differ by sampling noise.
+
+    Rule (Ansh, W0.6): the most depended-on charger, i.e. the one whose failure costs the most confidence. When
+    no single failure costs more than LEVER_MIN_GAIN (redundant backups: the drops are within Monte Carlo noise),
+    fall back to the charger that charged the most successful runs.
+    """
+    if not stops:
+        return None
+    cands = [(i, n, code) for i, st in enumerate(stops) for code, n in ((PLANNED, st.node), *enumerate(st.alts))]
+    base = confidence_without(None)
+    drops = [base - confidence_without(n) for _, n, _ in cands]
+    k = int(np.argmax(drops))
+    if drops[k] <= LEVER_MIN_GAIN and ev.charged_at is not None:
+        k = int(np.argmax([np.sum(ev.success & (ev.charged_at[i] == code)) for i, _, code in cands]))
+    return cands[k][0], cands[k][1]
+
+
+def _p_reach(ctx: Ctx, stops: Sequence[Stop], ev: PlanEval, i: int, node: Node) -> float:
+    """P(the car gets to ``node`` with reserve) as the response's stops/alternates measure it."""
+    if node is stops[i].node:
+        arr = ev.stop_arrival[i]
+        return float(np.mean(np.where(np.isfinite(arr), arr, -np.inf) >= RES_STOP))
+    return float(np.mean(ev.soc_in[i] - (ctx.runs.used_at_km(node.km) - ev.used_in[i]) >= RES_STOP))
+
+
+def reason_facts(ctx: Ctx, stops: Sequence[Stop], ev: PlanEval, decision: str,
+                 carrier: tuple[int, Node] | None) -> dict | None:
+    """The numbers behind the reason sentence (raw probabilities; each language formats them)."""
+    if decision not in ("GO", "NO_GO"):
+        return None
+    facts = {"kind": decision if carrier else f"{decision}_direct", "confidence": ev.confidence,
+             "target": ctx.target}
+    if carrier is not None:
+        i, node = carrier
+        facts.update({"role": "stop" if node is stops[i].node else "backup", "charger_id": node.id,
+                      "name": node.charger.name if node.charger else node.id, "p_works": node.p_works,
+                      "n_reports": _evidence(node)["n_reports"], "p_reach": _p_reach(ctx, stops, ev, i, node)})
+    return facts
+
+
+def render_reason(facts: dict, templates: dict[str, str], pct: Callable[[float], str],
+                  reports: Callable[[int], str], roles: dict[str, str]) -> str:
+    """Fill one reason template; ``pct`` formats a probability (confidence_display, or spoken words)."""
+    return templates[facts["kind"]].format(
+        role=roles.get(facts.get("role", ""), ""), name=facts.get("name", ""),
+        p_works=pct(facts.get("p_works", 0.0)), reports=reports(facts.get("n_reports", 0)),
+        p_reach=pct(facts.get("p_reach", 0.0)), confidence=pct(facts["confidence"]), target=f"{facts['target']:.0%}")
 
 
 def _risk_sources(vehicle: VehicleContext, ctx: Ctx, stops: Sequence[Stop]) -> list[dict]:

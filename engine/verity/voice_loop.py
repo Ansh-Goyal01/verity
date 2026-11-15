@@ -20,6 +20,7 @@ from datetime import datetime
 
 import numpy as np
 
+from .dispatch import REASON_TEMPLATES_EN, ROLE_EN, render_reason, reports_en
 from .forecast import confidence_display
 from .schemas import ChargerRecord, Report
 from .trips import haversine_m
@@ -65,6 +66,22 @@ SPOKEN_CONFIDENCE: dict[str, dict[str, str]] = {
     "hi-IN": {"95%+": "95 प्रतिशत या उससे अधिक", "under 5%": "5 प्रतिशत से कम", "pct": "{p} प्रतिशत"},
     "en-IN": {"95%+": "95 percent or more", "under 5%": "under 5 percent", "pct": "{p} percent"},
 }
+
+
+# The dispatch reason (W0.6) spoken: en-IN reuses the response's own templates; Hindi written for this project
+# (not yet checked by a native speaker - Ansh to verify before the demo).
+REASON_TEMPLATES: dict[str, dict[str, str]] = {
+    "en-IN": REASON_TEMPLATES_EN,
+    "hi-IN": {
+        "GO": "{role} {name} के काम करने की संभावना {p_works} है ({reports}), और वहाँ {p_reach} बार पहुँचा जा सकता है।",
+        "GO_direct": "बिना चार्जिंग के, {confidence} बार रिज़र्व बैटरी के साथ पहुँचा जा सकता है।",
+        "NO_GO": "सबसे अच्छी योजना {role} {name} पर निर्भर है ({p_works} काम करने की संभावना, {reports}), "
+                 "फिर भी संभावना केवल {confidence} है (लक्ष्य {target})।",
+        "NO_GO_direct": "कोई भी चार्जिंग योजना {target} के लक्ष्य तक नहीं पहुँचती; सबसे अच्छी {confidence} तक पहुँचती है।",
+    },
+}
+ROLES = {"en-IN": ROLE_EN, "hi-IN": {"stop": "तय चार्जिंग स्टॉप", "backup": "बैकअप चार्जर"}}
+REPORTS = {"en-IN": reports_en, "hi-IN": lambda n: "कोई रिपोर्ट नहीं" if n == 0 else f"{n} रिपोर्ट"}
 
 
 def spoken_confidence(confidence: float, language: str) -> str:
@@ -144,14 +161,22 @@ def voice_report(transcript: str, chargers: Sequence[ChargerRecord], t: datetime
                           t=t, evidence="driver voice note", is_simulated=not from_real_person)
 
 
+def spoken_reason(facts: dict, language: str) -> str:
+    """The dispatch reason sentence (DispatchResult.reason_facts) in ``language``, numbers in spoken words."""
+    return render_reason(facts, REASON_TEMPLATES[language], lambda p: spoken_confidence(p, language),
+                         REPORTS[language], ROLES[language])
+
+
 def render_decision(decision: str, language: str, *, destination: str = "", confidence: float | None = None,
-                    bingo: float | None = None) -> str:
-    """Fill a fixed template. ``confidence`` is the engine's probability (0-1, already rounded to 5 %)."""
+                    bingo: float | None = None, reason_facts: dict | None = None) -> str:
+    """Fill a fixed template. ``confidence`` is the engine's probability (0-1, already rounded to 5 %).
+    ``reason_facts`` (from dispatch) appends the reason sentence naming the charger that carries the decision."""
     template = DECISION_TEMPLATES[language][decision]
     needs = {"confidence": confidence, "bingo": bingo}
     missing = [k for k, v in needs.items() if "{" + k + "}" in template and v is None]
     if missing:
         raise ValueError(f"{decision} needs {', '.join(missing)} from the engine")
-    return template.format(destination=destination,
+    text = template.format(destination=destination,
                            confidence=None if confidence is None else spoken_confidence(confidence, language),
                            bingo=None if bingo is None else int(round(bingo)))
+    return text if reason_facts is None else f"{text} {spoken_reason(reason_facts, language)}"

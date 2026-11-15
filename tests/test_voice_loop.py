@@ -106,3 +106,14 @@ def test_tts_and_stt_send_the_documented_fields() -> None:
     assert [c["path"] for c in client.calls] == ["/text-to-speech", "/speech-to-text"]
     with pytest.raises(ValueError):
         client.stt_full(b"", "a.wav", "audio/wav", "unknown", "shout")
+
+
+def test_the_dispatch_reason_is_spoken_in_both_languages() -> None:
+    """W0.6: the reason sentence is reused in speech, numbers in spoken words, never certainty."""
+    facts = {"kind": "GO", "confidence": 0.97, "target": 0.9, "role": "backup", "charger_id": "CH-1",
+             "name": "Tata Power Mathura", "p_works": 0.95, "n_reports": 3, "p_reach": 0.9}
+    en = render_decision("GO", "en-IN", destination="Agra", confidence=0.97, bingo=20, reason_facts=facts)
+    assert "GO because backup Tata Power Mathura (95 percent or more likely to work, 3 reports)" in en
+    assert "reachable 90 percent of the time" in en and "100" not in en
+    hi = render_decision("GO", "hi-IN", destination="Agra", confidence=0.97, bingo=20, reason_facts=facts)
+    assert "बैकअप चार्जर Tata Power Mathura" in hi and "3 रिपोर्ट" in hi and "90 प्रतिशत" in hi
