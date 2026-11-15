@@ -13,7 +13,7 @@ import pytest
 
 from api.service import DEMO_REPORTS, PIN_KM_TOLERANCE, EngineService, ScenarioPin, demo_reports_for
 from verity.chargers import RouteCharger
-from verity.dispatch import execute_trip
+from verity.dispatch import execute_trip, live_update_plan
 from verity.schemas import ChargerRecord
 
 BOOKING = {"origin": {"lat": 28.5355, "lon": 77.3910}, "destination": {"lat": 27.1767, "lon": 78.0081},
@@ -88,6 +88,31 @@ def test_v19_refuses_because_its_plan_rests_on_chargers_without_current_evidence
     d = plans["V19"]
     assert d["decision"] == "INSUFFICIENT_EVIDENCE" and d["confidence"] >= 0.9
     assert "stale or missing" in d["refusal_reason"] and "verify" in d["refusal_reason"].lower()
+
+
+# --- the Bingo Line agrees with the plan (W0.1) -------------------------------------------------------------------
+
+
+def test_go_plans_keep_the_expected_battery_at_or_above_the_bingo_line(plans: dict) -> None:
+    """F1: V12 was GO at 95 % while the line sat 20 points above the expected battery from km 34 to km 65."""
+    go = {vid: p for vid, p in plans.items() if p["decision"] == "GO"}
+    assert go, "no GO plan among the demo vehicles"
+    for vid, p in go.items():
+        below = [(r["km"], r["bingo_soc_pct"], r["expected_soc_pct"]) for r in p["bingo_line"]
+                 if r["expected_soc_pct"] < r["bingo_soc_pct"]]
+        assert not below, f"{vid}: expected battery below the Bingo Line at {below[:5]}"
+
+
+def test_the_plans_own_median_battery_continues_at_every_km(svc: EngineService, plans: dict) -> None:
+    """F1: the live update said 'below the Bingo Line, slow down' at confidence 1.0 on the plan's own path."""
+    for vid, p in plans.items():
+        if p["decision"] != "GO":
+            continue
+        state = svc.plans[p["plan_id"]].state
+        trace, km_end = state.ev.trace, state.ctx.runs.km_end
+        off = [(float(km), upd["action"]) for i, km in enumerate(km_end)
+               if (upd := live_update_plan(state, float(km), float(np.median(trace[:, i]))))["action"] != "CONTINUE"]
+        assert not off, f"{vid}: on-plan readings did not CONTINUE at {off[:5]}"
 
 
 # --- the GO vehicle's replay --------------------------------------------------------------------------------------

@@ -20,12 +20,14 @@ from verity.dispatch import (
     Stop,
     VehicleContext,
     _build_ctx,
+    bingo_line,
     dispatch,
     evaluate_plan,
     execute_trip,
     k_shortest_paths,
     live_update_plan,
     make_nodes,
+    make_stops,
 )
 from verity.forecast import ForecastConfig, PlannedRoute
 from verity.schemas import ChargerRecord
@@ -209,6 +211,53 @@ def test_bingo_is_higher_on_a_long_gap_than_next_to_a_charger() -> None:
     assert at[100] > at[38]  # deep in the 110 km gap versus right before a charger
 
 
+BACKUPS_BEYOND_WINDOW = scenario(("P", 118.0, 0.7), ("Q", 126.0, 0.95), ("R", 132.0, 0.95))
+
+
+def test_bingo_line_counts_the_planned_stops_backups_wherever_they_are() -> None:
+    """F1/F2: the planned stop P (works 70 %) is backed by Q and R just after it. While the car is more than
+    60 km before Q, the old line ignored Q and R, demanded ~96 % and contradicted a plan that meets the target."""
+    chargers, trust = BACKUPS_BEYOND_WINDOW
+    ctx = _build_ctx(vehicle(), ROUTE, 80.0, 0.9, np.random.default_rng(3), CFG)
+    nodes = make_nodes(chargers, trust)
+    stops = make_stops(ctx, [nodes[0]], nodes)
+    ev = evaluate_plan(ctx, stops, np.random.default_rng(4))
+    assert [a.id for a in stops[0].alts] == ["Q", "R"] and ev.confidence >= ctx.target
+    line = bingo_line(ctx, stops, np.random.default_rng(5))
+    median = np.median(ev.trace, axis=0)
+    below = [(p["km"], p["bingo_soc_pct"], int(round(float(m)))) for p, m in zip(line, median)
+             if int(round(float(m))) < p["bingo_soc_pct"]]
+    assert not below, f"expected battery below the Bingo Line on a plan that meets the target: {below[:5]}"
+
+
+def random_trip(seed: int) -> tuple[tuple, float]:
+    """A seeded simulated trip: 2-7 high-trust chargers anywhere on the route, 60-98 % reliable, start 40-95 %."""
+    rng = np.random.default_rng(1000 + seed)
+    kms = np.sort(rng.uniform(15.0, 180.0, int(rng.integers(2, 8))))
+    specs = scenario(*[(f"R{i}", float(k), float(rng.uniform(0.6, 0.98))) for i, k in enumerate(kms)])
+    return specs, float(rng.uniform(40.0, 95.0))
+
+
+def test_go_plans_stay_above_their_own_bingo_line_and_continue_on_plan() -> None:
+    """W0.1 invariant on 50 seeded simulated trips: on every GO plan the expected battery is at or above the
+    Bingo Line at every km, and feeding the plan's own median battery to the live update says CONTINUE."""
+    n_go, failures = 0, []
+    for seed in range(50):
+        (chargers, trust), start = random_trip(seed)
+        r = dispatch(vehicle(), ROUTE, chargers, trust, start_soc=start, seed=seed, cfg=CFG, compute_levers=False)
+        if r.decision != "GO":
+            continue
+        n_go += 1
+        below = [p["km"] for p in r.bingo_line if p["expected_soc_pct"] < p["bingo_soc_pct"]]
+        trace, km_end = r.state.ev.trace, r.state.ctx.runs.km_end
+        off = [float(km) for i, km in enumerate(km_end)
+               if live_update_plan(r.state, float(km), float(np.median(trace[:, i])))["action"] != "CONTINUE"]
+        if below or off:
+            failures.append((seed, round(start), below[:3], off[:3]))
+    assert n_go >= 10, f"only {n_go} GO plans: the invariant is not exercised"
+    assert not failures, f"{len(failures)} of {n_go} GO plans contradict their Bingo Line: {failures[:5]}"
+
+
 def test_point_of_no_return_is_inside_the_route() -> None:
     r = run(60.0)
     assert 0 < r.point_of_no_return_km <= r.distance_km
@@ -270,6 +319,20 @@ def test_live_update_continues_diverts_or_slows_depending_on_the_reading() -> No
     broken = live_update_plan(state, km, expected, broken={nxt["charger_id"]})
     assert broken["action"] == "DIVERT" and broken["divert_to"]["charger_id"] != nxt["charger_id"]
     assert "reported broken" in broken["message"]
+
+
+def test_live_update_never_slows_down_for_the_bingo_line_while_confidence_meets_the_target() -> None:
+    """W0.1 precedence: the reweighted confidence outranks the Bingo Line (forecast_update.json said SLOW_DOWN
+    at confidence 1.0). A stored line of 100 % puts every reading below it; on plan, the answer stays CONTINUE."""
+    from dataclasses import replace as dc_replace
+
+    r = run(60.0, compute_levers=False)
+    state = dc_replace(r.state, bingo=tuple({**p, "bingo_soc_pct": 100} for p in r.state.bingo))
+    i = int(np.searchsorted(state.ctx.runs.km_end, 40.0))
+    upd = live_update_plan(state, 40.0, float(np.median(state.ev.trace[:, i])))
+    assert upd["confidence"] >= state.ctx.target and upd["bingo_soc_pct_here"] == 100
+    assert upd["action"] == "CONTINUE" and "meets the target" in upd["message"]
+    assert live_update_plan(state, 40.0, 8.0)["action"] in ("DIVERT", "SLOW_DOWN")  # and far below plan it acts
 
 
 # --- executing a plan in a simulated world ------------------------------------------------------------------------

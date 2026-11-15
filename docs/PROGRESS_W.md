@@ -5,7 +5,7 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 
 ## Sessions
 
-- [ ] S1 Bingo Line agrees with the plan (W0.1) + deadline line (W0.0)
+- [x] S1 Bingo Line agrees with the plan (W0.1) + deadline line (W0.0)
 - [ ] S2 No certainty on screen + reason sentence (W0.2, W0.6)
 - [ ] S3 Green on every machine + hardening (W0.4, W0.7)
 - [ ] S4 One source of truth + offline (W0.3, W0.5)
@@ -35,3 +35,18 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
   again. Report that the parity tests were skipped this way.
 
 ## Handoff notes (newest last, at most 15 lines per session)
+
+### S1 (2026-11-16) — done
+- W0.0 `56ddaf2`: CLAUDE.md deadline line -> finale 21 Nov 2026, 07:30 IST.
+- Aura keep-alive `5c2bd30`: `scripts/aura_keepalive.py`, Windows task `VerityAuraKeepAlive` 10:00 + 22:00 IST until 23 Nov
+  (write-and-delete, log `data/cache/aura_keepalive.log`). Only runs while the laptop is on; first two runs OK.
+- W0.1: F2 confirmed by a failing test first. Bingo Line + live update now use the plan's own policy
+  (`policy_ahead`: next stop, its backups, later stops + backups, destination) and one threshold (`meets_target`,
+  displayed confidence). Live-update precedence in DECISIONS.md: confidence meeting target -> CONTINUE.
+- New tests: F2 repro, 50 seeded trips (30 GO: expected >= line at every km, on-plan median -> CONTINUE), V12
+  invariants, precedence. Suite: 369 passed, 10 skipped (parity tests skipped with `NEO4J_URI=`).
+- Numbers that moved: V12 line at km 34 72 -> 46 (expected 50); forecast_update.json SLOW_DOWN -> CONTINUE
+  (line 63 -> 35 at km 57.9, confidence 1.0). No pinned decision changed (V07 NO_GO 80 %, V12 GO 95 %, V19 IE).
+  E3/E4 outcomes identical; only timing fields changed.
+- Manual step for Ansh: the frontend snapshot (`web/js/snapshot.js`) still holds the old V12 line; regenerate it
+  with `uv run python scripts/export_web_snapshot.py` when convenient (S4 adds the engine-side snapshot).

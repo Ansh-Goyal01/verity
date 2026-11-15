@@ -7,9 +7,9 @@
   "p50": 23,
   "p90": 25
  },
- "bingo_soc_pct_here": 63,
- "action": "SLOW_DOWN",
+ "bingo_soc_pct_here": 35,
+ "action": "CONTINUE",
  "divert_to": null,
- "message": "Battery is below the Bingo Line and no alternate is reachable with confidence: slow down and save energy.",
+ "message": "On plan: still above the Bingo Line.",
  "is_simulated": true
 }

@@ -421,28 +421,42 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
 # --- Bingo Line, point of no return -----------------------------------------------------------------------
 
 
-def bingo_line(ctx: Ctx, stops: Sequence[Stop], nodes: Sequence[Node], rng: np.random.Generator) -> list[dict]:
-    """Per segment end: the lowest SoC from which a planned charger, a working alternate or the destination
-    is still reachable with probability >= the target."""
+def meets_target(p: float | Array, target: float) -> bool | Array:
+    """The one "meets the target" test (W0.1), shared by the GO decision, the Bingo Line and the live update:
+    the DISPLAYED confidence (nearest 5 %, golden rule 5) against the target, so the three never disagree."""
+    return np.round(np.asarray(p, dtype=float) * 20.0) / 20.0 >= target - 1e-9
+
+
+def policy_ahead(stops: Sequence[Stop], km: float) -> tuple[Node, ...]:
+    """The plan's own policy from ``km`` on (W0.1), as ``evaluate_plan`` runs it: the next planned stop, then its
+    backups wherever they are, then (a run whose stop failed carries on) the later planned stops and their
+    backups. The destination always follows. Past the last stop only the destination is left. No duplicates."""
+    seen: dict[str, Node] = {}
+    for st in (s for s in stops if s.node.km > km):
+        for n in (st.node, *st.alts):
+            seen.setdefault(n.id, n)
+    return tuple(seen.values())
+
+
+def bingo_line(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator) -> list[dict]:
+    """Per segment end: the lowest SoC from which the plan's own policy (next planned stop, its backups, the
+    destination; the failure model of ``evaluate_plan``) still meets the target (W0.1, F1/F2)."""
     runs = ctx.runs
     sub = rng.choice(runs.n_runs, size=min(BINGO_SUBSAMPLE, runs.n_runs), replace=False)
     grid = np.arange(0.0, 100.5, 1.0)
-    node_used = {n.id: runs.used_at_km(n.km)[sub] for n in nodes}
     dest_used = runs.total_used[sub]
     out = []
     for si, km in enumerate(runs.km_end):
         used_x = runs.soc_used_cum[sub, si]
-        planned = next((s.node for s in stops if s.node.km > km), None)
         cands: list[tuple[Array, float, float, str]] = [(dest_used - used_x, 1.0, RESERVE_PCT, "__destination__")]
-        for n in nodes:
-            if km < n.km <= km + ALT_AHEAD_KM or (planned is not None and n.id == planned.id):
-                cands.append((node_used[n.id] - used_x, n.p_works, RES_STOP, n.site_id))
+        for n in policy_ahead(stops, float(km)):
+            cands.append((runs.used_at_km(n.km)[sub] - used_x, n.p_works, RES_STOP, n.site_id))
         energy = np.stack([c[0] for c in cands])  # (C, n)
         res = np.array([c[2] for c in cands])[:, None, None]
         reach = (grid[None, None, :] - energy[:, :, None]) >= res  # (C, n, G)
         fail = p_all_fail([c[1] for c in cands], [c[3] for c in cands], reach)  # (n, G), Site-correlated (F8c)
         prob = 1.0 - fail.mean(axis=0)  # (G,)
-        ok = np.nonzero(prob >= ctx.target)[0]
+        ok = np.nonzero(meets_target(prob, ctx.target))[0]
         bingo = float(grid[ok[0]]) if len(ok) else 100.0
         out.append({"km": round(float(km), 1), "bingo_soc_pct": int(round(bingo))})
     return out
@@ -591,7 +605,7 @@ def dispatch(
     # The decision follows the DISPLAYED confidence (nearest 5 %, golden rule 5), so the UI never shows
     # "90 % / NO_GO" for a 90 % target; 2.5 points is below the Monte Carlo's own resolution anyway.
     shown, shown_pess = round_prob(conf), round_prob(conf_pess)
-    decision, refusal = "GO" if shown >= target_confidence - 1e-9 else "NO_GO", None
+    decision, refusal = "GO" if meets_target(conf, target_confidence) else "NO_GO", None
     if thin_vehicle:
         decision = "INSUFFICIENT_EVIDENCE"
         refusal = ("This vehicle has no calibrated trips yet, so its real range is unknown. Log one or two short "
@@ -653,7 +667,7 @@ def _assemble(vehicle: VehicleContext, ctx: Ctx, stops: Sequence[Stop], ev: Plan
                               "lat": alt.charger.lat if alt.charger else None,
                               "lon": alt.charger.lon if alt.charger else None,
                               "p_reach": round_prob(reach), "p_works": round_prob(alt.p_works)})
-    bingo = bingo_line(ctx, stops, nodes, rng)
+    bingo = bingo_line(ctx, stops, rng)
     exp = np.quantile(ev.trace, [0.1, 0.5, 0.9], axis=0)
     for i, row in enumerate(bingo):
         row.update({"expected_soc_pct": int(round(float(exp[1, i]))), "expected_soc_p10": int(round(float(exp[0, i]))),
@@ -728,7 +742,12 @@ def _levers(vehicle, route, route_chargers, trust, ctx, stops, ev, nodes, start_
 
 def live_update_plan(state: PlanState, km_now: float, soc_now: float, *, broken: set[str] = frozenset(),
                      sigma_obs: float = 0.8, min_ess: float = 40.0) -> dict:
-    """Condition the stored plan evaluation on a new reading and decide CONTINUE / DIVERT / SLOW_DOWN."""
+    """Condition the stored plan evaluation on a new reading and decide CONTINUE / DIVERT / SLOW_DOWN.
+
+    Precedence (W0.1, DECISIONS.md): (1) the next planned charger reported broken -> DIVERT to its best reachable
+    backup, else SLOW_DOWN; (2) the reweighted confidence meets the target -> CONTINUE, whatever the Bingo Line
+    says (the full plan model outranks its one-number summary); (3) below the Bingo Line -> DIVERT to a reachable
+    backup of the next stop, else SLOW_DOWN; (4) otherwise (confidence below target) -> SLOW_DOWN."""
     ctx, ev, runs = state.ctx, state.ev, state.ctx.runs
     idx = int(min(np.searchsorted(runs.km_end, km_now), len(runs.km_end) - 1))
     expected = ev.trace[:, idx]
@@ -747,15 +766,23 @@ def live_update_plan(state: PlanState, km_now: float, soc_now: float, *, broken:
     q = [float(arrival[order][min(np.searchsorted(cdf, p), len(cdf) - 1)]) for p in (0.1, 0.5, 0.9)]
     bingo_here = state.bingo[min(idx + 1, len(state.bingo) - 1)]["bingo_soc_pct"]
     used_now = runs.used_at_km(km_now)
-    next_stop = next((s.node for s in state.stops if s.node.km > km_now), None)
-    ahead = [n for n in state.nodes if km_now < n.km <= km_now + ALT_AHEAD_KM and n.id not in broken]
+    policy = policy_ahead(state.stops, km_now)  # the same set the Bingo Line was built from
+    next_stop = policy[0] if policy else None
+    # a divert goes to a backup or a later planned stop, never to the next planned stop itself
+    ahead = [n for n in policy[1:] if n.id not in broken]
 
     def reach(n: Node) -> float:
         return float(np.sum(w * (soc_now - (runs.used_at_km(n.km) - used_now) >= RES_STOP)))
 
     action, divert_to, message = "CONTINUE", None, "On plan: still above the Bingo Line."
     next_broken = next_stop is not None and next_stop.id in broken
-    if next_broken or soc_now < bingo_here:
+    on_target = bool(meets_target(conf, ctx.target))
+    if on_target and not next_broken:
+        if soc_now < bingo_here:
+            message = "On plan: confidence still meets the target."
+        elif soc_now < float(np.median(expected)) - 3.0:
+            message = "Battery is draining faster than planned; still above the Bingo Line."
+    elif next_broken or soc_now < bingo_here:
         options = sorted(ahead, key=lambda n: -(reach(n) * n.p_works))
         if options and reach(options[0]) > 0.5:
             n = options[0]
@@ -771,11 +798,9 @@ def live_update_plan(state: PlanState, km_now: float, soc_now: float, *, broken:
                        "and save energy." if next_broken else
                        "Battery is below the Bingo Line and no alternate is reachable with confidence: slow down "
                        "and save energy.")
-    elif conf < ctx.target:
+    else:
         action = "SLOW_DOWN"
         message = "Battery is draining faster than planned; confidence is below target. Slow down to save energy."
-    elif soc_now < float(np.median(expected)) - 3.0:
-        message = "Battery is draining faster than planned; still above the Bingo Line."
     return {"km_along_route": round(float(km_now), 1), "confidence": round_prob(conf),
             "arrival_soc": {"p10": int(round(q[0])), "p50": int(round(q[1])), "p90": int(round(q[2]))},
             "bingo_soc_pct_here": int(bingo_here), "action": action, "divert_to": divert_to, "message": message}
