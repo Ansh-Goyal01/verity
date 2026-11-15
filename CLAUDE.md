@@ -10,7 +10,7 @@ problem statement T6.1 "Will I Make It". Team: Low Cortisol.
 - Prompt playbook for building: `docs/PROMPTS.md`.
 - Interface between the engine and the frontend pages: `docs/API_CONTRACT.md` (never changed
   silently; proposals go in `docs/API_CONTRACT_CHANGES.md`).
-- **Prototype deadline: 31 Oct 2026, 11:59 PM IST. Internal target: submit by 6 PM.**
+- **Finale: 21 November 2026, 07:30 IST.**
 
 ## Golden rules (judges reward honesty; never break these)
 
