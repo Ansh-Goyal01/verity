@@ -23,5 +23,12 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 - HEAD `9302586` (F12). Guide reports 362 passed / 1 failed (CRLF, Linux only) / 1 skipped on Linux.
 - Stray nested clone `verity/` in the repo root (older R-series history of the GitHub remote). Untracked;
   never stage it. Ansh can delete it or move it out of the repo.
+- 2026-11-16: new Aura instance live (username is `neo4j`, not the instance id). Smoke test OK.
+  `tests/test_graph_parity.py`: 9 passed, 1 failed -
+  `test_simulated_reports_and_sources_are_tagged_and_syncing_again_changes_nothing`: re-sync with only
+  `demo_reports` drops REPORTED 28 -> 14 and Source 24 -> 10 (likely the service's own reports, e.g. the
+  driver-demo scenario, being removed by the replace-style sync). Probably never run live before (skips when
+  Neo4j is unreachable). **S6: diagnose first, decide sync-vs-test, log in DECISIONS.md.** Until fixed, the
+  full `uv run pytest` is red whenever Neo4j is reachable; `VERITY_GRAPH=memory` keeps it green.
 
 ## Handoff notes (newest last, at most 15 lines per session)
