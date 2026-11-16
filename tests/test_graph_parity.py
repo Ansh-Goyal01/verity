@@ -102,7 +102,8 @@ def test_simulated_reports_and_sources_are_tagged_and_syncing_again_changes_noth
                   "RETURN count(s) AS n")[0]["n"]
     assert (untagged, sources) == (0, 0)
     directory, _ = load_chargers()
-    again = open_graph(directory, neo4j.demo_reports, prefer="neo4j")
+    # The service syncs BOTH report sets (api/service.py): a re-sync with only one would, correctly, prune the other.
+    again = open_graph(directory, neo4j.demo_reports + neo4j.driver_demo_reports, prefer="neo4j")
     try:
         assert run(counts)[0] == before
     finally:
