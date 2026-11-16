@@ -69,13 +69,13 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 - W0.4 `49ee00e`: `.gitattributes` (LF text; BMW CSV fixtures `-text`, now stored as CRLF); the CRLF test builds its own bytes (old
   test fails on LF fixtures, new passes on both); E1 fingerprint + audit hash hash newline-normalised bytes. One-time re-stamp of
   those two hash fields only, after the old hashes were re-verified; every E1 number identical, no held-out trip opened
-  (`tests/test_e1_fingerprint.py` guards it on every OS). `.github/workflows/ci.yml`: Ubuntu + Windows, Python 3.13, no secrets.
+  (`tests/test_e1_fingerprint.py` guards it on every OS). `.github/workflows/ci.yml`: Windows only (Ansh's decision, later the same day), Python 3.13, no secrets.
 - W0.7 (next commit): LRU(300) plan + ride caches (`api/limits.py`, atomic `get`); CORS from `VERITY_CORS_ORIGINS`; voice rate limit 20/min per
   address shared by tts+stt (429 + `Retry-After`, exposed through CORS; IPv6 per /64); `/api/health` adds `graph{backend,nodes,relationships}` +
   `sarvam_key_present`. `counts()` on both graph backends: memory 288/302 = live Aura 288/302 (by hand, not pinned). Contract v3 + CHANGES.
 - Suite: 442 passed, 10 skipped (parity, `NEO4J_URI=`). No pinned decision moved (V07 NO_GO 80%, V12 GO 95%+, V19 IE 90%). Code review run
   (`code-reviewer`): no CRITICAL/HIGH; the MEDIUMs were fixed, limits logged in DECISIONS.md. Only `docs/api_examples/health.json` re-exported.
-- Manual for Ansh: (1) push, then watch the FIRST CI run on Ubuntu: pinned numbers (V07/V12/V19) were never run on Linux; (2) confirm the
+- Manual for Ansh: (1) push, then watch the FIRST CI run (Windows): it has never run; (2) confirm the
   20/min voice default (`VERITY_VOICE_RATE_PER_MIN`); (3) a hosted deploy must set `VERITY_TRUST_PROXY=1` and `VERITY_CORS_ORIGINS` (S11);
   (4) `SarvamClient` reads `.env` only, so an env-var-only deploy shows `sarvam_key_present: false` (S5/S11).
 - Seen, not fixed: with live Aura, dispatch V12 `compute_ms` ~10 s vs ~2.4 s in memory (network writes; S8). Run `export_api_examples.py` with `VERITY_GRAPH=memory`.
