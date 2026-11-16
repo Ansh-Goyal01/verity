@@ -33,10 +33,14 @@ from typing import Any, NamedTuple, Protocol
 
 from ..paths import REPO_ROOT
 from ..schemas import ChargerRecord, Report
+from .channels import channel_of
+from .graph_structure import MemoryStructure, Neo4jStructure
+from .graph_types import AliasRec, AuditView, NameHit, PlanRec, SiteRec
 
 log = logging.getLogger(__name__)
 
-NODE_LABELS = ("Charger", "Operator", "Site", "HardwareModel", "VehicleModel", "Source", "RoadSegment")
+NODE_LABELS = ("Charger", "Operator", "Site", "SiteType", "HardwareModel", "VehicleModel", "Source", "Channel",
+               "RoadSegment", "Plan", "Alias")
 TEST_PREFIX = "TEST-"
 RING_WINDOW_HOURS = 72.0  # reports this close in time can belong to one burst (approximate - verify)
 STALE_LEG_SECONDS = 3600.0  # scoped LEGs older than this were left behind by a crashed request
@@ -190,12 +194,25 @@ class ChargerGraph(Protocol):
     def co_reporting_pairs(self, min_shared: int = 4) -> list[tuple[str, str, int]]: ...
     def report_rings(self, min_shared: int = 4, window_hours: float | None = RING_WINDOW_HOURS) -> list[Ring]: ...
     def counts(self) -> GraphCounts: ...
+    # W2.1 / W2.5 / W2.6: physical sites, plans, aliases, name search, audit views
+    def sync_sites(self) -> None: ...
+    def sites(self) -> list[SiteRec]: ...
+    def add_plan(self, plan: PlanRec) -> None: ...
+    def plan(self, plan_id: str) -> PlanRec | None: ...
+    def plan_ids(self) -> list[str]: ...
+    def sweep_plans(self, keep: int, max_age_s: float, now: float | None = None) -> None: ...
+    def add_aliases(self, aliases: Sequence[AliasRec]) -> None: ...
+    def aliases(self) -> list[AliasRec]: ...
+    def search_names(self, spoken: str, limit: int = 3) -> list[NameHit]: ...
+    def why(self, plan_id: str) -> AuditView | None: ...
+    def charger_neighbourhood(self, charger_id: str) -> AuditView | None: ...
 
 
-class InMemoryGraph:
+class InMemoryGraph(MemoryStructure):
     """Dictionary-backed graph with the same behaviour as the Neo4j one (fallback for the API, default for tests)."""
 
     def __init__(self) -> None:
+        self._init_structure()
         self._chargers: dict[str, ChargerRecord] = {}
         self._reports: dict[str, Report] = {}
         self._legs: dict[str, dict[tuple[str, str, str], Leg]] = defaultdict(dict)
@@ -224,7 +241,8 @@ class InMemoryGraph:
         return sorted(self._chargers.values(), key=lambda c: c.id)
 
     def reports(self, charger_id: str | None = None) -> list[Report]:
-        keep = (r for r in self._reports.values() if charger_id is None or r.charger_id == charger_id)
+        # A snapshot first: live reports (POST /api/reports) are added while other requests read.
+        keep = (r for r in list(self._reports.values()) if charger_id is None or r.charger_id == charger_id)
         return sorted(keep, key=_report_order)
 
     def prune_simulated_reports(self, keep: Collection[str]) -> None:
@@ -298,19 +316,19 @@ class InMemoryGraph:
         works_with = list(self._works_with)
         segments = set(list(self._segments)) | {seg for seg, edges in alternates if edges}
         waypoints = 2 * sum(1 for scope, scope_legs in legs if scope and scope_legs)
+        extra_nodes, extra_rels = self.structure_counts()  # Site, SiteType, Channel, Plan, Alias and their edges
         nodes = (len(chargers) + len({c.operator for c in chargers if c.operator})
-                 + len({c.site_type for c in chargers if c.site_type})
                  + len({r.source_id for r in reports})
                  + len({v for v, _ in works_with}) + len({h for _, h in works_with})
-                 + len(segments) + waypoints)
+                 + len(segments) + waypoints + extra_nodes)
         relationships = (len(reports) + sum(1 for c in chargers if c.operator)
-                         + sum(1 for c in chargers if c.site_type) + sum(len(scope_legs) for _, scope_legs in legs)
-                         + sum(len(edges) for _, edges in alternates) + len(works_with))
+                         + sum(len(scope_legs) for _, scope_legs in legs)
+                         + sum(len(edges) for _, edges in alternates) + len(works_with) + extra_rels)
         return GraphCounts(nodes, relationships)
 
     def co_reporting_pairs(self, min_shared: int = 4) -> list[tuple[str, str, int]]:
         by_source: dict[str, set[str]] = defaultdict(set)
-        for r in self._reports.values():
+        for r in list(self._reports.values()):
             by_source[r.source_id].add(r.charger_id)
         ids = sorted(by_source)
         pairs = [(a, b, len(by_source[a] & by_source[b])) for i, a in enumerate(ids) for b in ids[i + 1:]]
@@ -319,7 +337,7 @@ class InMemoryGraph:
     def report_rings(self, min_shared: int = 4, window_hours: float | None = RING_WINDOW_HOURS) -> list[Ring]:
         window_s = None if window_hours is None else window_hours * 3600.0
         by_charger: dict[str, list[Report]] = defaultdict(list)
-        for r in self._reports.values():
+        for r in list(self._reports.values()):
             by_charger[r.charger_id].append(r)
         shared: dict[tuple[str, str], set[str]] = defaultdict(set)
         for cid, reps in by_charger.items():
@@ -351,10 +369,8 @@ _CHARGER_UPSERT = (
     "SET c.name=row.name, c.lat=row.lat, c.lon=row.lon, c.source_ids=row.source_ids, "
     "c.connectors=row.connectors, c.operator=row.operator, c.site_type=row.site_type "
     "FOREACH (_ IN CASE WHEN row.operator <> '' THEN [1] ELSE [] END | "
-    "MERGE (o:Operator {id:row.operator}) MERGE (c)-[:RUN_BY]->(o)) "
-    "FOREACH (_ IN CASE WHEN row.site_type <> '' THEN [1] ELSE [] END | "
-    "MERGE (s:Site {id:row.site_type}) MERGE (c)-[:AT]->(s))"
-)
+    "MERGE (o:Operator {id:row.operator}) MERGE (c)-[:RUN_BY]->(o))"
+)  # Site nodes are physical places now: ``sync_sites`` writes them from all chargers at once (W2.1)
 # One round trip for a whole batch: the AuraDB round trip (~100 ms) is what makes per-edge writes unusable.
 _REPORT_UPSERT = (
     "UNWIND $rows AS row MATCH (c:Charger {id:row.charger_id}) MERGE (s:Source {id:row.source_id}) "
@@ -362,6 +378,7 @@ _REPORT_UPSERT = (
     "ELSE s.is_simulated AND row.is_simulated END "
     "MERGE (s)-[r:REPORTED {key:row.key}]->(c) "
     "SET r.status=row.status, r.t=row.t, r.ts=row.ts, r.evidence=row.evidence, r.is_simulated=row.is_simulated "
+    "MERGE (ch:Channel {id:row.channel}) MERGE (s)-[:VIA]->(ch) "
     "RETURN count(r) AS n"
 )
 # Waypoints (START/END) are RoadSegment nodes of this scope; chargers are matched by id. Both ends are resolved
@@ -376,7 +393,7 @@ _LEG_UPSERT = (
 )
 
 
-class Neo4jGraph:
+class Neo4jGraph(Neo4jStructure):
     """Neo4j implementation of ``ChargerGraph``. Pass ``driver`` to inject a fake in tests."""
 
     def __init__(self, uri: str | None = None, user: str | None = None, password: str | None = None, *,
@@ -454,6 +471,7 @@ class Neo4jGraph:
     def ensure_constraints(self) -> None:
         for label in NODE_LABELS:
             self._run(f"CREATE CONSTRAINT {label.lower()}_id IF NOT EXISTS FOR (n:{label}) REQUIRE n.id IS UNIQUE")
+        self.ensure_name_index()
 
     # -- chargers and reports -------------------------------------------------------------------------------
     def add_charger(self, rec: ChargerRecord) -> None:
@@ -471,8 +489,8 @@ class Neo4jGraph:
 
     def add_reports(self, reps: Sequence[Report]) -> None:
         rows = [{"key": report_key(r), "charger_id": r.charger_id, "source_id": r.source_id, "status": r.status,
-                 "t": r.t.isoformat(), "ts": r.t.timestamp(), "evidence": r.evidence, "is_simulated": r.is_simulated}
-                for r in reps]
+                 "t": r.t.isoformat(), "ts": r.t.timestamp(), "evidence": r.evidence, "is_simulated": r.is_simulated,
+                 "channel": channel_of(r.source_id)} for r in reps]
         if not rows:
             return
         out = self._run(_REPORT_UPSERT, rows=rows)

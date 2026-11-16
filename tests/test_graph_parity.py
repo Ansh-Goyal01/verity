@@ -169,3 +169,84 @@ def test_queries_find_a_fake_ring_and_a_coverage_gap_and_match_the_in_memory_ans
     finally:
         graph.delete_test_data()
         graph.close()
+
+
+# --- W2.1 / W2.5 / W2.6: the new structure answers identically from either backend ---------------------------------
+
+
+def views_equal(a: dict, b: dict) -> bool:
+    return {k: a[k] for k in ("nodes", "edges", "is_simulated")} == {k: b[k] for k in ("nodes", "edges", "is_simulated")}
+
+
+def test_physical_sites_and_aliases_are_the_same_in_both_graphs_and_no_legacy_type_sites_remain(services) -> None:
+    memory, neo4j = services
+    assert memory.graph.mirror.sites() == neo4j.graph.neo4j.sites() and len(neo4j.graph.neo4j.sites()) > 100
+    assert memory.graph.mirror.aliases() == neo4j.graph.neo4j.aliases()
+    run = neo4j.graph.neo4j._run
+    ids = {c.id for c in neo4j.chargers}
+    assert {r["id"] for r in run("MATCH (s:Site) RETURN s.id AS id")} <= ids  # keyed by a charger id, never by a type
+    assert run("MATCH (s:Site) WHERE NOT (s)<-[:AT]-() RETURN count(s) AS n")[0]["n"] == 0
+    assert run("MATCH (s:Site) WHERE NOT (s)-[:OF_TYPE]->(:SiteType) RETURN count(s) AS n")[0]["n"] == 0
+
+
+def test_every_source_is_via_exactly_one_channel_and_the_channel_follows_the_rule(services) -> None:
+    from verity.trust.channels import channel_of
+
+    _, neo4j = services
+    rows = neo4j.graph.neo4j._run("MATCH (s:Source) OPTIONAL MATCH (s)-[:VIA]->(c:Channel) "
+                                  "RETURN s.id AS id, collect(c.id) AS channels")
+    live = [r for r in rows if not r["id"].startswith("TEST-")]
+    assert live and all(r["channels"] == [channel_of(r["id"])] for r in live)
+
+
+def test_the_plan_is_stored_in_neo4j_and_read_back_unchanged(services) -> None:
+    _, neo4j = services
+    plan_id = neo4j.dispatch(request("V12"))["plan_id"]
+    assert neo4j.graph.neo4j.plan(plan_id) == neo4j.graph.mirror.plan(plan_id) is not None
+
+
+def test_why_and_charger_views_are_identical_through_either_graph(services) -> None:
+    memory, neo4j = services
+    plan_id = memory.dispatch(request("V12"))["plan_id"]
+    assert neo4j.dispatch(request("V12"))["plan_id"] == plan_id
+    a, b = memory.graph_why(plan_id), neo4j.graph_why(plan_id)
+    assert (a["backend"], a["executed"], b["backend"], b["executed"]) == ("memory", False, "neo4j", True)
+    assert views_equal(a, b) and a["cypher"] == b["cypher"] and b["query_ms"] > 0
+    cid = memory.dispatch(request("V12"))["stops"][0]["charger_id"]
+    assert views_equal(memory.graph_charger(cid), neo4j.graph_charger(cid))
+
+
+@pytest.mark.parametrize("spoken", ["Yuma", "Tata Power Mathura", "Haldiram wala charger", "Sector 62 wala charger",
+                                    "EV charging station", "Statiq"])
+def test_a_spoken_name_resolves_the_same_way_through_the_index_and_its_twin(services, spoken: str) -> None:
+    from verity.names import decide
+
+    memory, neo4j = services
+    a, b = memory.graph.mirror.search_names(spoken), neo4j.graph.neo4j.search_names(spoken)
+    assert a == b and decide(a) == decide(b)
+
+
+def test_one_alias_naming_several_chargers_gives_every_one_of_them_in_both_graphs() -> None:
+    """The review's HIGH finding: Neo4j used to return ONE arbitrary charger for an alias that names several, where the
+    in-memory twin returned all of them, so the same words decided differently."""
+    from verity.names import decide
+    from verity.trust.graph_types import AliasRec
+
+    graph = live_graph()
+    chargers = [ChargerRecord(id=f"TEST-N{i}", name=f"TEST-N{i}", lat=0.0, lon=float(i)) for i in range(3)]
+    aliases = [AliasRec("zebra crossing wala", c.id, "alias_file") for c in chargers]
+    memory = InMemoryGraph()
+    memory.add_chargers(chargers)
+    memory.add_aliases(aliases)
+    try:
+        graph.delete_test_data()
+        graph.add_chargers(chargers)
+        graph.add_aliases(aliases)
+        a, b = memory.search_names("zebra crossing", 5), graph.search_names("zebra crossing", 5)
+        assert [h.charger_id for h in a] == [h.charger_id for h in b] == ["TEST-N0", "TEST-N1", "TEST-N2"]
+        assert decide(a).kind == decide(b).kind == "which_one"  # three equal candidates: ask, never pick one
+        assert graph.search_names("zebra " + " ".join(f"w{i}" for i in range(40)), 5) is not None  # long speech: no clause error
+    finally:
+        graph._run("MATCH (a:Alias) WHERE a.id = 'zebra crossing wala' DETACH DELETE a")
+        graph.delete_test_data()
+        graph.close()

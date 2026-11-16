@@ -4,8 +4,8 @@ A small, committed gazetteer (data/gazetteer/ncr_places.json: only places whose 
 and plain rules over the transcript, in English, Hinglish or Devanagari. No model is involved: the spoken-ride
 pipeline reads the answer back to the driver and runs nothing until they confirm, so a rule that is sometimes wrong is
 safe and one that guesses silently is not. Anything the gazetteer does not know is simply not found. S6 (W2.5)
-replaces this with a full-text index over the OSM names; the interface here (find mentions, assign roles) is what
-that index will have to provide.
+built the full-text index over CHARGER names (``names.py``, ``trust/graph_structure.py``); it is deliberately NOT used
+here, because ride places are not chargers and charger names would match ordinary words (docs/DECISIONS.md, W2.5).
 """
 
 from __future__ import annotations

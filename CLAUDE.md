@@ -130,12 +130,15 @@ Report: `charger_id, source_id, status (working|broken|blocked|occupied|no_power
 
 ## Neo4j graph schema (trust/graph.py)
 
-Nodes: `Charger, Operator, Site, HardwareModel, VehicleModel, Source, RoadSegment`.
+Nodes: `Charger, Operator, Site, SiteType, HardwareModel, VehicleModel, Source, Channel, RoadSegment, Plan, Alias`.
+`Site` = a physical place (chargers within 150 m); `Plan`/`Alias` are written by the API (W2.1, W2.5).
 Relationships: `(Source)-[:REPORTED {status, t}]->(Charger)`, `(Charger)-[:RUN_BY]->(Operator)`,
 `(Charger)-[:AT]->(Site)`, `(Charger)-[:IS]->(HardwareModel)`,
 `(VehicleModel)-[:WORKS_WITH {success_rate, n}]->(HardwareModel)`,
 `(Charger)-[:LEG {soc_band, p_reach, minutes}]->(Charger)`,
-`(RoadSegment)-[:ALTERNATE {p_works}]->(Charger)`.
+`(RoadSegment)-[:ALTERNATE {p_works}]->(Charger)`, `(Site)-[:OF_TYPE]->(SiteType)`, `(Source)-[:VIA]->(Channel)`,
+`(Plan)-[:STOPS_AT {order}|BACKUP_FOR {stop, p_reach, p_works}|AVOIDED {stop, reason}]->(Charger)`,
+`(Alias {text})-[:NAMES]->(Charger)` + full-text index `charger_names` over `Charger.name` and `Alias.text`.
 LEG is stored per battery band, never as one fixed probability.
 
 ## Commands (keep this section updated as commands are created)

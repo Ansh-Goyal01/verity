@@ -499,3 +499,66 @@ class VoiceRideConfirm(Req):
 class ErrorBody(Resp):
     error: str
     message: str
+
+
+# --- graph audit endpoints and live reports (contract v4, additive; W2.6) -----------------------------------------
+
+
+class AuditNode(Resp):
+    id: str
+    label: str
+    props: dict
+
+
+class AuditEdge(Resp):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    from_: str = Field(alias="from")
+    to: str
+    type: str
+    props: dict
+
+
+class TrustBlock(Resp):
+    p_works: float | None  # rounded to 5 %; null when nothing is known
+    trust_level: TrustLevel
+    n_reports: int = Field(ge=0)
+    days_since_last: int | None
+
+
+class AuditView(Resp):
+    nodes: list[AuditNode]
+    edges: list[AuditEdge]
+    cypher: str  # the query that produced this view (when ``executed`` is false: the one Neo4j would have run)
+    query_ms: float = Field(ge=0)
+    backend: Literal["neo4j", "memory"]
+    executed: bool
+    is_simulated: bool
+
+
+class WhyResponse(AuditView):
+    plan_id: str
+
+
+class ChargerGraphResponse(AuditView):
+    charger_id: str
+    trust: TrustBlock
+
+
+class ReportRequest(Req):
+    charger_id: str = Field(min_length=1, max_length=64)
+    status: ReportStatus
+    consent: bool  # must be true: the report joins the charger's public history
+    channel: Literal["driver_voice"] = "driver_voice"
+    note: str | None = Field(default=None, max_length=200)
+
+
+class ReportResponse(Resp):
+    charger_id: str
+    status: ReportStatus
+    source_id: str
+    t: str
+    trust_before: TrustBlock
+    trust_after: TrustBlock
+    backend: Literal["neo4j", "memory"]
+    is_simulated: bool

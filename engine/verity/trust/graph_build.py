@@ -8,23 +8,40 @@ mirror in use and records why; the reason holds exception CLASS names only, neve
 
 from __future__ import annotations
 
+import json
 import logging
 import math
 import threading
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TypeVar
 
 from neo4j.exceptions import DriverError, Neo4jError
 
 from ..chargers import RouteCharger
+from ..paths import DATA_DIR
+from ..places import normalise
 from ..schemas import ChargerRecord, Report
 from .engine import ChargerTrust
-from .graph import Alternate, ChargerGraph, InMemoryGraph, Neo4jGraph, RoadSegmentRec, report_key
+from .graph import TEST_PREFIX, Alternate, ChargerGraph, InMemoryGraph, Neo4jGraph, RoadSegmentRec, report_key
+from .graph_types import (
+    AVOIDED_LOW_P_WORKS,
+    AVOIDED_NO_REPORTS,
+    AliasRec,
+    PlanAvoidedRec,
+    PlanBackupRec,
+    PlanRec,
+    PlanStopRec,
+)
 
 log = logging.getLogger(__name__)
 T = TypeVar("T")
 
+ALIAS_FILE = DATA_DIR / "gazetteer" / "charger_aliases.json"
+MAX_AVOIDED_STORED = 30  # AVOIDED edges kept per plan (the rest are only counted in Plan.avoided_total)
+PLAN_KEEP = 300  # newest plans kept in the graph: the same bound as the service's plan cache
+PLAN_MAX_AGE_S = 24 * 3600.0  # and none older than a day (swept like the plan legs are)
 SEGMENT_KM = 10.0  # the route is cut into road segments of this length for the coverage-gap query
 MIN_ALT_P_WORKS = 0.5  # an alternate below this does not count as coverage (approximate - verify)
 # Only these mean "the graph is unavailable". A bug in the engine code run on the graph must surface as that bug,
@@ -43,11 +60,60 @@ def _close_quietly(graph: Neo4jGraph) -> None:
         pass
 
 
+def avoided_reason(p_works: float, trust_level: str) -> str | None:
+    """Why a charger does not count as a backup, or None when it does. Golden rule 6 (refuse rather than guess): a
+    charger nobody has reported on ("unknown") is not coverage, however good its prior looks; otherwise it must be
+    more likely than not to work. The one rule behind both the coverage-gap query and the plan's AVOIDED edges."""
+    if trust_level == "unknown":
+        return AVOIDED_NO_REPORTS
+    return AVOIDED_LOW_P_WORKS if p_works < MIN_ALT_P_WORKS else None
+
+
 def usable_alternate(p_works: float, trust_level: str) -> bool:
-    """Does a charger count as a backup for coverage? Golden rule 6 (refuse rather than guess): a charger nobody
-    has reported on ("unknown") is not coverage, however good its prior looks; otherwise it must be more likely
-    than not to work."""
-    return trust_level != "unknown" and p_works >= MIN_ALT_P_WORKS
+    """Does a charger count as a backup for coverage? See ``avoided_reason``."""
+    return avoided_reason(p_works, trust_level) is None
+
+
+def plan_record(plan_id: str, response: dict, route_chargers: Sequence[RouteCharger], trust: dict[str, ChargerTrust],
+                alt_ahead_km: float, created_ts: float) -> PlanRec:
+    """A released plan as graph edges. AVOIDED = chargers inside a stop's backup window that the coverage rule refuses
+    (``avoided_reason``); stored nearest-first up to MAX_AVOIDED_STORED, with the full count kept in ``avoided_total``."""
+    stops = tuple(PlanStopRec(i, s["charger_id"]) for i, s in enumerate(response["stops"]))
+    backups = tuple(PlanBackupRec(a["for_stop_index"], a["charger_id"], a["p_reach"], a["p_works"])
+                    for a in response["alternates"])
+    by_id = {rc.charger.id: rc for rc in route_chargers}
+    used = {s.charger_id for s in stops} | {b.charger_id for b in backups}
+    seen: dict[str, PlanAvoidedRec] = {}
+    for stop in stops:
+        origin = by_id.get(stop.charger_id)
+        if origin is None:
+            continue
+        for rc in sorted(route_chargers, key=lambda r: (r.km_along, r.charger.id)):
+            t = trust.get(rc.charger.id)
+            if rc.charger.id in used or rc.charger.id in seen or t is None:
+                continue
+            if 0.0 < rc.km_along - origin.km_along <= alt_ahead_km:
+                reason = avoided_reason(t.p_works, t.trust_level)
+                if reason is not None:
+                    seen[rc.charger.id] = PlanAvoidedRec(stop.order, rc.charger.id, reason)
+    avoided = tuple(list(seen.values())[:MAX_AVOIDED_STORED])
+    return PlanRec(plan_id, response["vehicle_id"], response["decision"], response["confidence"], response["n_runs"],
+                   created_ts, stops, backups, avoided, len(seen), bool(response.get("is_simulated", True)))
+
+
+def derive_aliases(chargers: Sequence[ChargerRecord], alias_file: Path | None = None) -> list[AliasRec]:
+    """Names a driver might say: each charger's operator (when it is not already its name) and the entries of the
+    committed alias file. Nothing is invented: unknown ids in the file are skipped, and a charger with neither stays
+    findable only by its own directory name."""
+    out = [AliasRec(c.operator, c.id, "operator") for c in chargers
+           if c.operator and normalise(c.operator) != normalise(c.name) and not c.id.startswith(TEST_PREFIX)]
+    path = alias_file or ALIAS_FILE
+    if path.is_file():
+        known = {c.id for c in chargers}
+        for a in json.loads(path.read_text(encoding="utf-8")).get("aliases", []):
+            if a["charger_id"] in known and normalise(a["text"]):
+                out.append(AliasRec(a["text"], a["charger_id"], "alias_file"))
+    return out
 
 
 @dataclass
@@ -97,9 +163,12 @@ def _sync_neo4j(graph: Neo4jGraph, chargers: Sequence[ChargerRecord], reports: S
     graph.verify_connectivity()
     graph.ensure_constraints()
     graph.add_chargers(chargers)
+    graph.sync_sites()
     graph.add_reports(reports)
     graph.prune_simulated_reports({report_key(r) for r in reports if r.is_simulated})
+    graph.add_aliases(derive_aliases(chargers))
     graph.sweep_stale_legs()
+    graph.sweep_plans(PLAN_KEEP, PLAN_MAX_AGE_S)
 
 
 def open_graph(chargers: Sequence[ChargerRecord], reports: Sequence[Report], *, prefer: str = "auto") -> GraphHandle:
@@ -109,6 +178,7 @@ def open_graph(chargers: Sequence[ChargerRecord], reports: Sequence[Report], *, 
     mirror = InMemoryGraph()
     mirror.add_chargers(chargers)
     mirror.add_reports(reports)
+    mirror.add_aliases(derive_aliases(chargers))
     if prefer == "memory":
         return GraphHandle(mirror, "memory", mirror, "VERITY_GRAPH=memory")
     reason, graph = "no NEO4J_URI / NEO4J_USERNAME / NEO4J_PASSWORD", None
@@ -116,6 +186,8 @@ def open_graph(chargers: Sequence[ChargerRecord], reports: Sequence[Report], *, 
         graph = Neo4jGraph.from_env()  # inside the try: a malformed URI raises here and its message can hold the URI
         if graph is not None:
             _sync_neo4j(graph, chargers, reports)
+            known = {c.id for c in chargers}  # real reports written in an earlier run: the mirror must hold them too,
+            mirror.add_reports([r for r in graph.reports() if not r.is_simulated and r.charger_id in known])  # or a fallback loses them
             log.info("graph backend: neo4j (%d chargers, %d reports synced)", len(chargers), len(reports))
             return GraphHandle(graph, "neo4j", mirror, "connected")
     except Exception as exc:  # noqa: BLE001 - class name only: messages may echo the connection string

@@ -107,3 +107,16 @@ fits the project. Nothing here is applied unless both sides agree.
   in two calls (multipart audio -> read-back or a question, never a decision; JSON `confirmed` -> the ordinary ride-check,
   spoken). Every stage reports its own `timings_ms`. Additive; nothing existing changed.
 - The new endpoint shares the voice rate-limit budget (429) with tts and stt. Call 2 works with no key (text, or the cached clip).
+
+## 2026-11-17 - v4: `GET /api/graph/why/{plan_id}`, `GET /api/graph/charger/{id}`, `POST /api/reports` (W2.6)
+
+- Reason: guide W2.6/W2.7. A decision has to be a path a judge can audit, and a driver's live report has to reach the graph
+  that trust is computed from. Every graph response carries the Cypher that produced it and the query time.
+- Old shape: none of the three existed. New shape: see the last section of API_CONTRACT.md. Additive; nothing existing changed.
+- Honesty fields: `backend` ("neo4j" | "memory") and `executed` (false when the in-memory twin answered: `cypher` is then the
+  query Neo4j would have run and `query_ms` times the Python twin). `POST /api/reports` writes a real, non-simulated report
+  (`is_simulated: false`, source `driver:driver_voice`), needs `consent: true`, and has its own per-address rate limit
+  (`VERITY_REPORT_RATE_PER_MIN`, default 10, 429 + `Retry-After`).
+- A second guard: one report per address per charger per 10 minutes (429 `already_reported`).
+- Not yet: a stored plan is NOT recomputed after a report (S7 decides how a report moves a plan); trust uses the engine's
+  fixed demo clock, as dispatch does (S7 replaces it).

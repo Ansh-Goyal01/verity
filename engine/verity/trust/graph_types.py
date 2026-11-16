@@ -56,6 +56,11 @@ class PlanRec:
     avoided_total: int = 0  # how many were passed over before the cap on what is stored
     is_simulated: bool = True
 
+    def __post_init__(self) -> None:
+        # A plan's edges are a set: one canonical order, so a plan read back from Neo4j equals the one that was written.
+        for name in ("stops", "backups", "avoided"):
+            object.__setattr__(self, name, tuple(sorted(getattr(self, name))))
+
 
 class AliasRec(NamedTuple):
     """A name a driver might say for one charger. ``origin`` says where it came from, so nothing is invented."""
@@ -73,7 +78,7 @@ class NameHit(NamedTuple):
 
 
 @dataclass(frozen=True)
-class GraphView:
+class AuditView:
     """A sub-graph for the UI plus the query that produced it. ``executed`` is False when the in-memory twin
     answered: ``cypher`` is then the query Neo4j WOULD have run, and ``query_ms`` times the Python twin."""
 

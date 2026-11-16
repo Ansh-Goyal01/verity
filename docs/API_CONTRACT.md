@@ -446,3 +446,23 @@ malformed `language`; 422 `unsupported_ride` on call 2 when no checked route is 
 only Sector 18 to IGI Airport T3: the engine would otherwise fetch a route from the network, so the voice demo refuses);
 429 as above. `timings_ms` is milliseconds
 per stage, `null` for a stage the call did not run; `hear` + `parse` + `llm` + `speak` are what the driver waits for.
+
+## Graph audit and live reports (contract v4, W2.6)
+
+All three are additive. Errors use the usual `{"error", "message"}` shape.
+
+**`GET /api/graph/why/{plan_id}`** - the path behind a released plan: the plan, its stops (`STOPS_AT {order}`), backups
+(`BACKUP_FOR {stop, p_reach, p_works}`) and chargers it passed over (`AVOIDED {stop, reason}`; `reason` is `no_reports` or
+`low_p_works`: inside a stop's backup window, not relied on, and would not count as coverage), each charger's physical `Site`
+and `Operator`, its latest 5 reports, their `Source` and `Channel`. Response: `{plan_id, nodes: [{id, label, props}],
+edges: [{from, to, type, props}], cypher, query_ms, backend, executed, is_simulated}`. Node ids are `<Label>:<id>`.
+404 `unknown_plan` for a plan the graph does not hold (plans are kept for the newest 300 and 24 h).
+
+**`GET /api/graph/charger/{id}`** - one charger's neighbourhood: operator, site and the other chargers there, latest 5 reports
+with channels, aliases, the latest 5 plans that used or avoided it. Response as above plus `charger_id` and `trust`
+(`{p_works (5 % steps or null), trust_level, n_reports, days_since_last}`). 404 `unknown_charger`.
+
+**`POST /api/reports`** - body `{charger_id, status (working|broken|blocked|occupied|no_power), consent (must be true),
+channel ("driver_voice"), note? (<= 200 chars)}`. Writes one `REPORTED` edge (`is_simulated: false`, source
+`driver:driver_voice`, channel `driver_voice`) and answers `{charger_id, status, source_id, t, trust_before, trust_after,
+backend, is_simulated: false}`; trust is evaluated at the engine's own clock, the same one dispatch uses. 422 `consent_required`, 404 `unknown_charger`, 429 `rate_limited` (own budget, not the voice one) or `already_reported` (one report per address per charger per 10 minutes; `Retry-After` says when).

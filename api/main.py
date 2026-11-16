@@ -27,6 +27,7 @@ from verity.voice import SarvamClient, VoiceUnavailable, parse_multipart, parse_
 
 from .limits import RateLimiter, client_ip, parse_origins, positive_int, rate_key
 from .models import (
+    ChargerGraphResponse,
     ChargersResponse,
     DemoScenario,
     DispatchRequest,
@@ -36,6 +37,8 @@ from .models import (
     ForecastUpdateResponse,
     Health,
     ReplayResponse,
+    ReportRequest,
+    ReportResponse,
     RideCheckRequest,
     RideCheckResponse,
     SttResponse,
@@ -44,6 +47,7 @@ from .models import (
     VoiceRideConfirm,
     VoiceRideDecided,
     VoiceRideHeard,
+    WhyResponse,
 )
 from .service import ApiError, EngineService
 from .speech import VOICE_MESSAGE, synthesise
@@ -51,6 +55,8 @@ from .voice_ride import decide_stage, hear_stage
 
 # Origins her pages use: "null" (file:// double-click), VS Code Live Server, and GitHub Pages.
 DEFAULT_ORIGINS = ["null", "http://localhost:5500", "http://127.0.0.1:5500", "https://ansh-goyal01.github.io"]
+DEFAULT_REPORT_RATE_PER_MIN = 10  # live reports per address: each one writes to the graph that trust is computed from
+REPORT_COOLDOWN_S = 600.0  # one address may report on one charger once per 10 minutes (one anonymous caller must not stack reports)
 DEFAULT_VOICE_RATE_PER_MIN = 20  # tts + stt together, per address: every call is paid, a demo needs a handful
 VOICE_WINDOW_S = 60.0
 MAX_RECORDING_BYTES = 5_000_000  # Sarvam takes clips under 30 s; a larger upload is not a driver's one sentence
@@ -82,6 +88,9 @@ def trust_proxy_enabled() -> bool:
 ALLOWED_ORIGINS = cors_origins()
 TRUST_PROXY = trust_proxy_enabled()
 voice_limiter = RateLimiter(voice_rate_per_min(), VOICE_WINDOW_S)
+report_cooldown = RateLimiter(1, REPORT_COOLDOWN_S)
+report_limiter = RateLimiter(positive_int(env_setting("VERITY_REPORT_RATE_PER_MIN"), DEFAULT_REPORT_RATE_PER_MIN,
+                                          "VERITY_REPORT_RATE_PER_MIN"), VOICE_WINDOW_S)
 
 _service: EngineService | None = None
 
@@ -113,10 +122,11 @@ def get_voice_limiter() -> RateLimiter:
 
 
 class RateLimited(ApiError):
-    def __init__(self, retry_after_s: float) -> None:
+    def __init__(self, retry_after_s: float, what: str = "voice", code: str = "rate_limited",
+                 message: str | None = None) -> None:
         self.retry_after = max(1, math.ceil(retry_after_s))  # whole seconds, never "0"
-        super().__init__(429, "rate_limited", f"Too many voice requests from this address; try again in "
-                                              f"{self.retry_after} s.")
+        super().__init__(429, code, message or f"Too many {what} requests from this address; try again in "
+                                               f"{self.retry_after} s.")
 
 
 def limit_voice(request: Request, limiter: RateLimiter = Depends(get_voice_limiter)) -> None:
@@ -124,6 +134,20 @@ def limit_voice(request: Request, limiter: RateLimiter = Depends(get_voice_limit
     retry_after = limiter.hit(rate_key(client_ip(request, TRUST_PROXY)))
     if retry_after is not None:
         raise RateLimited(retry_after)
+
+
+def get_report_limiter() -> RateLimiter:
+    return report_limiter
+
+
+def get_report_cooldown() -> RateLimiter:
+    return report_cooldown
+
+
+def limit_reports(request: Request, limiter: RateLimiter = Depends(get_report_limiter)) -> None:
+    retry_after = limiter.hit(rate_key(client_ip(request, TRUST_PROXY)))
+    if retry_after is not None:
+        raise RateLimited(retry_after, "report")
 
 
 @asynccontextmanager
@@ -208,6 +232,27 @@ def get_chargers(min_lat: float = Query(ge=-90, le=90), min_lon: float = Query(g
     if min_lat > max_lat or min_lon > max_lon:
         raise ApiError(422, "invalid_bbox", "min_lat/min_lon must not exceed max_lat/max_lon")
     return svc.chargers_in_bbox(min_lat, min_lon, max_lat, max_lon)
+
+
+@app.get("/api/graph/why/{plan_id}", response_model=WhyResponse)
+def get_graph_why(plan_id: str, svc: EngineService = Depends(get_service)) -> dict:
+    return svc.graph_why(plan_id)
+
+
+@app.get("/api/graph/charger/{charger_id}", response_model=ChargerGraphResponse)
+def get_graph_charger(charger_id: str, svc: EngineService = Depends(get_service)) -> dict:
+    return svc.graph_charger(charger_id)
+
+
+@app.post("/api/reports", response_model=ReportResponse, dependencies=[Depends(limit_reports)])
+def post_report(req: ReportRequest, request: Request, svc: EngineService = Depends(get_service),
+                cooldown: RateLimiter = Depends(get_report_cooldown)) -> dict:
+    if req.consent:  # a refused request must not use up the cooldown
+        retry_after = cooldown.hit(f"{rate_key(client_ip(request, TRUST_PROXY))}|{req.charger_id}")
+        if retry_after is not None:
+            raise RateLimited(retry_after, code="already_reported",
+                              message=f"This address already reported on this charger; try again in {math.ceil(retry_after)} s.")
+    return svc.add_report(req.model_dump())
 
 
 @app.get("/api/demo/replay/{plan_id}", response_model=ReplayResponse)

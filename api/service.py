@@ -37,7 +37,14 @@ from verity.sim import generate_dataset, load_manifest
 from verity.trips import haversine_m, load_sim_observation
 from verity.trust.engine import ChargerTrust, TrustEngine
 from verity.trust.graph import TEST_PREFIX, ChargerGraph, GraphCounts
-from verity.trust.graph_build import GraphHandle, open_graph, populate_road_network
+from verity.trust.graph_build import (
+    PLAN_KEEP,
+    PLAN_MAX_AGE_S,
+    GraphHandle,
+    open_graph,
+    plan_record,
+    populate_road_network,
+)
 from verity.trust.reports_sim import NOW
 from verity.ridecheck import RideInput, ride_check
 from verity.routing import snapshot_to_route
@@ -45,6 +52,7 @@ from verity.vehicles import get_prior
 from verity.ride_voice import spoken_ride_answer
 from verity.voice_loop import SPEECH_LANGUAGES, spoken_answers
 
+from .graph_endpoints import GraphEndpoints
 from .limits import LruCache
 from .models import DispatchRequest, RideCheckRequest
 from .ride import (
@@ -229,7 +237,7 @@ def canonical_request(model: type, req: dict) -> dict:
     return model.model_validate(req).model_dump()
 
 
-class EngineService:
+class EngineService(GraphEndpoints):
     def __init__(self, n_runs: int | None = None, graph_backend: str | None = None) -> None:
         self.cfg = ForecastConfig(n_runs=n_runs or int(os.environ.get("VERITY_N_RUNS", "1500")))
         self.route, self.snap = load_planned_route()
@@ -326,6 +334,19 @@ class EngineService:
         if time.monotonic() - self._last_sweep >= SWEEP_EVERY_S:
             self._last_sweep = time.monotonic()
             graph.sweep_stale_legs()
+            graph.sweep_plans(PLAN_KEEP, PLAN_MAX_AGE_S)
+            self.graph.mirror.sweep_plans(PLAN_KEEP, PLAN_MAX_AGE_S)  # the mirror holds every plan too
+
+    def _record_plan(self, plan_id: str, response: dict, view: GraphView) -> None:
+        """Write the released plan into the graph (STOPS_AT / BACKUP_FOR / AVOIDED). A failure here must never fail the
+        dispatch: the plan is already computed and cached, only its audit trail would be missing."""
+        try:
+            rec = plan_record(plan_id, response, view.near, view.trust, ALT_AHEAD_KM, time.time())
+            self.graph.mirror.add_plan(rec)
+            if self.graph.backend == "neo4j":  # not ``populate``: a rejected audit write must not switch Neo4j off for everyone
+                self.graph.neo4j.add_plan(rec)
+        except Exception as exc:  # noqa: BLE001 - logged by class name only
+            log.warning("could not record plan %s in the graph (%s)", plan_id, type(exc).__name__)
 
     def _graph_queries(self) -> tuple[int, float]:
         neo = self.graph.neo4j
@@ -408,6 +429,7 @@ class EngineService:
             "compute_ms": result.compute_ms, "n_runs": self.cfg.n_runs, "is_simulated": True,
         }
         self.plans[plan_id] = StoredPlan(result.state, response, dict(req))
+        self._record_plan(plan_id, response, view)
         return response
 
     # -- ride check (F8b) --------------------------------------------------------------------------------------------

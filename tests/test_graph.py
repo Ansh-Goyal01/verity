@@ -32,7 +32,9 @@ T0 = datetime(2026, 10, 27, 10, 0, tzinfo=IST)
 PROTOCOL_METHODS = ("add_charger", "add_chargers", "add_report", "add_reports", "chargers", "reports", "add_leg",
                     "add_legs", "legs", "legs_from", "drop_legs", "sweep_stale_legs", "add_alternate", "add_alternates",
                     "alternates", "add_road_segments", "reset_road_network", "coverage_gaps", "report_rings",
-                    "prune_simulated_reports", "add_works_with", "works_with", "co_reporting_pairs", "counts")
+                    "prune_simulated_reports", "add_works_with", "works_with", "co_reporting_pairs", "counts",
+                    "sync_sites", "sites", "add_plan", "plan", "plan_ids", "sweep_plans", "add_aliases", "aliases",
+                    "search_names", "why", "charger_neighbourhood")
 
 
 def charger(i: int, op: str = "OpA") -> ChargerRecord:
@@ -99,11 +101,11 @@ def test_counts_follow_the_documented_node_and_relationship_kinds() -> None:
     g.add_alternates([Alternate("seg-1", "C1", 0.9), Alternate("seg-2", "C2", 0.8)])  # seg-2 exists only as an edge end
     g.add_works_with("model-x", "hw-y", 0.6, 12)
     counts = g.counts()
-    # nodes: 3 Charger + 2 Operator + 1 Site + 2 Source + 1 VehicleModel + 1 HardwareModel
-    #        + 4 RoadSegment (seg-1, seg-2, req1:START, req1:END)
-    assert counts.nodes == 3 + 2 + 1 + 2 + 1 + 1 + 4
-    # relationships: 3 REPORTED + 3 RUN_BY + 3 AT + 2 LEG + 2 ALTERNATE + 1 WORKS_WITH
-    assert counts.relationships == 3 + 3 + 3 + 2 + 2 + 1
+    # nodes: 3 Charger + 2 Operator + 1 Site (one 150 m cluster) + 1 SiteType + 2 Source + 1 Channel ("other")
+    #        + 1 VehicleModel + 1 HardwareModel + 4 RoadSegment (seg-1, seg-2, req1:START, req1:END)
+    assert counts.nodes == 3 + 2 + 1 + 1 + 2 + 1 + 1 + 1 + 4
+    # relationships: 3 REPORTED + 3 RUN_BY + 3 AT + 1 OF_TYPE + 2 VIA + 2 LEG + 2 ALTERNATE + 1 WORKS_WITH
+    assert counts.relationships == 3 + 3 + 3 + 1 + 2 + 2 + 2 + 1
 
 
 def test_dropping_a_request_scope_takes_its_waypoints_and_legs_with_it() -> None:
@@ -134,8 +136,9 @@ def test_constraints_cover_every_node_label_from_claude_md() -> None:
     drv = FakeDriver()
     Neo4jGraph(driver=drv).ensure_constraints()
     text = " ".join(q for q, _ in drv.log)
-    assert len(drv.log) == len(NODE_LABELS) == 7
+    assert len(drv.log) == len(NODE_LABELS) + 1 == 12  # one constraint per label, plus the full-text name index
     assert all(f"(n:{label})" in text for label in NODE_LABELS) and "IF NOT EXISTS" in text
+    assert "FULLTEXT INDEX charger_names" in text
 
 
 def test_add_charger_and_report_write_the_documented_relationships() -> None:
@@ -144,10 +147,11 @@ def test_add_charger_and_report_write_the_documented_relationships() -> None:
     g.add_charger(charger(1))
     g.add_report(report("C1", "s1", "broken"))
     (q_charger, p_charger), (q_report, p_report) = drv.log
-    assert "RUN_BY" in q_charger and "[:AT]" in q_charger and "MERGE (c:Charger" in q_charger
+    assert "RUN_BY" in q_charger and "MERGE (c:Charger" in q_charger and "Site" not in q_charger  # sites: sync_sites
     row = p_charger["rows"][0]
     assert row["operator"] == "OpA" and json.loads(row["connectors"]) == [{"type": "CCS2", "kw": 60.0}]
-    assert "REPORTED" in q_report and p_report["rows"][0]["status"] == "broken"
+    assert "REPORTED" in q_report and "VIA" in q_report and p_report["rows"][0]["status"] == "broken"
+    assert p_report["rows"][0]["channel"] == "other"  # "s1" follows no source-id convention
     assert p_report["rows"][0]["t"].startswith("2026-10-27T10:00")
 
 

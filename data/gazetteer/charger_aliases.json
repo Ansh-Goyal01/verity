@@ -1,0 +1,4 @@
+{
+ "note": "Spoken names for chargers (W2.5). Add an entry ONLY for a charger id you have verified in person or from a dated public source, and say which in 'source'. Nothing here is a guess: an empty list is the honest state. 'text' is what a driver might say (English, Hinglish or Devanagari); 'charger_id' must exist in the charger directory.",
+ "aliases": []
+}
