@@ -8,7 +8,7 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 - [x] S1 Bingo Line agrees with the plan (W0.1) + deadline line (W0.0)
 - [x] S2 No certainty on screen + reason sentence (W0.2, W0.6)
 - [x] S3 Green on every machine + hardening (W0.4, W0.7)
-- [ ] S4 One source of truth + offline (W0.3, W0.5)
+- [x] S4 One source of truth + offline (W0.3, W0.5)
 - [ ] S5 Sarvam client + spoken ride-check (W3.1, W3.2)
 - [ ] S6 Graph structure + names + graph endpoints (W2.1, W2.5, W2.6)
 - [ ] S7 Spoken report into the graph + OCM check-ins (W3.3, W1.2)
@@ -79,3 +79,16 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
   20/min voice default (`VERITY_VOICE_RATE_PER_MIN`); (3) a hosted deploy must set `VERITY_TRUST_PROXY=1` and `VERITY_CORS_ORIGINS` (S11);
   (4) `SarvamClient` reads `.env` only, so an env-var-only deploy shows `sarvam_key_present: false` (S5/S11).
 - Seen, not fixed: with live Aura, dispatch V12 `compute_ms` ~10 s vs ~2.4 s in memory (network writes; S8). Run `export_api_examples.py` with `VERITY_GRAPH=memory`.
+
+### S4 (2026-11-16) — done
+- W0.3 `01fc5be`: `n_runs` on dispatch / forecast-update / ride-check. `scripts/export_snapshot.py` -> `results/snapshot.json` (API examples incl. new
+  `ride_check.json` + `driver_demo.json`, E1-E5, run_all, `real_data_summary.json`; `sources` names each file; no timestamp). `export_web_snapshot.py` now wraps
+  the same bundle. `tests/test_snapshot.py` fails if the snapshot, a section, or a saved example differs from its file / the live engine (F4's V07 0.85-vs-0.80).
+- W0.5 `613c95d`: dispatch returns `speech` {en-IN, hi-IN} (the exact sentence to speak). `data/audio_cache/`: 6 Sarvam TTS clips, 6 paid calls (all 200, 0.9-3.9 s),
+  served with `cached: true` only when live TTS fails. `tests/test_offline_demo.py`: all non-loopback connections refused, Neo4j unreachable -> memory, the demo's calls
+  make ZERO connection attempts. Found + fixed: the spoken reason said "target 90%" (now in words).
+- Suite: 495 passed, 11 skipped (10 parity with `NEO4J_URI=`, 1 = `web/js/snapshot.js` stale). No pinned decision moved. Paid-call budget used: 6 TTS.
+- Manual for Ansh: (1) `uv run python scripts/export_web_snapshot.py` (refreshes web/js/snapshot.js: F4's stale numbers, plus rideCheck / driverDemo / real_data / n_runs);
+  (2) frontend: speak `speech[lang]` through `/api/voice/tts`, show `n_runs`, drop hardcoded 1,500/2,000; (3) F9's CDNs (Leaflet, fonts, tiles) are in `web/` and still there;
+  (4) listen to the 6 clips in `data/audio_cache/` (Hindi quality is yours to judge). Any template/number change -> `scripts/build_audio_cache.py` (paid) or the offline test fails.
+- Seen: the V12 GO answer is 14.5 s spoken (decision + Bingo + reason): too long for the 3-second goal; S5's spoken ride-check must be short. STT has no offline path.
