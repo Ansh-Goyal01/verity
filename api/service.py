@@ -42,7 +42,8 @@ from verity.trust.reports_sim import NOW
 from verity.ridecheck import RideInput, ride_check
 from verity.routing import snapshot_to_route
 from verity.vehicles import get_prior
-from verity.voice_loop import spoken_answers
+from verity.ride_voice import spoken_ride_answer
+from verity.voice_loop import SPEECH_LANGUAGES, spoken_answers
 
 from .limits import LruCache
 from .models import DispatchRequest, RideCheckRequest
@@ -456,12 +457,15 @@ class EngineService:
         ids = {o.node.id for o in opts}
         near = [r for r in view.reports if r.charger_id in ids]
         n_sim = sum(r.is_simulated for r in near)
-        return {"vehicle_id": req["vehicle_id"], **result, "n_runs": self.cfg.n_runs,
+        answer = {"vehicle_id": req["vehicle_id"], **result, "n_runs": self.cfg.n_runs,
                 "route": {"polyline": thin_polyline(bundle["polyline"]), "source": bundle["source"]},
                 "earning_rate": {"rs_per_hour": rate, "is_example": is_example,
                                  "source": EARNING_RATE_SOURCE if is_example else "Entered by the driver"},
                 "data_notes": data_notes(bundle, opts, signals, len(near) - n_sim, n_sim) + notes,
                 "is_simulated": True}
+        # The sentence to speak per language (W3.2): a fixed template filled with this answer's numbers, or none.
+        answer["speech"] = {lang: text for lang in SPEECH_LANGUAGES if (text := spoken_ride_answer(answer, lang))}
+        return answer
 
     def driver_demo(self) -> dict:
         """The second demo's request and what is pinned (F10); the decision itself comes from POST /api/ride-check."""

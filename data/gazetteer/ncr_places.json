@@ -1,0 +1,35 @@
+{
+ "note": "Places the spoken ride-check can resolve (W3.2). Every coordinate is copied from the project's own pinned driver scenario (api/service.py DRIVER_DEMO); none was added from memory. Aliases are what a driver might say or STT might write, in English, Hinglish and Devanagari. A place not listed here is reported as unknown, never guessed.",
+ "coverage": "The demo scenario only (Sector 62 -> Sector 18 -> IGI Airport T3). Plain 'airport' resolves to Terminal 3 because it is the only airport listed; the read-back says 'IGI Airport Terminal 3' so the driver can correct it. S6 (W2.5) replaces this with a full-text index over the OSM charger and place names.",
+ "places": [
+  {
+   "id": "noida-sector-62",
+   "name": "Sector 62, Noida",
+   "lat": 28.628,
+   "lon": 77.3649,
+   "aliases": ["sector 62", "sec 62", "sector sixty two", "सेक्टर 62", "सेक्टर बासठ"],
+   "spoken": {"en-IN": "Sector 62", "hi-IN": "सेक्टर 62"},
+   "source": "api/service.py DRIVER_DEMO['current']: where the pinned driver scenario starts (Noida Sector 62)"
+  },
+  {
+   "id": "noida-sector-18",
+   "name": "Sector 18, Noida",
+   "lat": 28.5708,
+   "lon": 77.3261,
+   "aliases": ["sector 18", "sec 18", "sector eighteen", "सेक्टर 18", "सेक्टर अठारह", "सेक्टर अट्ठारह"],
+   "spoken": {"en-IN": "Sector 18", "hi-IN": "सेक्टर 18"},
+   "source": "api/service.py DRIVER_DEMO['pickup']: the pinned driver scenario's pickup (Noida Sector 18)"
+  },
+  {
+   "id": "igi-airport-t3",
+   "name": "IGI Airport Terminal 3",
+   "lat": 28.5562,
+   "lon": 77.0999,
+   "aliases": ["igi airport terminal 3", "igi airport terminal three", "igi terminal 3", "igi airport", "igi", "delhi airport",
+               "airport terminal 3", "airport terminal three", "terminal 3", "terminal three", "t3", "t 3", "airport",
+               "एयरपोर्ट टर्मिनल 3", "एयरपोर्ट", "एअरपोर्ट", "हवाई अड्डा", "हवाई अड्डे", "आईजीआई", "टर्मिनल 3", "टर्मिनल तीन"],
+   "spoken": {"en-IN": "IGI Airport Terminal 3", "hi-IN": "आईजीआई एयरपोर्ट टर्मिनल 3"},
+   "source": "api/service.py DRIVER_DEMO['drop']: the pinned driver scenario's drop (IGI Airport Terminal 3)"
+  }
+ ]
+}

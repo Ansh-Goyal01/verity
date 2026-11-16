@@ -384,6 +384,7 @@ class RideCheckResponse(Resp):
     earning_rs_per_hour: float
     compute_ms: int
     n_runs: int = Field(ge=1)  # Monte Carlo runs behind the confidence (W0.3)
+    speech: dict[str, str]  # language -> the exact sentence to speak (W3.2); empty if it cannot be said honestly
     route: RideRoute
     earning_rate: EarningRate
     data_notes: list[str]
@@ -421,6 +422,78 @@ class TtsResponse(Resp):
 class SttResponse(Resp):
     text: str
     soc_pct: int | None
+
+
+# --- the spoken ride-check (W3.2) ----------------------------------------------------------------------------------
+
+
+class PlaceRef(Resp):
+    id: str
+    name: str
+    lat: float
+    lon: float
+
+
+class RideSlotsOut(Resp):
+    soc_pct: int | None
+    pickup: PlaceRef | None
+    drop: PlaceRef | None
+    missing: list[str]  # what the rules and the model could not find: the driver is asked again
+    unresolved: list[str]  # place names heard but not in the gazetteer (never guessed)
+    parsed_by: Literal["rules", "llm", "rules+llm"]
+
+
+class SpokenClip(Resp):
+    audio_base64: str
+    format: Literal["wav"]
+    cached: bool  # true: a pre-generated clip, served because live text-to-speech failed
+
+
+class VoiceRideTimings(Resp):
+    """Milliseconds per stage; null for a stage this call did not run. ``total`` is the handler's own time."""
+
+    hear: int | None
+    parse: int | None
+    llm: int | None
+    decide: int | None
+    speak: int | None
+    total: int
+
+
+class VoiceRideHeard(Resp):
+    stage: Literal["confirm", "clarify"]  # confirm: read back, wait for yes; clarify: something was not understood
+    transcript: str  # in the script it was spoken in
+    language_code: str | None  # as detected by speech-to-text
+    reply_language: Literal["en-IN", "hi-IN"]
+    slots: RideSlotsOut
+    needs_confirmation: bool
+    prompt: str  # the read-back or the question, as text
+    prompt_audio: SpokenClip | None
+    timings_ms: VoiceRideTimings
+    is_simulated: bool
+
+
+class VoiceRideDecided(Resp):
+    stage: Literal["decided", "not_confirmed"]
+    reply_language: Literal["en-IN", "hi-IN"]
+    ride_check: RideCheckResponse | None
+    speech: str | None  # the sentence spoken: a fixed template filled with the ride-check's numbers
+    audio: SpokenClip | None
+    timings_ms: VoiceRideTimings
+    is_simulated: bool
+
+
+class VoiceRideConfirm(Req):
+    """Second call: the driver said yes (or no) to the read-back. Nothing runs unless ``confirmed`` is true."""
+
+    confirmed: bool
+    soc_pct: int = Field(ge=0, le=100)
+    pickup_id: str
+    drop_id: str
+    language: Literal["en-IN", "hi-IN"]
+    vehicle_id: str | None = None  # default: the demo driver's vehicle
+    current: LatLon | None = None  # default: the demo driver's position
+    speak: bool = True
 
 
 class ErrorBody(Resp):

@@ -92,3 +92,16 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
   (2) frontend: speak `speech[lang]` through `/api/voice/tts`, show `n_runs`, drop hardcoded 1,500/2,000; (3) F9's CDNs (Leaflet, fonts, tiles) are in `web/` and still there;
   (4) listen to the 6 clips in `data/audio_cache/` (Hindi quality is yours to judge). Any template/number change -> `scripts/build_audio_cache.py` (paid) or the offline test fails.
 - Seen: the V12 GO answer is 14.5 s spoken (decision + Bingo + reason): too long for the 3-second goal; S5's spoken ride-check must be short. STT has no offline path.
+
+### S5 (2026-11-16) — IN PROGRESS: stopped at the usage limit; box NOT ticked; S6 not started
+- Done + committed: W3.1 (`VoiceModels` + `SARVAM_*` settings, key read from the environment as well as `.env`, per-call chat timeout, `docs/SARVAM_API_NOTES.md`
+  incl. the pages NOT read) and the W3.2 building blocks: `places.py` + `data/gazetteer/ncr_places.json` (3 places, coordinates copied from DRIVER_DEMO),
+  `ride_voice.py` (rule slots, 4 s LLM fallback that only fills gaps, read-back / clarify, fixed-template spoken ride answer), `speech` on `POST /api/ride-check`,
+  and the endpoint's models in `api/models.py`. Suite: 574 passed, 11 skipped, run with `--ignore=tests/test_voice_ride_api.py`.
+- Resume here: (1) `tests/test_voice_ride_api.py` is written, UNTRACKED and RED: it is the spec for `POST /api/voice/ride-check`. Still to write: `api/speech.py`
+  (`synthesise`: live TTS, else the cached clip; also use it in `/api/voice/tts`), `api/voice_ride.py` (`hear_stage`, `decide_stage`, per-stage timings), the endpoint
+  in `api/main.py` (multipart audio -> stage confirm/clarify; JSON `confirmed` -> decided/not_confirmed; both behind `limit_voice`). Then commit that test file.
+  (2) NO real STT/chat call has been made yet: write a bench on synthetic TTS audio (saaras v3 vs v4, modes, `sarvam-105b` reasoning none/omit vs `sarvam-105b-conversations`)
+  -> `results/voice_ride_check_latency.json`; pick the defaults by measurement and log them in DECISIONS (W3.1). (3) Add the pinned ride's read-back + answer sentences
+  to `scripts/build_audio_cache.py` (4 more paid TTS) so `tests/test_offline_demo.py` covers them. (4) Contract v3 + CHANGES + DECISIONS + CLAUDE.md for the endpoint; tick S5.
+- S6 (W2.1, W2.5, W2.6) not started. Paid calls this session: 6 TTS (audio cache) only. Ansh's Hindi/Hinglish misparse test comes after the endpoint exists.
