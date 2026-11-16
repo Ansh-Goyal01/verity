@@ -9,7 +9,7 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 - [x] S2 No certainty on screen + reason sentence (W0.2, W0.6)
 - [x] S3 Green on every machine + hardening (W0.4, W0.7)
 - [x] S4 One source of truth + offline (W0.3, W0.5)
-- [ ] S5 Sarvam client + spoken ride-check (W3.1, W3.2)
+- [x] S5 Sarvam client + spoken ride-check (W3.1, W3.2)
 - [ ] S6 Graph structure + names + graph endpoints (W2.1, W2.5, W2.6)
 - [ ] S7 Spoken report into the graph + OCM check-ins (W3.3, W1.2)
 - [ ] S8 Graph independence + Cypher chains + E6 (W2.2, W2.3)
@@ -93,15 +93,19 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
   (4) listen to the 6 clips in `data/audio_cache/` (Hindi quality is yours to judge). Any template/number change -> `scripts/build_audio_cache.py` (paid) or the offline test fails.
 - Seen: the V12 GO answer is 14.5 s spoken (decision + Bingo + reason): too long for the 3-second goal; S5's spoken ride-check must be short. STT has no offline path.
 
-### S5 (2026-11-16) — IN PROGRESS: stopped at the usage limit; box NOT ticked; S6 not started
-- Done + committed: W3.1 (`VoiceModels` + `SARVAM_*` settings, key read from the environment as well as `.env`, per-call chat timeout, `docs/SARVAM_API_NOTES.md`
-  incl. the pages NOT read) and the W3.2 building blocks: `places.py` + `data/gazetteer/ncr_places.json` (3 places, coordinates copied from DRIVER_DEMO),
-  `ride_voice.py` (rule slots, 4 s LLM fallback that only fills gaps, read-back / clarify, fixed-template spoken ride answer), `speech` on `POST /api/ride-check`,
-  and the endpoint's models in `api/models.py`. Suite: 574 passed, 11 skipped, run with `--ignore=tests/test_voice_ride_api.py`.
-- Resume here: (1) `tests/test_voice_ride_api.py` is written, UNTRACKED and RED: it is the spec for `POST /api/voice/ride-check`. Still to write: `api/speech.py`
-  (`synthesise`: live TTS, else the cached clip; also use it in `/api/voice/tts`), `api/voice_ride.py` (`hear_stage`, `decide_stage`, per-stage timings), the endpoint
-  in `api/main.py` (multipart audio -> stage confirm/clarify; JSON `confirmed` -> decided/not_confirmed; both behind `limit_voice`). Then commit that test file.
-  (2) NO real STT/chat call has been made yet: write a bench on synthetic TTS audio (saaras v3 vs v4, modes, `sarvam-105b` reasoning none/omit vs `sarvam-105b-conversations`)
-  -> `results/voice_ride_check_latency.json`; pick the defaults by measurement and log them in DECISIONS (W3.1). (3) Add the pinned ride's read-back + answer sentences
-  to `scripts/build_audio_cache.py` (4 more paid TTS) so `tests/test_offline_demo.py` covers them. (4) Contract v3 + CHANGES + DECISIONS + CLAUDE.md for the endpoint; tick S5.
-- S6 (W2.1, W2.5, W2.6) not started. Paid calls this session: 6 TTS (audio cache) only. Ansh's Hindi/Hinglish misparse test comes after the endpoint exists.
+### S5 (2026-11-16) — done
+- W3.1 `1899947`: `VoiceModels` + `SARVAM_*` settings, key read from the environment too, per-call chat timeout, `docs/SARVAM_API_NOTES.md` (pages read AND not read).
+  W3.2 `2a0cd0a` (places, slot parsing, 4 s model fallback that only fills gaps, fixed-template answer) + `2e38573` (the endpoint): `POST /api/voice/ride-check`, two calls:
+  audio -> read-back or a question (never decides); JSON `confirmed` -> the ordinary ride-check, spoken. `api/speech.py` is the one "live TTS, else the cached clip" path (also `/api/voice/tts`).
+- Measured, not assumed (`scripts/bench_voice_ride_check.py`, 22 paid calls, SYNTHETIC audio, n=2 per cell, `results/voice_ride_check_latency.json`): `saaras:v3` transcribe 0/4 correct
+  (writes number words), codemix 2/4, `saaras:v4` 4/4 (digits), all ~0.5-0.6 s median -> **default STT is now `saaras:v4`**. Chat fallback ~0.2 s on all four configs (the old 22.9 s did not reproduce); default unchanged.
+- Cache: the pinned ride's read-back + answer, EN + HI (4 paid TTS, `scripts/build_audio_cache.py`); `tests/test_offline_demo.py` covers them and call 2 with Sarvam unreachable.
+- Suite: 598 passed, 11 skipped (10 parity with `NEO4J_URI=`, 1 = `web/js/snapshot.js` stale). Engine untouched, so no pinned decision moved. Paid calls in S5: 4 TTS + 22 bench = 26 (S4: 6).
+- Code review (`code-reviewer`): no CRITICAL/HIGH; 4 of 7 MEDIUMs fixed (bounded body + 413, `fullmatch` language, same-place in call 1, model-written names not spoken) and
+  call 2 now REFUSES rides with no committed route (422 `unsupported_ride`; only 18 -> IGI T3 has one, so "Sector 62 -> airport" is read back and then refused: S6 grows the gazetteer + routes).
+  Left as logged limits in DECISIONS: one rate-limit hit buys up to 3 paid calls; a bare number in the transcript is taken as the battery.
+- NOT measured: the 3-second goal end to end (per-stage `timings_ms` are in every response; the TTS step and the Monte Carlo were not benched), real microphone speech, noise, accents.
+- Manual for Ansh: (1) speak Hindi/Hinglish to it and list the misparses (the frontend does: multipart `audio` -> show `prompt` -> JSON `confirmed`); (2) check the Hindi read-back/answer sentences (`ride_voice.py`);
+  (3) `web/js/snapshot.js` is still stale (`scripts/export_web_snapshot.py`); (4) CONTRACT: `docs/API_CONTRACT.md` last section.
+- Seen, not fixed: `get_voice_client` builds a new `SarvamClient` (a new HTTP connection pool, a new TLS handshake) on every request; one shared client would cut that from every voice call (S11 / when the 3 s goal is measured).
+- S6 (W2.1, W2.5, W2.6) not started.

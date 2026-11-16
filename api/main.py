@@ -54,7 +54,9 @@ DEFAULT_ORIGINS = ["null", "http://localhost:5500", "http://127.0.0.1:5500", "ht
 DEFAULT_VOICE_RATE_PER_MIN = 20  # tts + stt together, per address: every call is paid, a demo needs a handful
 VOICE_WINDOW_S = 60.0
 MAX_RECORDING_BYTES = 5_000_000  # Sarvam takes clips under 30 s; a larger upload is not a driver's one sentence
-LANGUAGE_FIELD = re.compile(r"^(unknown|[a-z]{2,3}-[A-Z]{2})$")  # only a real language code is sent to a paid call
+MULTIPART_OVERHEAD_BYTES = 100_000  # the form's other fields and boundaries
+MAX_CONFIRM_JSON_BYTES = 16_384  # the second call is a handful of fields
+LANGUAGE_FIELD = re.compile(r"unknown|[a-z]{2,3}-[A-Z]{2}")  # matched with fullmatch: only a code-shaped value reaches a paid call
 
 
 def env_setting(name: str) -> str | None:
@@ -243,6 +245,22 @@ async def voice_stt(request: Request, voice: SarvamClient | None = Depends(get_v
     return {"text": text, "soc_pct": parse_soc_percent(text)}
 
 
+async def read_body_limited(request: Request, limit: int) -> bytes | None:
+    """The request body, or ``None`` as soon as it is known to exceed ``limit`` (by its declared length, else by counting
+    the stream), so an oversized upload is never buffered whole."""
+    declared = request.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > limit:
+        return None
+    chunks: list[bytes] = []
+    size = 0
+    async for chunk in request.stream():
+        size += len(chunk)
+        if size > limit:
+            return None
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
 def _validation_detail(exc: ValidationError) -> str:
     return "; ".join(f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}" for e in exc.errors()) or "invalid request"
 
@@ -254,8 +272,12 @@ async def voice_ride_check(request: Request, svc: EngineService = Depends(get_se
     """The spoken ride-check in two calls (W3.2). Multipart audio (+ ``language``, ``speak``) -> hear and read back, or ask
     again; it never decides. JSON ``VoiceRideConfirm`` -> on ``confirmed`` the ordinary ride-check, spoken in a fixed template."""
     content_type = request.headers.get("content-type", "")
-    body = await request.body()
-    if content_type.startswith("application/json"):
+    is_json = content_type.startswith("application/json")
+    body = await read_body_limited(request, MAX_CONFIRM_JSON_BYTES if is_json else MAX_RECORDING_BYTES + MULTIPART_OVERHEAD_BYTES)
+    if body is None:
+        return _error(413, "payload_too_large", f"the request is larger than this endpoint accepts "
+                                                f"({MAX_RECORDING_BYTES} bytes of audio, one sentence under 30 s)")
+    if is_json:
         try:
             confirm = VoiceRideConfirm.model_validate_json(body)
         except ValidationError as exc:
@@ -265,7 +287,7 @@ async def voice_ride_check(request: Request, svc: EngineService = Depends(get_se
     if voice is None:
         return _error(503, "voice_unavailable", VOICE_MESSAGE)
     try:
-        fields, files = parse_multipart(content_type, body)
+        fields, files = await run_in_threadpool(parse_multipart, content_type, body)  # not on the event loop
     except ValueError as exc:
         return _error(422, "invalid_request", str(exc))
     upload = files.get("audio") or files.get("file")
@@ -275,7 +297,7 @@ async def voice_ride_check(request: Request, svc: EngineService = Depends(get_se
     if not audio or len(audio) > MAX_RECORDING_BYTES:
         return _error(422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
     language = fields.get("language", "unknown")
-    if not LANGUAGE_FIELD.match(language):
+    if not LANGUAGE_FIELD.fullmatch(language):
         return _error(422, "invalid_request", "language must be 'unknown' or a code like hi-IN")
     speak = fields.get("speak", "1").strip().lower() not in {"0", "false", "no"}
     try:

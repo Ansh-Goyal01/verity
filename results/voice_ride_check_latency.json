@@ -1,0 +1,449 @@
+{
+ "experiment": "W3.1 voice ride-check latency",
+ "is_simulated": true,
+ "label": "SYNTHETIC audio (Sarvam TTS reading our own sentences), not a real driver; latency measured from this laptop",
+ "generated_at": "2026-11-16T18:02:03+00:00",
+ "app_llm_limit_s": 4.0,
+ "expected_slots": {
+  "soc_pct": 45,
+  "pickup": "noida-sector-18",
+  "drop": "igi-airport-t3"
+ },
+ "chat_case": "बैटरी पैंतालीस प्रतिशत है, सेक्टर 18 से एयरपोर्ट का राइड",
+ "clips": {
+  "hinglish": {
+   "language": "en-IN",
+   "text": "Battery 45 percent hai, Sector 18 se airport ka ride mila hai"
+  },
+  "hindi": {
+   "language": "hi-IN",
+   "text": "बैटरी 45 प्रतिशत है, सेक्टर 18 से एयरपोर्ट का राइड मिला है"
+  }
+ },
+ "configs": [
+  {
+   "stage": "stt",
+   "model": "saaras:v3",
+   "option": "transcribe",
+   "samples": [
+    {
+     "clip": "hinglish",
+     "rep": 0,
+     "ms": 684,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी फोर्टी फाइव परसेंट है, सेक्टर एटीन से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": false
+    },
+    {
+     "clip": "hinglish",
+     "rep": 1,
+     "ms": 559,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी फोर्टी फाइव परसेंट है, सेक्टर एटीन से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": false
+    },
+    {
+     "clip": "hindi",
+     "rep": 0,
+     "ms": 619,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी पैंतालीस प्रतिशत है, सेक्टर अट्ठारह से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": false
+    },
+    {
+     "clip": "hindi",
+     "rep": 1,
+     "ms": 580,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी पैंतालीस प्रतिशत है, सेक्टर अट्ठारह से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": false
+    }
+   ],
+   "n": 4,
+   "ok": 4,
+   "correct": 0,
+   "median_ms": 599,
+   "max_ms": 684
+  },
+  {
+   "stage": "stt",
+   "model": "saaras:v3",
+   "option": "codemix",
+   "samples": [
+    {
+     "clip": "hinglish",
+     "rep": 0,
+     "ms": 466,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी 45% है, सेक्टर 18 से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": true
+    },
+    {
+     "clip": "hinglish",
+     "rep": 1,
+     "ms": 530,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी 45% है, सेक्टर 18 से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": true
+    },
+    {
+     "clip": "hindi",
+     "rep": 0,
+     "ms": 725,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी पैंतालीस प्रतिशत है, सेक्टर अट्ठारह से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": false
+    },
+    {
+     "clip": "hindi",
+     "rep": 1,
+     "ms": 510,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी पैंतालीस प्रतिशत है, सेक्टर अट्ठारह से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": false
+    }
+   ],
+   "n": 4,
+   "ok": 4,
+   "correct": 2,
+   "median_ms": 520,
+   "max_ms": 725
+  },
+  {
+   "stage": "stt",
+   "model": "saaras:v4",
+   "option": "transcribe",
+   "samples": [
+    {
+     "clip": "hinglish",
+     "rep": 0,
+     "ms": 469,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी 45% है। सेक्टर 18 से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": true
+    },
+    {
+     "clip": "hinglish",
+     "rep": 1,
+     "ms": 674,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी 45% है। सेक्टर 18 से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": true
+    },
+    {
+     "clip": "hindi",
+     "rep": 0,
+     "ms": 520,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी 45 प्रतिशत है। सेक्टर 18 से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": true
+    },
+    {
+     "clip": "hindi",
+     "rep": 1,
+     "ms": 665,
+     "ok": true,
+     "http_status": 200,
+     "transcript": "बैटरी 45 प्रतिशत है। सेक्टर 18 से एयरपोर्ट का राइड मिला है।",
+     "language_code": "hi-IN",
+     "correct": true
+    }
+   ],
+   "n": 4,
+   "ok": 4,
+   "correct": 4,
+   "median_ms": 592,
+   "max_ms": 674
+  },
+  {
+   "stage": "chat",
+   "model": "sarvam-105b",
+   "option": "reasoning=low",
+   "samples": [
+    {
+     "rep": 0,
+     "ms": 249,
+     "ok": true,
+     "http_status": 200,
+     "within_app_limit": true,
+     "correct": true
+    },
+    {
+     "rep": 1,
+     "ms": 206,
+     "ok": true,
+     "http_status": 200,
+     "within_app_limit": true,
+     "correct": true
+    }
+   ],
+   "n": 2,
+   "ok": 2,
+   "correct": 2,
+   "median_ms": 227,
+   "max_ms": 249
+  },
+  {
+   "stage": "chat",
+   "model": "sarvam-105b",
+   "option": "reasoning=none",
+   "samples": [
+    {
+     "rep": 0,
+     "ms": 223,
+     "ok": true,
+     "http_status": 200,
+     "within_app_limit": true,
+     "correct": true
+    },
+    {
+     "rep": 1,
+     "ms": 193,
+     "ok": true,
+     "http_status": 200,
+     "within_app_limit": true,
+     "correct": true
+    }
+   ],
+   "n": 2,
+   "ok": 2,
+   "correct": 2,
+   "median_ms": 208,
+   "max_ms": 223
+  },
+  {
+   "stage": "chat",
+   "model": "sarvam-105b",
+   "option": "reasoning=omit",
+   "samples": [
+    {
+     "rep": 0,
+     "ms": 216,
+     "ok": true,
+     "http_status": 200,
+     "within_app_limit": true,
+     "correct": true
+    },
+    {
+     "rep": 1,
+     "ms": 191,
+     "ok": true,
+     "http_status": 200,
+     "within_app_limit": true,
+     "correct": true
+    }
+   ],
+   "n": 2,
+   "ok": 2,
+   "correct": 2,
+   "median_ms": 203,
+   "max_ms": 216
+  },
+  {
+   "stage": "chat",
+   "model": "sarvam-105b-conversations",
+   "option": "reasoning=omit",
+   "samples": [
+    {
+     "rep": 0,
+     "ms": 221,
+     "ok": true,
+     "http_status": 200,
+     "within_app_limit": true,
+     "correct": true
+    },
+    {
+     "rep": 1,
+     "ms": 248,
+     "ok": true,
+     "http_status": 200,
+     "within_app_limit": true,
+     "correct": true
+    }
+   ],
+   "n": 2,
+   "ok": 2,
+   "correct": 2,
+   "median_ms": 234,
+   "max_ms": 248
+  }
+ ],
+ "paid_calls": [
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 1407
+  },
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 1132
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 684
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 559
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 619
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 580
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 466
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 530
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 725
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 510
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v4",
+   "ok": true,
+   "http_status": 200,
+   "ms": 469
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v4",
+   "ok": true,
+   "http_status": 200,
+   "ms": 674
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v4",
+   "ok": true,
+   "http_status": 200,
+   "ms": 520
+  },
+  {
+   "path": "/speech-to-text",
+   "model": "saaras:v4",
+   "ok": true,
+   "http_status": 200,
+   "ms": 665
+  },
+  {
+   "path": "/v1/chat/completions",
+   "model": "sarvam-105b",
+   "ok": true,
+   "http_status": 200,
+   "ms": 249
+  },
+  {
+   "path": "/v1/chat/completions",
+   "model": "sarvam-105b",
+   "ok": true,
+   "http_status": 200,
+   "ms": 206
+  },
+  {
+   "path": "/v1/chat/completions",
+   "model": "sarvam-105b",
+   "ok": true,
+   "http_status": 200,
+   "ms": 223
+  },
+  {
+   "path": "/v1/chat/completions",
+   "model": "sarvam-105b",
+   "ok": true,
+   "http_status": 200,
+   "ms": 193
+  },
+  {
+   "path": "/v1/chat/completions",
+   "model": "sarvam-105b",
+   "ok": true,
+   "http_status": 200,
+   "ms": 216
+  },
+  {
+   "path": "/v1/chat/completions",
+   "model": "sarvam-105b",
+   "ok": true,
+   "http_status": 200,
+   "ms": 191
+  },
+  {
+   "path": "/v1/chat/completions",
+   "model": "sarvam-105b-conversations",
+   "ok": true,
+   "http_status": 200,
+   "ms": 221
+  },
+  {
+   "path": "/v1/chat/completions",
+   "model": "sarvam-105b-conversations",
+   "ok": true,
+   "http_status": 200,
+   "ms": 248
+  }
+ ]
+}

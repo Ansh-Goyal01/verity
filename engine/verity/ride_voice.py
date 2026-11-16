@@ -26,7 +26,9 @@ from .voice_loop import soc_from_transcript, spoken_confidence
 
 log = logging.getLogger(__name__)
 LLM_TIMEOUT_S = 4.0
+MAX_SPOKEN_NAME_CHARS = 40
 _DEVANAGARI = re.compile(r"[ऀ-ॿ]")
+_NUMBER_WITH_UNIT = re.compile(r"%|percent|per cent|pratishat|प्रतिशत|फीसदी|फ़ीसदी", re.IGNORECASE)
 
 LLM_SYSTEM = ("You read what an electric cab driver in Delhi-NCR said about a ride request, in any Indian language or a "
               "mix with English. Return only JSON. soc_pct: the battery percentage as a whole number from 0 to 100, or "
@@ -61,6 +63,8 @@ def parse_ride_request(transcript: str, gazetteer: Gazetteer, language_code: str
     mentions = find_mentions(norm, gazetteer)
     pickup, drop, how = assign_roles(norm, mentions)
     soc, _ = soc_from_transcript(mask(norm, mentions), None, language_code)  # Hindi number WORDS are left to the model
+    if pickup is not None and drop is not None and pickup.id == drop.id:
+        drop = None  # a ride from a place to itself is not a ride: ask again (call 2 would refuse it anyway)
     return RideSlots(soc, pickup, drop, "rules", (), how)
 
 
@@ -72,7 +76,14 @@ def _resolve(name: object, gazetteer: Gazetteer) -> tuple[Place | None, str | No
     if not isinstance(name, str) or not name.strip():
         return None, None
     mentions = find_mentions(normalise(name), gazetteer)
-    return (mentions[0].place, None) if mentions else (None, name.strip())
+    if mentions:
+        return mentions[0].place, None
+    name = name.strip()
+    # An unknown name is spoken back to the driver ("I do not know the place X yet"), so it must look like a place the
+    # driver named: never long, never a number-with-unit the model composed itself (a model never writes a number).
+    if len(name) > MAX_SPOKEN_NAME_CHARS or _NUMBER_WITH_UNIT.search(name):
+        return None, None
+    return None, name
 
 
 def complete_with_llm(slots: RideSlots, transcript: str, client: ChatJson | None, gazetteer: Gazetteer,

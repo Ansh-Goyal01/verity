@@ -163,6 +163,9 @@ LEG is stored per battery band, never as one fixed probability.
   `VERITY_GRAPH=memory uv run python scripts/export_api_examples.py`; Ansh then runs `scripts/export_web_snapshot.py`.
 - Offline voice (PAID Sarvam TTS, only for sentences not yet cached): `uv run python scripts/build_audio_cache.py`
   (`--dry-run` lists them, calls nothing); clips in `data/audio_cache/`; `tests/test_offline_demo.py` fails if one is missing.
+- Spoken ride-check: `POST /api/voice/ride-check` in two calls (hear + read back, then `confirmed` -> decide + speak), see
+  docs/API_CONTRACT.md. Voice latency bench (22 PAID Sarvam calls; a dry run unless `--run`):
+  `uv run python scripts/bench_voice_ride_check.py` -> `results/voice_ride_check_latency.json`.
 - Aura keep-alive (one write-and-delete, log in data/cache/aura_keepalive.log): `uv run python scripts/aura_keepalive.py`;
   scheduled 10:00 + 22:00 daily until 2026-11-23 as Windows task `VerityAuraKeepAlive`
 

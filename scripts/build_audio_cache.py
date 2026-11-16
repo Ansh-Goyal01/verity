@@ -19,6 +19,7 @@ import sys
 from datetime import datetime, timezone
 
 from api.service import FLEET_META, EngineService, demo_dispatch_request
+from api.voice_ride import pinned_ride_sentences
 from verity.audio_cache import AudioCache
 from verity.paths import RESULTS_DIR
 from verity.voice import TTS_MODEL, SarvamClient, VoiceUnavailable
@@ -33,7 +34,7 @@ def demo_sentences(svc: EngineService) -> list[tuple[str, str, str]]:
         response = svc.dispatch(demo_dispatch_request(vehicle))
         for language, text in response["speech"].items():
             out.append((language, text, f"dispatch {vehicle} ({response['decision']})"))
-    return out
+    return out + pinned_ride_sentences(svc)  # W3.2: the spoken ride-check's read-back and answer
 
 
 def main(argv: list[str]) -> int:

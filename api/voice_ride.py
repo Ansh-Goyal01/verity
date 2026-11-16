@@ -18,15 +18,31 @@ from verity.audio_cache import AudioCache
 from verity.places import Gazetteer, Place
 from verity.ride_voice import RideSlots, clarify, complete_with_llm, parse_ride_request, read_back, reply_language
 from verity.voice import SarvamClient
+from verity.voice_loop import SPEECH_LANGUAGES
 
 from .models import VoiceRideConfirm
+from .ride import match_bundle
 from .service import DRIVER_DEMO, ApiError, EngineService
 from .speech import try_synthesise
+
+# The ride the demo speaks about (DRIVER_DEMO: 45 %, Noida Sector 18 -> IGI Airport T3). Its sentences are pre-recorded.
+PINNED_RIDE = {"soc_pct": 45, "pickup_id": "noida-sector-18", "drop_id": "igi-airport-t3"}
 
 
 @lru_cache(maxsize=1)
 def gazetteer() -> Gazetteer:
     return Gazetteer.from_file()
+
+
+def pinned_ride_sentences(svc: EngineService) -> list[tuple[str, str, str]]:
+    """(language, text, source) for everything the pinned ride says: the read-back and the ride-check answer, in every
+    speech language. The one list that ``scripts/build_audio_cache.py`` records and ``tests/test_offline_demo.py`` checks."""
+    gaz = gazetteer()
+    slots = RideSlots(PINNED_RIDE["soc_pct"], gaz.by_id(PINNED_RIDE["pickup_id"]), gaz.by_id(PINNED_RIDE["drop_id"]))
+    answers = svc.ride_check(DRIVER_DEMO)["speech"]
+    out = [(language, read_back(slots, language), "voice ride-check read-back (pinned ride)") for language in SPEECH_LANGUAGES]
+    out += [(language, text, "voice ride-check answer (pinned ride)") for language, text in answers.items()]
+    return out
 
 
 def _ms(since: float) -> int:
@@ -104,6 +120,12 @@ def decide_stage(svc: EngineService, voice: SarvamClient | None, cache: AudioCac
                "vehicle_id": confirm.vehicle_id or DRIVER_DEMO["vehicle_id"],
                "current": confirm.current.model_dump() if confirm.current else DRIVER_DEMO["current"],
                "pickup": {"lat": pickup.lat, "lon": pickup.lon}, "drop": {"lat": drop.lat, "lon": drop.lon}}
+    here = (request["current"]["lat"], request["current"]["lon"])
+    if match_bundle(svc.ride_bundles, here, (pickup.lat, pickup.lon), (drop.lat, drop.lon)) is None:
+        # Any other ride would fetch a route and the weather from the network, for the demo's fixed (past) departure time,
+        # and the spoken sentence could not say so. Until the gazetteer and the routes grow (S6), refuse rather than guess.
+        raise ApiError(422, "unsupported_ride", f"No checked route is committed for {pickup.name} to {drop.name}; the voice "
+                                                "demo only checks the rides it has a route for.")
     t = time.perf_counter()
     result = svc.ride_check(request)
     timings["decide"] = _ms(t)

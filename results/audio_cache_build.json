@@ -2,39 +2,29 @@
  "experiment": "W0.5 audio cache build",
  "is_simulated": true,
  "label": "Sarvam TTS of engine sentences on the SIMULATED demo fleet",
- "generated_at": "2026-11-16T12:52:35+00:00",
+ "generated_at": "2026-11-16T17:59:57+00:00",
  "tts_model": "bulbul:v3",
- "sentences_total": 6,
+ "sentences_total": 10,
  "made_now": [
   {
    "language": "en-IN",
-   "source": "dispatch V07 (NO_GO)",
-   "characters": 219
+   "source": "voice ride-check read-back (pinned ride)",
+   "characters": 71
   },
   {
    "language": "hi-IN",
-   "source": "dispatch V07 (NO_GO)",
-   "characters": 211
+   "source": "voice ride-check read-back (pinned ride)",
+   "characters": 65
   },
   {
    "language": "en-IN",
-   "source": "dispatch V12 (GO)",
-   "characters": 239
+   "source": "voice ride-check answer (pinned ride)",
+   "characters": 220
   },
   {
    "language": "hi-IN",
-   "source": "dispatch V12 (GO)",
-   "characters": 261
-  },
-  {
-   "language": "en-IN",
-   "source": "dispatch V19 (INSUFFICIENT_EVIDENCE)",
-   "characters": 76
-  },
-  {
-   "language": "hi-IN",
-   "source": "dispatch V19 (INSUFFICIENT_EVIDENCE)",
-   "characters": 78
+   "source": "voice ride-check answer (pinned ride)",
+   "characters": 201
   }
  ],
  "failed": [],
@@ -44,42 +34,28 @@
    "model": "bulbul:v3",
    "ok": true,
    "http_status": 200,
-   "ms": 3899
+   "ms": 1742
   },
   {
    "path": "/text-to-speech",
    "model": "bulbul:v3",
    "ok": true,
    "http_status": 200,
-   "ms": 2918
+   "ms": 1558
   },
   {
    "path": "/text-to-speech",
    "model": "bulbul:v3",
    "ok": true,
    "http_status": 200,
-   "ms": 3362
+   "ms": 2600
   },
   {
    "path": "/text-to-speech",
    "model": "bulbul:v3",
    "ok": true,
    "http_status": 200,
-   "ms": 3587
-  },
-  {
-   "path": "/text-to-speech",
-   "model": "bulbul:v3",
-   "ok": true,
-   "http_status": 200,
-   "ms": 915
-  },
-  {
-   "path": "/text-to-speech",
-   "model": "bulbul:v3",
-   "ok": true,
-   "http_status": 200,
-   "ms": 1133
+   "ms": 2794
   }
  ]
 }

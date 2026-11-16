@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient
 import api.main as api_main
 from api.main import app, get_voice_client
 from api.service import DRIVER_DEMO, FLEET_META, EngineService, demo_dispatch_request
+from api.voice_ride import PINNED_RIDE, pinned_ride_sentences
 from verity.audio_cache import AudioCache
 from verity.voice import SARVAM_BASE, SarvamClient
 
@@ -138,6 +139,19 @@ def test_every_spoken_answer_of_the_demo_comes_from_the_cache_when_sarvam_is_unr
             assert audio == cache.lookup(text, language)
             spoken += 1
     assert spoken == 2 * len(FLEET_META)
+
+
+def test_the_spoken_ride_checks_read_back_and_answer_come_from_the_cache_when_sarvam_is_unreachable(offline, started) -> None:
+    client, _ = offline
+    sentences = pinned_ride_sentences(api_main.get_service())
+    assert {language for language, _, _ in sentences} == {"en-IN", "hi-IN"} and len(sentences) == 4
+    for language, text, source in sentences:
+        r = client.post("/api/voice/tts", json={"text": text, "language": language})
+        assert r.status_code == 200 and r.json()["cached"] is True, (
+            f"[{language}] {source} is not cached: run  uv run python scripts/build_audio_cache.py  (paid TTS calls)")
+    confirm = {"confirmed": True, **PINNED_RIDE, "language": "en-IN"}  # the second call of the spoken ride-check, offline
+    body = client.post("/api/voice/ride-check", json=confirm).json()
+    assert body["stage"] == "decided" and body["audio"]["cached"] is True and body["speech"]
 
 
 def test_speech_to_text_has_no_offline_clip_and_says_so_honestly(offline, started) -> None:

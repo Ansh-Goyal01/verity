@@ -9,6 +9,33 @@
    "text": "Do not start yet. The chance of reaching Agra is only 80 percent. NO_GO because the best plan relies on planned stop Tata (85 percent likely to work, 1 report) and reaches only 80 percent confidence (target 90 percent).",
    "tts_model": "bulbul:v3"
   },
+  "3566c36ce365b71971a753a2": {
+   "bytes": 191968,
+   "file": "3566c36ce365b71971a753a2.wav",
+   "language": "en-IN",
+   "sha256": "328132d9c17732b6068cfe02319c3ec0c4e92f0b6cad1773f613820eb314b039",
+   "source": "voice ride-check read-back (pinned ride)",
+   "text": "45 percent battery, Sector 18 to IGI Airport Terminal 3. Is that right?",
+   "tts_model": "bulbul:v3"
+  },
+  "53f431fb0ddba28318ff1e96": {
+   "bytes": 583340,
+   "file": "53f431fb0ddba28318ff1e96.wav",
+   "language": "hi-IN",
+   "sha256": "b6516390c86ac5a99761e633fc5911285730af2d988d13d16dc440cdc971c7be",
+   "source": "voice ride-check answer (pinned ride)",
+   "text": "राइड ले लीजिए। राइड पूरी करके चालू चार्जर तक पहुँचने की संभावना 95 प्रतिशत या उससे अधिक है। ड्रॉप के बाद Radisson Blu Plaza Delhi Airport पर चार्ज करें: लगभग 79 मिनट, करीब 80 रुपये (उदाहरण कमाई दर पर)।",
+   "tts_model": "bulbul:v3"
+  },
+  "65aa3611f11c0f7a585462b3": {
+   "bytes": 222072,
+   "file": "65aa3611f11c0f7a585462b3.wav",
+   "language": "hi-IN",
+   "sha256": "b0087745b19dab3cc02fb2a8e580b61f2bc8dfde56c0c8144cc4a9f5b1928211",
+   "source": "voice ride-check read-back (pinned ride)",
+   "text": "बैटरी 45 प्रतिशत, सेक्टर 18 से आईजीआई एयरपोर्ट टर्मिनल 3। सही है?",
+   "tts_model": "bulbul:v3"
+  },
   "7607d7cb1d8ca83bb021bc7a": {
    "bytes": 568288,
    "file": "7607d7cb1d8ca83bb021bc7a.wav",
@@ -34,6 +61,15 @@
    "sha256": "12ee38cb463f152b189c8e7a76895dc023f75b3c0298c3fe2faa980e732f3d52",
    "source": "dispatch V12 (GO)",
    "text": "जाइए। Agra तक पहुँचने की संभावना 95 प्रतिशत या उससे अधिक है। बैटरी 59 प्रतिशत से नीचे जाए तो रास्ता बदलें। बैकअप चार्जर EV charging station (OpenStreetMap) के काम करने की संभावना 95 प्रतिशत या उससे अधिक है (10 रिपोर्ट), और वहाँ 90 प्रतिशत बार पहुँचा जा सकता है।",
+   "tts_model": "bulbul:v3"
+  },
+  "b94734054ee79258a6e526d9": {
+   "bytes": 515602,
+   "file": "b94734054ee79258a6e526d9.wav",
+   "language": "en-IN",
+   "sha256": "55cb9a1b9b7194f77edf560e2ec6a3c4d419e60f8c6dea7f47c1063e973238a4",
+   "source": "voice ride-check answer (pinned ride)",
+   "text": "Take the ride. The chance of completing it and reaching a working charger is 95 percent or more. After the drop, charge at Radisson Blu Plaza Delhi Airport: about 79 minutes, roughly 80 rupees at an example earning rate.",
    "tts_model": "bulbul:v3"
   },
   "cd7a2a6a1fd4d2ce6f885ac7": {

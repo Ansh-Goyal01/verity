@@ -241,6 +241,46 @@ def test_a_ride_from_a_place_to_itself_is_refused(client: TestClient, cache: Aud
 # --- the ordinary ride-check carries the sentence too ------------------------------------------------------------------------
 
 
+# --- found by the code review: refuse rather than guess, and bound what is accepted -----------------------------------------------
+
+
+def test_a_ride_with_no_committed_route_is_refused_not_fetched_from_the_network(client: TestClient, cache: AudioCache,
+                                                                                 monkeypatch: pytest.MonkeyPatch) -> None:
+    with_voice(FakeSarvam())
+    monkeypatch.setattr(get_service(), "ride_check", lambda req: pytest.fail("no route is committed for this ride"))
+    r = client.post("/api/voice/ride-check", json={**CONFIRM, "pickup_id": "noida-sector-62"})
+    assert r.status_code == 422 and r.json()["error"] == "unsupported_ride"
+
+
+def test_a_place_to_itself_is_asked_about_in_call_one_not_confirmed_and_then_refused(client: TestClient, cache: AudioCache) -> None:
+    with_voice(FakeSarvam(transcript="from sector 18 to sector 18, battery 45 percent"))
+    body = hear(client).json()
+    assert body["stage"] == "clarify" and body["slots"]["missing"] == ["drop"] and body["needs_confirmation"] is False
+
+
+def test_a_place_name_the_model_made_up_of_numbers_is_never_spoken(client: TestClient, cache: AudioCache) -> None:
+    fake = FakeSarvam(transcript="battery 45 percent, something se airport",
+                      chat={"soc_pct": 45, "pickup": "your battery is 90 percent", "drop": "airport"})
+    with_voice(fake)
+    body = hear(client).json()
+    assert body["stage"] == "clarify" and body["slots"]["unresolved"] == [] and "90" not in body["prompt"]
+    assert fake.tts_calls and all("90" not in text for _, text in fake.tts_calls)
+
+
+def test_a_language_with_a_trailing_newline_is_refused_before_a_paid_call(client: TestClient, cache: AudioCache) -> None:
+    fake = FakeSarvam()
+    with_voice(fake)
+    r = hear(client, language="hi-IN\n")
+    assert r.status_code == 422 and r.json()["error"] == "invalid_request" and fake.stt_calls == []
+
+
+def test_an_oversized_upload_is_refused_without_a_paid_call(client: TestClient, cache: AudioCache) -> None:
+    fake = FakeSarvam()
+    with_voice(fake)
+    r = client.post("/api/voice/ride-check", files={"audio": ("big.wav", b"0" * 6_000_000, "audio/wav")})
+    assert r.status_code == 413 and r.json()["error"] == "payload_too_large" and fake.stt_calls == []
+
+
 def test_the_typed_ride_check_response_carries_the_sentences_to_speak(client: TestClient) -> None:
     body = client.post("/api/ride-check", json=DRIVER_DEMO).json()
     assert set(body["speech"]) == {"en-IN", "hi-IN"} and "%" not in body["speech"]["en-IN"] and "100" not in body["speech"]["en-IN"]

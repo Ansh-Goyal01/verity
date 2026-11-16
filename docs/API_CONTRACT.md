@@ -348,7 +348,7 @@ Real values are in `docs/api_examples/health.json`.
 
 ## HTTP 429 on the voice endpoints (W0.7)
 
-`POST /api/voice/tts` and `POST /api/voice/stt` share one budget per client address (default 20 calls per minute,
+`POST /api/voice/tts`, `POST /api/voice/stt` and `POST /api/voice/ride-check` (both stages) share one budget per client address (default 20 calls per minute,
 `VERITY_VOICE_RATE_PER_MIN`; an IPv6 client is counted per /64), because every call is a paid Sarvam call. Over it:
 
 ```json
@@ -397,3 +397,52 @@ every non-local connection refused.
 `docs/api_examples/` now also holds `ride_check.json` and `driver_demo.json` (real responses for the pinned airport
 ride), and `results/snapshot.json` bundles every example and result the screens show, with `sources` naming the file
 behind each section; `tests/test_snapshot.py` fails when the bundle or an example differs from the engine or its file.
+
+## `speech` on POST /api/ride-check, and `POST /api/voice/ride-check` (W3.2)
+
+`POST /api/ride-check` now also returns `speech`: language (`"en-IN"`, `"hi-IN"`) -> the exact sentence to speak for the
+answer, a FIXED template filled with the response's own numbers (confidence as `confidence_display` says it, minutes,
+rupees, the charger to use after the drop). `{}` when the engine cannot say it honestly. A language model never writes it.
+Speak this string; the audio cache is keyed on it.
+
+`POST /api/voice/ride-check` is the driver's voice loop in **two calls**, so a misheard word can never start a ride-check.
+
+**Call 1, hear (multipart/form-data).** Field `audio` (or `file`): one recording, under 30 s and 5 MB. Optional `language`
+(`unknown`, the default, lets speech-to-text detect it, or a code such as `hi-IN`) and `speak` (`0` = no audio back).
+Response (`stage` is `"confirm"` or `"clarify"`; this call NEVER runs the ride-check):
+
+```
+{"stage": "confirm", "transcript": "...", "language_code": "hi-IN", "reply_language": "en-IN" | "hi-IN",
+ "slots": {"soc_pct": 45, "pickup": {"id", "name", "lat", "lon"}, "drop": {...}, "missing": [], "unresolved": [],
+           "parsed_by": "rules" | "llm" | "rules+llm"},
+ "needs_confirmation": true,
+ "prompt": "45 percent battery, Sector 18 to IGI Airport Terminal 3. Is that right?",
+ "prompt_audio": {"audio_base64": "...", "format": "wav", "cached": false} | null,
+ "timings_ms": {"hear": 0, "parse": 0, "llm": null, "decide": null, "speak": 0, "total": 0}, "is_simulated": true}
+```
+
+`stage: "clarify"` means something was not understood: `missing` lists `soc_pct` / `pickup` / `drop`, `unresolved` lists
+a place name that was heard but is not in the gazetteer (never guessed), and `prompt` asks about exactly that. Show or
+speak the `prompt` and record again. `prompt_audio` is `null` when it could not be synthesised: speak `prompt` with browser
+speech. The reply is in the language that was heard (`hi-IN` or English).
+
+**Call 2, decide (application/json).** After the driver says yes or no to the read-back:
+
+```
+{"confirmed": true, "soc_pct": 45, "pickup_id": "noida-sector-18", "drop_id": "igi-airport-t3", "language": "en-IN",
+ "vehicle_id": null, "current": null, "speak": true}
+```
+
+Use the values from call 1's `slots`. `vehicle_id` and `current` default to the demo driver's. `confirmed: false` runs
+nothing and returns `{"stage": "not_confirmed", "ride_check": null, "speech": null, "audio": null}`. `confirmed: true`
+runs the ordinary ride-check and returns `{"stage": "decided", "ride_check": <the POST /api/ride-check response>,
+"speech": "<the sentence>", "audio": {...} | null, "timings_ms": {...}}`. This call works with no Sarvam key at all: `audio`
+is then the pre-generated clip (`cached: true`) of the pinned ride's sentence, or `null` (speak `speech` with browser speech).
+
+**Errors.** 503 `voice_unavailable` on call 1 when there is no key or Sarvam cannot be reached (speech-to-text has no
+offline path: fall back to the keypad); 413 `payload_too_large` over 5 MB of audio (16 KB for call 2); 422
+`invalid_request` for a missing recording, an unknown or identical `pickup_id` / `drop_id`, a battery outside 0-100, or a
+malformed `language`; 422 `unsupported_ride` on call 2 when no checked route is committed for that pickup and drop (today
+only Sector 18 to IGI Airport T3: the engine would otherwise fetch a route from the network, so the voice demo refuses);
+429 as above. `timings_ms` is milliseconds
+per stage, `null` for a stage the call did not run; `hear` + `parse` + `llm` + `speak` are what the driver waits for.

@@ -97,3 +97,13 @@ fits the project. Nothing here is applied unless both sides agree.
   live synthesis fails, serves the pre-generated clip of that exact sentence (`cached: true`) instead of the 503.
   Additive; a client that ignores both keeps working.
 - The spoken reason now says the target in words ("target 90 percent"); the written `reason` is unchanged.
+
+## 2026-11-16 - v3: `speech` on ride-check; `POST /api/voice/ride-check` (W3.2)
+
+- Reason: guide W3.2. A driver should be able to say the ride and hear the answer, but a misheard battery or place must
+  never start a decision, and the answer has to be short and made only of engine numbers.
+- Old shape: ride-check had no spoken text; voice was `POST /api/voice/tts` and `/stt` only. New shape: ride-check adds
+  `speech` (language -> the exact sentence, `{}` if it cannot be said honestly); a new endpoint `POST /api/voice/ride-check`
+  in two calls (multipart audio -> read-back or a question, never a decision; JSON `confirmed` -> the ordinary ride-check,
+  spoken). Every stage reports its own `timings_ms`. Additive; nothing existing changed.
+- The new endpoint shares the voice rate-limit budget (429) with tts and stt. Call 2 works with no key (text, or the cached clip).

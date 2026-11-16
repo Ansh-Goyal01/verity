@@ -8,7 +8,7 @@ import httpx
 import pytest
 
 from verity.schemas import ChargerRecord
-from verity.voice import SarvamClient
+from verity.voice import STT_MODEL, SarvamClient
 from verity.voice_loop import match_spoken_charger, parse_status, render_decision, soc_from_transcript, voice_report
 
 T = datetime(2026, 11, 12, 18, 0, tzinfo=timezone.utc)
@@ -102,7 +102,7 @@ def test_tts_and_stt_send_the_documented_fields() -> None:
     out = client.stt_full(b"RIFF", "a.wav", "audio/wav", "unknown", "translit")
     stt = seen["/speech-to-text"]
     assert out == {"transcript": "battery 42 pratishat", "language_code": "hi-IN"}
-    assert b"translit" in stt and b"saaras:v3" in stt and b"unknown" in stt
+    assert b"translit" in stt and STT_MODEL.encode() in stt and b"unknown" in stt
     assert [c["path"] for c in client.calls] == ["/text-to-speech", "/speech-to-text"]
     with pytest.raises(ValueError):
         client.stt_full(b"", "a.wav", "audio/wav", "unknown", "shout")
