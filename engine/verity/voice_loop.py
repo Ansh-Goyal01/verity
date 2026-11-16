@@ -14,6 +14,7 @@ Pure functions over transcripts (the Sarvam calls live in voice.SarvamClient):
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Callable, Sequence
 from datetime import datetime
@@ -26,7 +27,9 @@ from .schemas import ChargerRecord, Report
 from .trips import haversine_m
 from .voice import parse_soc_percent
 
+log = logging.getLogger(__name__)
 SOURCE_KIND = "driver_voice"
+SPEECH_LANGUAGES = ("en-IN", "hi-IN")  # the languages the demo answers in (W0.5); both are in the audio cache
 MIN_NAME_COVERAGE = 0.5  # share of a charger name's meaningful words that must be spoken (approximate - verify)
 NEAR_RADIUS_KM = 2.0
 _DEVANAGARI = re.compile(r"[ऀ-ॿ]")
@@ -164,7 +167,8 @@ def voice_report(transcript: str, chargers: Sequence[ChargerRecord], t: datetime
 def spoken_reason(facts: dict, language: str) -> str:
     """The dispatch reason sentence (DispatchResult.reason_facts) in ``language``, numbers in spoken words."""
     return render_reason(facts, REASON_TEMPLATES[language], lambda p: spoken_confidence(p, language),
-                         REPORTS[language], ROLES[language])
+                         REPORTS[language], ROLES[language],
+                         target_text=lambda t: SPOKEN_CONFIDENCE[language]["pct"].format(p=int(round(100 * t))))
 
 
 def render_decision(decision: str, language: str, *, destination: str = "", confidence: float | None = None,
@@ -180,3 +184,17 @@ def render_decision(decision: str, language: str, *, destination: str = "", conf
                            confidence=None if confidence is None else spoken_confidence(confidence, language),
                            bingo=None if bingo is None else int(round(bingo)))
     return text if reason_facts is None else f"{text} {spoken_reason(reason_facts, language)}"
+
+
+def spoken_answers(decision: str, *, destination: str, confidence: float | None, bingo: float | None,
+                   reason_facts: dict | None) -> dict[str, str]:
+    """The sentence the demo speaks for a decision, in every demo language (W0.5): the dispatch response carries
+    these exact strings, and the audio cache is keyed on them, so what is spoken offline is what was spoken online.
+    Empty when the engine did not supply what the template needs (a GO without its Bingo Line is not spoken:
+    refuse rather than guess)."""
+    try:
+        return {language: render_decision(decision, language, destination=destination, confidence=confidence,
+                                          bingo=bingo, reason_facts=reason_facts) for language in SPEECH_LANGUAGES}
+    except ValueError as exc:
+        log.warning("not speaking %s: %s", decision, exc)
+        return {}

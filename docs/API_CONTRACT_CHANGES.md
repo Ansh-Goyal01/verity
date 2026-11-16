@@ -87,3 +87,13 @@ fits the project. Nothing here is applied unless both sides agree.
 - Reason: guide W0.3 / finding F4. A page said 2,000 runs, the README 1,500; no consumer could tell which was true.
 - Old shape: no run count in any response. New shape: `n_runs` (integer >= 1) on `POST /api/dispatch`,
   `POST /api/forecast/update` (the runs of the plan it reweights) and `POST /api/ride-check`. Additive.
+
+## 2026-11-16 - v3: `speech` on dispatch, `cached` on text-to-speech (W0.5, F9)
+
+- Reason: guide W0.5 / finding F9. The demo's voice depended on live Sarvam and the venue's wifi; and the frontend built
+  its own sentences, so nothing could be pre-generated.
+- Old shape: dispatch had no spoken text; `POST /api/voice/tts` returned `{audio_base64, format}`. New shape: dispatch
+  adds `speech` (language -> the exact sentence, `{}` if it cannot be said honestly); tts adds `cached` (bool) and, when
+  live synthesis fails, serves the pre-generated clip of that exact sentence (`cached: true`) instead of the 503.
+  Additive; a client that ignores both keeps working.
+- The spoken reason now says the target in words ("target 90 percent"); the written `reason` is unchanged.

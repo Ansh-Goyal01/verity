@@ -175,6 +175,7 @@ class DispatchResponse(Resp):
     confidence: float
     confidence_display: str  # "95%+" | "under 5%" | the rounded percent (W0.2)
     reason: str  # one sentence naming the charger that carries the decision (W0.6)
+    speech: dict[str, str]  # language -> the exact sentence to speak (W0.5); empty if the engine cannot speak it honestly
     arrival_soc: ArrivalSoc
     route: Route
     stops: list[Stop]
@@ -414,6 +415,7 @@ class TtsRequest(Req):
 class TtsResponse(Resp):
     audio_base64: str
     format: Literal["wav"]
+    cached: bool  # true: pre-generated clip served because live text-to-speech failed (W0.5)
 
 
 class SttResponse(Resp):

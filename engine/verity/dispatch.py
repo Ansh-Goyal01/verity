@@ -770,12 +770,14 @@ def reason_facts(ctx: Ctx, stops: Sequence[Stop], ev: PlanEval, decision: str,
 
 
 def render_reason(facts: dict, templates: dict[str, str], pct: Callable[[float], str],
-                  reports: Callable[[int], str], roles: dict[str, str]) -> str:
-    """Fill one reason template; ``pct`` formats a probability (confidence_display, or spoken words)."""
+                  reports: Callable[[int], str], roles: dict[str, str],
+                  target_text: Callable[[float], str] = lambda t: f"{t:.0%}") -> str:
+    """Fill one reason template; ``pct`` formats a probability (confidence_display, or spoken words). ``target_text``
+    formats the driver's target confidence: written "90%" by default, spoken words when the reason is read aloud."""
     return templates[facts["kind"]].format(
         role=roles.get(facts.get("role", ""), ""), name=facts.get("name", ""),
         p_works=pct(facts.get("p_works", 0.0)), reports=reports(facts.get("n_reports", 0)),
-        p_reach=pct(facts.get("p_reach", 0.0)), confidence=pct(facts["confidence"]), target=f"{facts['target']:.0%}")
+        p_reach=pct(facts.get("p_reach", 0.0)), confidence=pct(facts["confidence"]), target=target_text(facts["target"]))
 
 
 def _risk_sources(vehicle: VehicleContext, ctx: Ctx, stops: Sequence[Stop]) -> list[dict]:

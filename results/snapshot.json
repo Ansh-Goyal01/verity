@@ -83,6 +83,10 @@
     "confidence": 0.8,
     "confidence_display": "80%",
     "reason": "NO_GO because the best plan relies on planned stop Tata (85% likely to work, 1 report) and reaches only 80% confidence (target 90%).",
+    "speech": {
+     "en-IN": "Do not start yet. The chance of reaching Agra is only 80 percent. NO_GO because the best plan relies on planned stop Tata (85 percent likely to work, 1 report) and reaches only 80 percent confidence (target 90 percent).",
+     "hi-IN": "अभी न जाएँ। Agra तक पहुँचने की संभावना केवल 80 प्रतिशत है। सबसे अच्छी योजना तय चार्जिंग स्टॉप Tata पर निर्भर है (85 प्रतिशत काम करने की संभावना, 1 रिपोर्ट), फिर भी संभावना केवल 80 प्रतिशत है (लक्ष्य 90 प्रतिशत)।"
+    },
     "arrival_soc": {
      "p10": 0,
      "p50": 21,
@@ -7474,7 +7478,7 @@
      }
     ],
     "refusal_reason": null,
-    "compute_ms": 7385,
+    "compute_ms": 6750,
     "n_runs": 1500,
     "is_simulated": true
    },
@@ -7485,6 +7489,10 @@
     "confidence": 0.95,
     "confidence_display": "95%+",
     "reason": "GO because backup EV charging station (OpenStreetMap) (95%+ likely to work, 10 reports) is reachable 90% of the time.",
+    "speech": {
+     "en-IN": "Go. The chance of reaching Agra is 95 percent or more. Divert if the battery falls below 59 percent. GO because backup EV charging station (OpenStreetMap) (95 percent or more likely to work, 10 reports) is reachable 90 percent of the time.",
+     "hi-IN": "जाइए। Agra तक पहुँचने की संभावना 95 प्रतिशत या उससे अधिक है। बैटरी 59 प्रतिशत से नीचे जाए तो रास्ता बदलें। बैकअप चार्जर EV charging station (OpenStreetMap) के काम करने की संभावना 95 प्रतिशत या उससे अधिक है (10 रिपोर्ट), और वहाँ 90 प्रतिशत बार पहुँचा जा सकता है।"
+    },
     "arrival_soc": {
      "p10": 13,
      "p50": 19,
@@ -14834,7 +14842,7 @@
      }
     ],
     "refusal_reason": null,
-    "compute_ms": 7156,
+    "compute_ms": 5926,
     "n_runs": 1500,
     "is_simulated": true
    },
@@ -14845,6 +14853,10 @@
     "confidence": 0.9,
     "confidence_display": "90%",
     "reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
+    "speech": {
+     "en-IN": "There is not enough evidence to promise this trip yet, so we will not guess.",
+     "hi-IN": "पक्का कहने के लिए अभी पर्याप्त जानकारी नहीं है, इसलिए हम कोई वादा नहीं कर रहे।"
+    },
     "arrival_soc": {
      "p10": 8,
      "p50": 19,
@@ -22232,7 +22244,7 @@
      }
     ],
     "refusal_reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
-    "compute_ms": 6643,
+    "compute_ms": 6496,
     "n_runs": 1500,
     "is_simulated": true
    }

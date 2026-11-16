@@ -374,6 +374,26 @@ Every probability in these responses comes from a Monte Carlo of `n_runs` runs, 
 "19 of 20 simulated evenings" derived from it, instead of typing "1,500" or "2,000" into a page: the landing page
 and the README disagreed on it (F4). The number is the server's `VERITY_N_RUNS` (default 1500).
 
+## `speech` on POST /api/dispatch and `cached` on POST /api/voice/tts (W0.5)
+
+`speech` maps each demo language (`"en-IN"`, `"hi-IN"`) to the exact sentence to speak for the decision: a fixed
+template filled with the engine's numbers, spoken as words ("95 percent or more", never "100"), followed by the
+reason sentence. **Speak this string; do not build your own.** The server's audio cache is keyed on these exact
+strings, which is what lets the demo talk with the wifi off. `speech` is `{}` when the engine cannot say it honestly
+(a GO without its Bingo Line).
+
+```json
+{"decision": "NO_GO", "speech": {"en-IN": "Do not start yet. The chance of reaching Agra is only 80 percent. NO_GO because the best plan relies on planned stop Tata (85 percent likely to work, 1 report) and reaches only 80 percent confidence (target 90 percent).", "hi-IN": "..."}}
+```
+
+`POST /api/voice/tts` now returns `{"audio_base64": "...", "format": "wav", "cached": false}`. When live
+text-to-speech fails (no key, Sarvam unreachable, or Sarvam answers an error) the server returns the pre-generated clip
+of that exact sentence and language with `"cached": true`; a sentence that was never generated still gets the 503
+`voice_unavailable`. Speech-to-text has no offline fallback (arbitrary speech cannot be pre-recorded): it returns the
+same 503, and the UI falls back to the keypad. The clips are made by `scripts/build_audio_cache.py` (paid Sarvam calls,
+only for sentences not yet cached) into `data/audio_cache/`, and `tests/test_offline_demo.py` runs the whole demo with
+every non-local connection refused.
+
 `docs/api_examples/` now also holds `ride_check.json` and `driver_demo.json` (real responses for the pinned airport
 ride), and `results/snapshot.json` bundles every example and result the screens show, with `sources` naming the file
 behind each section; `tests/test_snapshot.py` fails when the bundle or an example differs from the engine or its file.

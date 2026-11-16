@@ -210,6 +210,6 @@ def test_voice_proxies_to_sarvam_through_a_mock_when_a_key_exists(client: TestCl
         missing = client.post("/api/voice/stt", files={"other": ("a.wav", b"abc", "audio/wav")})
     finally:
         app.dependency_overrides.pop(get_voice_client, None)
-    assert tts.status_code == 200 and tts.json() == {"audio_base64": "QUJD", "format": "wav"}
+    assert tts.status_code == 200 and tts.json() == {"audio_base64": "QUJD", "format": "wav", "cached": False}
     assert stt.status_code == 200 and stt.json() == {"text": "battery forty two percent", "soc_pct": 42}
     assert missing.status_code == 422 and missing.json()["error"] == "invalid_request"

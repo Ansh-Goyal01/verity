@@ -8,6 +8,7 @@ contract). Errors always have the shape ``{"error": code, "message": text}``.
 
 from __future__ import annotations
 
+import base64
 import math
 import os
 from contextlib import asynccontextmanager
@@ -19,6 +20,7 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from verity.audio_cache import AudioCache
 from verity.trust.graph import load_env
 from verity.voice import SarvamClient, VoiceUnavailable, parse_multipart, parse_soc_percent, sarvam_key_present
 
@@ -88,6 +90,13 @@ def get_voice_client() -> SarvamClient | None:
 
 def voice_key_present() -> bool:
     return sarvam_key_present()
+
+
+audio_cache = AudioCache()  # data/audio_cache: the demo's spoken answers, made ahead of time (W0.5)
+
+
+def get_audio_cache() -> AudioCache:
+    return audio_cache
 
 
 def get_voice_limiter() -> RateLimiter:
@@ -198,13 +207,21 @@ def get_replay(plan_id: str, svc: EngineService = Depends(get_service)) -> dict:
 
 
 @app.post("/api/voice/tts", response_model=TtsResponse, dependencies=[Depends(limit_voice)])
-def voice_tts(req: TtsRequest, voice: SarvamClient | None = Depends(get_voice_client)):
+def voice_tts(req: TtsRequest, voice: SarvamClient | None = Depends(get_voice_client),
+              cache: AudioCache = Depends(get_audio_cache)):
+    """Live text-to-speech; when there is no key or Sarvam cannot be reached, the pre-generated clip of exactly this
+    sentence (flagged ``cached: true``), and only if there is one. Anything else is the honest 503."""
     if voice is None:
-        return _error(503, "voice_unavailable", VOICE_MESSAGE)
-    try:
-        return voice.tts(req.text, req.language)
-    except VoiceUnavailable as exc:
-        return _error(503, "voice_unavailable", str(exc))
+        failure = VOICE_MESSAGE
+    else:
+        try:
+            return {**voice.tts(req.text, req.language), "cached": False}
+        except VoiceUnavailable as exc:
+            failure = str(exc)
+    clip = cache.lookup(req.text, req.language)
+    if clip is None:
+        return _error(503, "voice_unavailable", failure)
+    return {"audio_base64": base64.b64encode(clip).decode("ascii"), "format": "wav", "cached": True}
 
 
 @app.post("/api/voice/stt", response_model=SttResponse, dependencies=[Depends(limit_voice)])

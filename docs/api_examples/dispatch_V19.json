@@ -5,6 +5,10 @@
  "confidence": 0.9,
  "confidence_display": "90%",
  "reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
+ "speech": {
+  "en-IN": "There is not enough evidence to promise this trip yet, so we will not guess.",
+  "hi-IN": "पक्का कहने के लिए अभी पर्याप्त जानकारी नहीं है, इसलिए हम कोई वादा नहीं कर रहे।"
+ },
  "arrival_soc": {
   "p10": 8,
   "p50": 19,
@@ -7392,7 +7396,7 @@
   }
  ],
  "refusal_reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
- "compute_ms": 6643,
+ "compute_ms": 6496,
  "n_runs": 1500,
  "is_simulated": true
 }

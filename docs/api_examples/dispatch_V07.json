@@ -5,6 +5,10 @@
  "confidence": 0.8,
  "confidence_display": "80%",
  "reason": "NO_GO because the best plan relies on planned stop Tata (85% likely to work, 1 report) and reaches only 80% confidence (target 90%).",
+ "speech": {
+  "en-IN": "Do not start yet. The chance of reaching Agra is only 80 percent. NO_GO because the best plan relies on planned stop Tata (85 percent likely to work, 1 report) and reaches only 80 percent confidence (target 90 percent).",
+  "hi-IN": "अभी न जाएँ। Agra तक पहुँचने की संभावना केवल 80 प्रतिशत है। सबसे अच्छी योजना तय चार्जिंग स्टॉप Tata पर निर्भर है (85 प्रतिशत काम करने की संभावना, 1 रिपोर्ट), फिर भी संभावना केवल 80 प्रतिशत है (लक्ष्य 90 प्रतिशत)।"
+ },
  "arrival_soc": {
   "p10": 0,
   "p50": 21,
@@ -7396,7 +7400,7 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 7385,
+ "compute_ms": 6750,
  "n_runs": 1500,
  "is_simulated": true
 }

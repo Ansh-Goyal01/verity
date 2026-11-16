@@ -1,0 +1,85 @@
+{
+ "experiment": "W0.5 audio cache build",
+ "is_simulated": true,
+ "label": "Sarvam TTS of engine sentences on the SIMULATED demo fleet",
+ "generated_at": "2026-11-16T12:52:35+00:00",
+ "tts_model": "bulbul:v3",
+ "sentences_total": 6,
+ "made_now": [
+  {
+   "language": "en-IN",
+   "source": "dispatch V07 (NO_GO)",
+   "characters": 219
+  },
+  {
+   "language": "hi-IN",
+   "source": "dispatch V07 (NO_GO)",
+   "characters": 211
+  },
+  {
+   "language": "en-IN",
+   "source": "dispatch V12 (GO)",
+   "characters": 239
+  },
+  {
+   "language": "hi-IN",
+   "source": "dispatch V12 (GO)",
+   "characters": 261
+  },
+  {
+   "language": "en-IN",
+   "source": "dispatch V19 (INSUFFICIENT_EVIDENCE)",
+   "characters": 76
+  },
+  {
+   "language": "hi-IN",
+   "source": "dispatch V19 (INSUFFICIENT_EVIDENCE)",
+   "characters": 78
+  }
+ ],
+ "failed": [],
+ "paid_calls": [
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 3899
+  },
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 2918
+  },
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 3362
+  },
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 3587
+  },
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 915
+  },
+  {
+   "path": "/text-to-speech",
+   "model": "bulbul:v3",
+   "ok": true,
+   "http_status": 200,
+   "ms": 1133
+  }
+ ]
+}

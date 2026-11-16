@@ -42,6 +42,7 @@ from verity.trust.reports_sim import NOW
 from verity.ridecheck import RideInput, ride_check
 from verity.routing import snapshot_to_route
 from verity.vehicles import get_prior
+from verity.voice_loop import spoken_answers
 
 from .limits import LruCache
 from .models import DispatchRequest, RideCheckRequest
@@ -210,6 +211,15 @@ class GraphView:
     trust: dict[str, ChargerTrust]
     near: list[RouteCharger]
     reports: tuple[Report, ...] = ()
+
+
+def demo_dispatch_request(vehicle_id: str) -> dict:
+    """The demo booking as the ``POST /api/dispatch`` body for one demo vehicle: what the examples, the audio cache and
+    the offline test all send, so they all hit the same plan (the request hash is the plan id and the seed)."""
+    return {"vehicle_id": vehicle_id, "origin": {"lat": BOOKING["origin"]["lat"], "lon": BOOKING["origin"]["lon"]},
+            "destination": {"lat": BOOKING["destination"]["lat"], "lon": BOOKING["destination"]["lon"]},
+            "departure_time": BOOKING["departure_time"], "passengers": BOOKING["passengers"], "ac_on": BOOKING["ac_on"],
+            "target_confidence": BOOKING["target_confidence"], "start_soc_pct": FLEET_META[vehicle_id][1]}
 
 
 def canonical_request(model: type, req: dict) -> dict:
@@ -382,7 +392,12 @@ class EngineService:
         response = {
             "plan_id": plan_id, "vehicle_id": result.vehicle_id, "decision": result.decision,
             "confidence": result.confidence, "confidence_display": confidence_display(result.confidence),
-            "reason": result.reason, "arrival_soc": result.arrival_soc,
+            "reason": result.reason,
+            "speech": spoken_answers(result.decision, destination=BOOKING["destination"]["name"],
+                                     confidence=result.confidence,
+                                     bingo=result.bingo_line[0]["bingo_soc_pct"] if result.bingo_line else None,
+                                     reason_facts=result.reason_facts),
+            "arrival_soc": result.arrival_soc,
             "route": {"distance_km": result.distance_km, "duration_min": result.duration_min,
                       "polyline": self.snap["polyline"]},
             "stops": [{k: v for k, v in s.items() if k != "power_assumed"} for s in result.stops],

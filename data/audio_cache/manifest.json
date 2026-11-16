@@ -1,0 +1,60 @@
+{
+ "entries": {
+  "16bff3021760224e51781000": {
+   "bytes": 598392,
+   "file": "16bff3021760224e51781000.wav",
+   "language": "en-IN",
+   "sha256": "c5e2a5f5eceed66f82bef983c0189d44ee5716da1d75413a21689e7028b36d4d",
+   "source": "dispatch V07 (NO_GO)",
+   "text": "Do not start yet. The chance of reaching Agra is only 80 percent. NO_GO because the best plan relies on planned stop Tata (85 percent likely to work, 1 report) and reaches only 80 percent confidence (target 90 percent).",
+   "tts_model": "bulbul:v3"
+  },
+  "7607d7cb1d8ca83bb021bc7a": {
+   "bytes": 568288,
+   "file": "7607d7cb1d8ca83bb021bc7a.wav",
+   "language": "hi-IN",
+   "sha256": "38856861b792c78b2db47ebccc2d9d2d6eb78a71f9b6a05cd00213207d134f6d",
+   "source": "dispatch V07 (NO_GO)",
+   "text": "अभी न जाएँ। Agra तक पहुँचने की संभावना केवल 80 प्रतिशत है। सबसे अच्छी योजना तय चार्जिंग स्टॉप Tata पर निर्भर है (85 प्रतिशत काम करने की संभावना, 1 रिपोर्ट), फिर भी संभावना केवल 80 प्रतिशत है (लक्ष्य 90 प्रतिशत)।",
+   "tts_model": "bulbul:v3"
+  },
+  "831c851823364aa59cf7dc21": {
+   "bytes": 161862,
+   "file": "831c851823364aa59cf7dc21.wav",
+   "language": "en-IN",
+   "sha256": "76902c8b0fabba8f938f2347ad6eee331b529c571b7c15efe22c8377b821ffbb",
+   "source": "dispatch V19 (INSUFFICIENT_EVIDENCE)",
+   "text": "There is not enough evidence to promise this trip yet, so we will not guess.",
+   "tts_model": "bulbul:v3"
+  },
+  "912556f04d0619a47bfb23b7": {
+   "bytes": 692472,
+   "file": "912556f04d0619a47bfb23b7.wav",
+   "language": "hi-IN",
+   "sha256": "12ee38cb463f152b189c8e7a76895dc023f75b3c0298c3fe2faa980e732f3d52",
+   "source": "dispatch V12 (GO)",
+   "text": "जाइए। Agra तक पहुँचने की संभावना 95 प्रतिशत या उससे अधिक है। बैटरी 59 प्रतिशत से नीचे जाए तो रास्ता बदलें। बैकअप चार्जर EV charging station (OpenStreetMap) के काम करने की संभावना 95 प्रतिशत या उससे अधिक है (10 रिपोर्ट), और वहाँ 90 प्रतिशत बार पहुँचा जा सकता है।",
+   "tts_model": "bulbul:v3"
+  },
+  "cd7a2a6a1fd4d2ce6f885ac7": {
+   "bytes": 639788,
+   "file": "cd7a2a6a1fd4d2ce6f885ac7.wav",
+   "language": "en-IN",
+   "sha256": "58b0c87bf9761d2111914e4cc1ff316adb0498d5237d9c07e60264c6afba5ad7",
+   "source": "dispatch V12 (GO)",
+   "text": "Go. The chance of reaching Agra is 95 percent or more. Divert if the battery falls below 59 percent. GO because backup EV charging station (OpenStreetMap) (95 percent or more likely to work, 10 reports) is reachable 90 percent of the time.",
+   "tts_model": "bulbul:v3"
+  },
+  "f7a11d7c9d2731085ec37d96": {
+   "bytes": 184440,
+   "file": "f7a11d7c9d2731085ec37d96.wav",
+   "language": "hi-IN",
+   "sha256": "6c7d85c11075891d9859bc31c7299309a03b9b0d74449bf13de9d46c37b6cfe7",
+   "source": "dispatch V19 (INSUFFICIENT_EVIDENCE)",
+   "text": "पक्का कहने के लिए अभी पर्याप्त जानकारी नहीं है, इसलिए हम कोई वादा नहीं कर रहे।",
+   "tts_model": "bulbul:v3"
+  }
+ },
+ "is_simulated": true,
+ "note": "Sarvam text-to-speech of the demo's spoken answers, made ahead of time by scripts/build_audio_cache.py from sentences the engine wrote on the SIMULATED demo fleet. Served only when live text-to-speech fails."
+}

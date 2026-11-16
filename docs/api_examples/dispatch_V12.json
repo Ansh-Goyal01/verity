@@ -5,6 +5,10 @@
  "confidence": 0.95,
  "confidence_display": "95%+",
  "reason": "GO because backup EV charging station (OpenStreetMap) (95%+ likely to work, 10 reports) is reachable 90% of the time.",
+ "speech": {
+  "en-IN": "Go. The chance of reaching Agra is 95 percent or more. Divert if the battery falls below 59 percent. GO because backup EV charging station (OpenStreetMap) (95 percent or more likely to work, 10 reports) is reachable 90 percent of the time.",
+  "hi-IN": "जाइए। Agra तक पहुँचने की संभावना 95 प्रतिशत या उससे अधिक है। बैटरी 59 प्रतिशत से नीचे जाए तो रास्ता बदलें। बैकअप चार्जर EV charging station (OpenStreetMap) के काम करने की संभावना 95 प्रतिशत या उससे अधिक है (10 रिपोर्ट), और वहाँ 90 प्रतिशत बार पहुँचा जा सकता है।"
+ },
  "arrival_soc": {
   "p10": 13,
   "p50": 19,
@@ -7354,7 +7358,7 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 7156,
+ "compute_ms": 5926,
  "n_runs": 1500,
  "is_simulated": true
 }
