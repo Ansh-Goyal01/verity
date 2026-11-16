@@ -80,6 +80,7 @@ def test_health_shows_that_a_key_exists_but_never_the_key(client: TestClient, mo
 def test_health_says_voice_is_off_when_no_key_is_configured(client: TestClient, monkeypatch: pytest.MonkeyPatch,
                                                             env: dict) -> None:
     monkeypatch.setattr("verity.voice.load_env", lambda path=None: env)
+    monkeypatch.delenv("SARVAM_API_KEY", raising=False)  # a real environment variable counts too (W3.1)
     assert client.get("/api/health").json()["sarvam_key_present"] is False
 
 

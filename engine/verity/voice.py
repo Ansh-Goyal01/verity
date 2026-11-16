@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import re
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from email import policy
 from email.parser import BytesParser
@@ -45,8 +47,51 @@ class VoiceUnavailable(RuntimeError):
     """No Sarvam key configured, or the service could not be reached."""
 
 
+CHAT_REASONING = ("low", "medium", "high", "none", "omit")  # "none" sends null (thinking off); "omit" sends nothing
+
+
+@dataclass(frozen=True)
+class VoiceModels:
+    """Which Sarvam models a client uses (W3.1). The defaults are the ids verified live here (F7, 2026-11-12); the vendor
+    docs read on 2026-11-16 (docs/SARVAM_API_NOTES.md) recommend newer ones (saaras:v4, bulbul:v4-flash), so each id is a
+    setting and the paid-call log names the id every call actually used."""
+
+    stt_model: str = STT_MODEL
+    stt_mode: str = "transcribe"
+    tts_model: str = TTS_MODEL
+    tts_speaker: str | None = None  # None: the model's own default speaker (bulbul:v4-flash REJECTS v3's "shubh")
+    chat_model: str = CHAT_MODEL
+    chat_reasoning: str = "low"
+    translate_model: str = TRANSLATE_MODEL
+
+
+def models_from_settings(get: Callable[[str], str | None]) -> VoiceModels:
+    """Models from SARVAM_STT_MODEL, SARVAM_STT_MODE, SARVAM_TTS_MODEL, SARVAM_TTS_SPEAKER, SARVAM_CHAT_MODEL,
+    SARVAM_CHAT_REASONING. Blank means the default; a value the client cannot use fails here, naming the setting."""
+    def value(name: str, default: str) -> str:
+        return (get(name) or "").strip() or default
+
+    mode, reasoning = value("SARVAM_STT_MODE", "transcribe"), value("SARVAM_CHAT_REASONING", "low")
+    if mode not in STT_MODES:
+        raise ValueError(f"SARVAM_STT_MODE must be one of {STT_MODES}, not {mode!r}")
+    if reasoning not in CHAT_REASONING:
+        raise ValueError(f"SARVAM_CHAT_REASONING must be one of {CHAT_REASONING}, not {reasoning!r}")
+    return VoiceModels(stt_model=value("SARVAM_STT_MODEL", STT_MODEL), stt_mode=mode,
+                       tts_model=value("SARVAM_TTS_MODEL", TTS_MODEL), tts_speaker=value("SARVAM_TTS_SPEAKER", "") or None,
+                       chat_model=value("SARVAM_CHAT_MODEL", CHAT_MODEL), chat_reasoning=reasoning)
+
+
+def _settings(env_path: Path | None = None) -> Callable[[str], str | None]:
+    """Setting lookup. An explicit ``env_path`` is read ALONE (hermetic); otherwise a real environment variable wins
+    over ``.env`` (as for the Neo4j settings), so a hosted deploy that only sets environment variables works."""
+    file_values = load_env(env_path)
+    if env_path is not None:
+        return lambda name: file_values.get(name) or None
+    return lambda name: os.environ.get(name) or file_values.get(name) or None
+
+
 def _read_key(env_path: Path | None = None) -> str:
-    return load_env(env_path).get("SARVAM_API_KEY", "")
+    return _settings(env_path)("SARVAM_API_KEY") or ""
 
 
 def sarvam_key_present(env_path: Path | None = None) -> bool:
@@ -59,13 +104,15 @@ class SarvamClient:
     api_key: str
     client: httpx.Client
     calls: list[dict] = field(default_factory=list)  # paid-call log: path, model, ok, ms (never text or key)
+    models: VoiceModels = field(default_factory=VoiceModels)
 
     @classmethod
     def from_env(cls, env_path: Path | None = None, client: httpx.Client | None = None) -> SarvamClient | None:
-        key = _read_key(env_path)
+        get = _settings(env_path)
+        key = get("SARVAM_API_KEY")
         if not key:
             return None
-        return cls(key, client or httpx.Client(base_url=SARVAM_BASE, timeout=TIMEOUT_S))
+        return cls(key, client or httpx.Client(base_url=SARVAM_BASE, timeout=TIMEOUT_S), models=models_from_settings(get))
 
     def _post(self, path: str, model: str = "", bearer: bool = False, **kwargs) -> dict:
         headers = {KEY_HEADER: self.api_key, **({"Authorization": f"Bearer {self.api_key}"} if bearer else {})}
@@ -90,12 +137,15 @@ class SarvamClient:
         self.calls.append({"path": path, "model": model, "ok": ok, "http_status": status,
                            "ms": int(round(1000 * (time.perf_counter() - t0)))})
 
-    def chat_json(self, system: str, user: str, schema: dict, name: str = "labels") -> dict:
-        """One chat completion with Structured Outputs (json_schema); returns the parsed JSON object."""
-        body = {"model": CHAT_MODEL, "temperature": 0.0, "reasoning_effort": "low", "max_tokens": 4096,
+    def chat_json(self, system: str, user: str, schema: dict, name: str = "labels", timeout: float | None = None) -> dict:
+        """One chat completion with Structured Outputs (json_schema); returns the parsed JSON object. ``timeout`` is
+        this call's read limit in seconds (default CHAT_TIMEOUT_S): the spoken ride-check allows its fallback 4 s."""
+        body = {"model": self.models.chat_model, "temperature": 0.0, "max_tokens": 4096,
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
                 "response_format": {"type": "json_schema", "json_schema": {"name": name, "schema": schema}}}
-        data = self._post(CHAT_PATH, CHAT_MODEL, bearer=True, json=body, timeout=CHAT_TIMEOUT_S)
+        if self.models.chat_reasoning != "omit":  # "none" is JSON null: the docs' way to switch thinking off
+            body["reasoning_effort"] = None if self.models.chat_reasoning == "none" else self.models.chat_reasoning
+        data = self._post(CHAT_PATH, self.models.chat_model, bearer=True, json=body, timeout=timeout or CHAT_TIMEOUT_S)
         try:
             choice = data["choices"][0]
             content = choice["message"].get("content") or ""
@@ -110,30 +160,35 @@ class SarvamClient:
                                    f"usage={data.get('usage')})") from exc
 
     def translate(self, text: str, target: str = "en-IN", source: str = "auto") -> str:
-        data = self._post(TRANSLATE_PATH, TRANSLATE_MODEL, json={
+        data = self._post(TRANSLATE_PATH, self.models.translate_model, json={
             "input": text[:1000], "source_language_code": source, "target_language_code": target,
-            "model": TRANSLATE_MODEL})
+            "model": self.models.translate_model})
         return str(data.get("translated_text", ""))
 
     def tts(self, text: str, language: str, speaker: str | None = None) -> dict:
-        """Text -> ``{"audio_base64": ..., "format": "wav"}`` (bulbul:v3; ``language`` e.g. hi-IN / en-IN)."""
-        body = {"text": text, "language_code": language, "model": TTS_MODEL, **({"speaker": speaker} if speaker else {})}
-        data = self._post(TTS_PATH, TTS_MODEL, json=body)
+        """Text -> ``{"audio_base64": ..., "format": "wav"}`` (the configured model, bulbul:v3 by default;
+        ``language`` e.g. hi-IN / en-IN; ``speaker`` overrides the configured one)."""
+        speaker = speaker or self.models.tts_speaker
+        body = {"text": text, "language_code": language, "model": self.models.tts_model,
+                **({"speaker": speaker} if speaker else {})}
+        data = self._post(TTS_PATH, self.models.tts_model, json=body)
         audio = (data.get("audios") or [None])[0]
         if not audio:
             raise VoiceUnavailable("voice service returned no audio")
         return {"audio_base64": audio, "format": "wav"}
 
     def stt_full(self, audio: bytes, filename: str, content_type: str, language: str = "unknown",
-                 mode: str = "transcribe") -> dict:
-        """Audio -> ``{"transcript", "language_code"}`` (saaras:v3). ``language`` 'unknown' lets the model detect it."""
+                 mode: str | None = None) -> dict:
+        """Audio -> ``{"transcript", "language_code"}`` with the configured model and mode (``mode`` overrides the
+        mode for this call). ``language`` 'unknown' lets the model detect it. Clips must be under 30 s."""
+        mode = mode or self.models.stt_mode
         if mode not in STT_MODES:
             raise ValueError(f"mode must be one of {STT_MODES}")
-        data = self._post(STT_PATH, STT_MODEL, files={"file": (filename, audio, content_type)},
-                          data={"language_code": language, "model": STT_MODEL, "mode": mode})
+        data = self._post(STT_PATH, self.models.stt_model, files={"file": (filename, audio, content_type)},
+                          data={"language_code": language, "model": self.models.stt_model, "mode": mode})
         return {"transcript": str(data.get("transcript", "")), "language_code": data.get("language_code")}
 
-    def stt(self, audio: bytes, filename: str, content_type: str, language: str, mode: str = "transcribe") -> str:
+    def stt(self, audio: bytes, filename: str, content_type: str, language: str, mode: str | None = None) -> str:
         return self.stt_full(audio, filename, content_type, language, mode)["transcript"]
 
 
