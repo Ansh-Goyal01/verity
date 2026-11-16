@@ -8,7 +8,8 @@
 first and regenerated; E1 is regenerated from its fingerprint-verified immutable final evaluation
 (to avoid evaluating held-out trips twice), while E2-E5 execute. It never touches data/, the fixed held-out split, the cache, or anything outside
 the repository. Every step runs in its own process; its output goes to results/logs/<step>.log. The exit
-code is non-zero if any step fails or does not produce its expected files.
+code is non-zero if any step fails or does not produce its expected files. A full (non-fast) run ends by
+refreshing results/snapshot.json (scripts/export_snapshot.py), after run_all_summary.json it bundles.
 """
 
 from __future__ import annotations
@@ -106,8 +107,14 @@ def main() -> int:
     RESULTS.mkdir(parents=True, exist_ok=True)
     out = {"fast_mode": args.fast, "all_ok": all(s["ok"] for s in summary), "steps": summary}
     (RESULTS / "run_all_summary.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
-    print("\nALL STEPS OK" if out["all_ok"] else "\nSOME STEPS FAILED")
-    return 0 if out["all_ok"] else 1
+    snapshot_ok = True
+    if not args.fast:  # last, because the snapshot bundles run_all_summary.json; never from fast-mode numbers (W0.3)
+        snap = subprocess.run([PY, "scripts/export_snapshot.py"], cwd=REPO, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace")
+        snapshot_ok = snap.returncode == 0
+        print(f"[snapshot] {'OK  ' if snapshot_ok else 'FAIL'} {(snap.stdout.strip() or snap.stderr.strip())[-200:]}")
+    print("\nALL STEPS OK" if out["all_ok"] and snapshot_ok else "\nSOME STEPS FAILED")
+    return 0 if out["all_ok"] and snapshot_ok else 1
 
 
 if __name__ == "__main__":

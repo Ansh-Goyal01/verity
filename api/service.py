@@ -389,7 +389,7 @@ class EngineService:
             "alternates": result.alternates, "bingo_line": result.bingo_line,
             "point_of_no_return_km": result.point_of_no_return_km, "breakdown": result.breakdown,
             "levers": result.levers, "risk_sources": result.risk_sources, "refusal_reason": result.refusal_reason,
-            "compute_ms": result.compute_ms, "is_simulated": True,
+            "compute_ms": result.compute_ms, "n_runs": self.cfg.n_runs, "is_simulated": True,
         }
         self.plans[plan_id] = StoredPlan(result.state, response, dict(req))
         return response
@@ -441,7 +441,7 @@ class EngineService:
         ids = {o.node.id for o in opts}
         near = [r for r in view.reports if r.charger_id in ids]
         n_sim = sum(r.is_simulated for r in near)
-        return {"vehicle_id": req["vehicle_id"], **result,
+        return {"vehicle_id": req["vehicle_id"], **result, "n_runs": self.cfg.n_runs,
                 "route": {"polyline": thin_polyline(bundle["polyline"]), "source": bundle["source"]},
                 "earning_rate": {"rs_per_hour": rate, "is_example": is_example,
                                  "source": EARNING_RATE_SOURCE if is_example else "Entered by the driver"},
@@ -470,7 +470,7 @@ class EngineService:
         if d[i] > 15_000.0:
             raise ApiError(422, "off_route", "The position is more than 15 km from the planned route.")
         upd = live_update_plan(sp.state, float(self.poly_km[i]), float(req["soc_pct"]))
-        return {"plan_id": req["plan_id"], **upd, "is_simulated": True}
+        return {"plan_id": req["plan_id"], **upd, "n_runs": sp.state.ctx.runs.n_runs, "is_simulated": True}
 
     def chargers_in_bbox(self, min_lat: float, min_lon: float, max_lat: float, max_lon: float) -> dict:
         out = []

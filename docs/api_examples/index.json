@@ -96,6 +96,40 @@
    "status": 200
   },
   {
+   "file": "ride_check.json",
+   "method": "POST",
+   "path": "/api/ride-check",
+   "request_body": {
+    "vehicle_id": "V12",
+    "soc_pct": 45,
+    "current": {
+     "lat": 28.628,
+     "lon": 77.3649
+    },
+    "pickup": {
+     "lat": 28.5708,
+     "lon": 77.3261
+    },
+    "drop": {
+     "lat": 28.5562,
+     "lon": 77.0999
+    },
+    "earning_rs_per_hour": null,
+    "passengers": 1,
+    "ac_on": true,
+    "target_confidence": 0.9,
+    "departure_time": "2026-11-13T19:00:00+05:30"
+   },
+   "status": 200
+  },
+  {
+   "file": "driver_demo.json",
+   "method": "GET",
+   "path": "/api/demo/driver",
+   "request_body": null,
+   "status": 200
+  },
+  {
    "file": "chargers.json",
    "method": "GET",
    "path": "/api/chargers",

@@ -18,6 +18,7 @@ warnings.filterwarnings("ignore")  # starlette's httpx deprecation notice is irr
 from fastapi.testclient import TestClient  # noqa: E402
 
 from api.main import app, get_voice_client  # noqa: E402
+from api.service import DRIVER_DEMO  # noqa: E402
 from verity.paths import DOCS_DIR  # noqa: E402
 
 OUT = DOCS_DIR / "api_examples"
@@ -49,6 +50,8 @@ def main() -> int:
         pid = plan_ids["V12"]
         upd = {"plan_id": pid, "t": "2026-10-28T14:55:00+05:30", "lat": 28.10, "lon": 77.60, "soc_pct": 45}
         save("forecast_update", "POST", "/api/forecast/update", c.post("/api/forecast/update", json=upd), upd)
+        save("ride_check", "POST", "/api/ride-check", c.post("/api/ride-check", json=DRIVER_DEMO), DRIVER_DEMO)
+        save("driver_demo", "GET", "/api/demo/driver", c.get("/api/demo/driver"))
         box = {"min_lat": 27.0, "min_lon": 77.0, "max_lat": 29.5, "max_lon": 78.5}
         save("chargers", "GET", "/api/chargers", c.get("/api/chargers", params=box), box)
         replays = {vid: c.get(f"/api/demo/replay/{p}") for vid, p in plan_ids.items()}

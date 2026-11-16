@@ -11,5 +11,6 @@
  "action": "CONTINUE",
  "divert_to": null,
  "message": "On plan: still above the Bingo Line.",
+ "n_runs": 1500,
  "is_simulated": true
 }

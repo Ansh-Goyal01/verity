@@ -366,3 +366,14 @@ Every other endpoint is unlimited.
 `VERITY_TRUST_PROXY=1` (only behind exactly one proxy that appends `X-Forwarded-For`). Environment first, then
 `.env`. A plan not requested for a while may be evicted (the server keeps the 300 most recently used plans): a replay
 or live update for an evicted plan returns the existing 404 `unknown_plan`; call `POST /api/dispatch` again.
+
+## `n_runs` on dispatch, forecast update and ride-check (W0.3)
+
+Every probability in these responses comes from a Monte Carlo of `n_runs` runs, and the response says how many
+(`"n_runs": 1500`). A forecast update reports the runs of the plan it reweights. Show this number, or the count
+"19 of 20 simulated evenings" derived from it, instead of typing "1,500" or "2,000" into a page: the landing page
+and the README disagreed on it (F4). The number is the server's `VERITY_N_RUNS` (default 1500).
+
+`docs/api_examples/` now also holds `ride_check.json` and `driver_demo.json` (real responses for the pinned airport
+ride), and `results/snapshot.json` bundles every example and result the screens show, with `sources` naming the file
+behind each section; `tests/test_snapshot.py` fails when the bundle or an example differs from the engine or its file.

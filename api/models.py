@@ -186,6 +186,7 @@ class DispatchResponse(Resp):
     risk_sources: list[RiskSource]
     refusal_reason: str | None
     compute_ms: int
+    n_runs: int = Field(ge=1)  # Monte Carlo runs behind every probability here (W0.3): never hardcode it
     is_simulated: bool
 
 
@@ -217,6 +218,7 @@ class ForecastUpdateResponse(Resp):
     action: Action
     divert_to: DivertTo | None
     message: str
+    n_runs: int = Field(ge=1)  # the runs of the plan being reweighted (W0.3)
     is_simulated: bool
 
 
@@ -380,6 +382,7 @@ class RideCheckResponse(Resp):
     levers: list[RideLever]
     earning_rs_per_hour: float
     compute_ms: int
+    n_runs: int = Field(ge=1)  # Monte Carlo runs behind the confidence (W0.3)
     route: RideRoute
     earning_rate: EarningRate
     data_notes: list[str]

@@ -81,3 +81,9 @@ fits the project. Nothing here is applied unless both sides agree.
 - New error: HTTP 429 `{"error": "rate_limited", ...}` with `Retry-After` on the two voice endpoints only.
 - A plan evicted from the 300-entry LRU gives the existing 404 `unknown_plan`; repeated identical requests reuse one id.
 - CORS origins come from `VERITY_CORS_ORIGINS` when set; the default list is unchanged.
+
+## 2026-11-16 - v3: `n_runs` on dispatch, forecast update and ride-check (W0.3, F4)
+
+- Reason: guide W0.3 / finding F4. A page said 2,000 runs, the README 1,500; no consumer could tell which was true.
+- Old shape: no run count in any response. New shape: `n_runs` (integer >= 1) on `POST /api/dispatch`,
+  `POST /api/forecast/update` (the runs of the plan it reweights) and `POST /api/ride-check`. Additive.
