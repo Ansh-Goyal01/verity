@@ -72,9 +72,28 @@ def test_an_ambiguous_signal_fails_loudly(tmp_path: Path) -> None:
         read_trip(edited(tmp_path, b"Cabin Temperature Sensor [", b"Ambient Temperature ["))
 
 
+def crlf_bytes(name: str) -> bytes:
+    """A fixture as CRLF bytes whatever the checkout did to it: the real files use CRLF (W0.4, F10)."""
+    return fixture(name).read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+
+
 def test_a_non_increasing_time_axis_fails_loudly(tmp_path: Path) -> None:
+    raw = crlf_bytes("TripA01")
+    assert b"\r\n0.2;" in raw  # the CRLF is built here, so this test is identical on Windows, macOS and Linux
+    path = tmp_path / "TripA01.csv"
+    path.write_bytes(raw.replace(b"\r\n0.2;", b"\r\n0.0;", 1))
     with pytest.raises(ValueError, match="strictly increasing"):
-        read_trip(edited(tmp_path, b"\r\n0.2;", b"\r\n0.0;"))
+        read_trip(path)
+
+
+def test_crlf_and_lf_files_read_identically(tmp_path: Path) -> None:
+    lf_path, crlf_path = tmp_path / "lf" / "TripA01.csv", tmp_path / "crlf" / "TripA01.csv"
+    lf_path.parent.mkdir()
+    crlf_path.parent.mkdir()
+    lf_path.write_bytes(crlf_bytes("TripA01").replace(b"\r\n", b"\n"))
+    crlf_path.write_bytes(crlf_bytes("TripA01"))
+    assert b"\r" not in lf_path.read_bytes() and b"\r\n" in crlf_path.read_bytes()
+    assert read_trip(lf_path).data.equals(read_trip(crlf_path).data)
 
 
 def test_a_file_that_is_not_a_trip_id_is_refused() -> None:

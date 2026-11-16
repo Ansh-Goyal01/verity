@@ -1,0 +1,11 @@
+# One line-ending rule for every machine (W0.4, F10): text is stored as LF and checked out as LF, on Windows too.
+* text=auto eol=lf
+
+# The BMW i3 loader fixtures copy the real files byte for byte: Latin-1, CRLF, ';' separators.
+# Git must never convert them, or the loader would be tested on bytes the real data does not have.
+tests/fixtures/bmw_i3/*.csv -text
+
+# Binary files are never converted.
+*.png binary
+*.mp3 binary
+*.wav binary

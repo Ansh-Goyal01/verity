@@ -1,0 +1,30 @@
+# Green on every machine (W0.4, F10): the whole suite on Ubuntu and on Windows, on every push and pull request.
+# No secrets are given to this job, so the live-Neo4j parity tests skip themselves and no Sarvam call can be made.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: pytest (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false  # a failure on one OS must not hide the result on the other
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      VERITY_GRAPH: memory  # never connect to Neo4j from CI
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.13"  # the version the pinned demo numbers were produced on
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run pytest -q

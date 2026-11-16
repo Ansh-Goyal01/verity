@@ -1,8 +1,8 @@
 {
  "experiment": "E1 learning curve",
  "protocol": "R4a-training-LOO-extra-variance-v1",
- "fingerprint": "94425edd9be3d6c6a2726884c58cba2500c3db649377f7fc885b7483b058e0f0",
- "training_audit_sha256": "6cba305df637063a1419b792952635fb820d4fb0cf3e6bba0fe3bba818aa8c03",
+ "fingerprint": "be60fbf2116bb2c101780e6ef623aa8b566635435a9e228547727ac0805fd8a8",
+ "training_audit_sha256": "dadd5a1be5bbfdfda005389fe59cfc5810ca025c315e8ff259b348736398f618",
  "is_simulated": true,
  "dataset": "main",
  "rho_rel": 0.06,

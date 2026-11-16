@@ -96,8 +96,17 @@ def extra_relative_variance(rows: list[dict]) -> float:
     ])))
 
 
+def normalised_bytes(path: Path) -> bytes:
+    """File bytes with CRLF read as LF, so a Windows checkout (CRLF) and a Linux one (LF) hash the same (W0.4, F10)."""
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
+def audit_sha256(path: Path) -> str:
+    return hashlib.sha256(normalised_bytes(path)).hexdigest()
+
+
 def protocol_fingerprint(dataset: str, split: dict, rho: float, resamples: int, seed: int, draws: int) -> str:
-    """Hash code, settings, split and TRAIN data; never open a held-out trip here."""
+    """Hash code, settings, split and TRAIN data (line endings normalised); never open a held-out trip here."""
     from verity.paths import REPO_ROOT, SIM_DIR
     digest = hashlib.sha256(json.dumps([PROTOCOL, dataset, split, rho, resamples, seed, draws], sort_keys=True).encode())
     paths = [Path(__file__), *[REPO_ROOT / "engine" / "verity" / f"{m}.py"
@@ -106,7 +115,7 @@ def protocol_fingerprint(dataset: str, split: dict, rho: float, resamples: int, 
         for tid in v["train"]:
             paths.extend(SIM_DIR / dataset / kind / f"{tid}.json" for kind in ("trips", "context"))
     for path in paths:
-        digest.update(path.read_bytes())
+        digest.update(normalised_bytes(path))
     return digest.hexdigest()
 
 
@@ -233,7 +242,7 @@ def run_e1(dataset: str = "main", rho_rel: float = DEFAULT_RHO_REL, resamples: i
             samples = [np.concatenate(parts, axis=0) for parts in all_samples[method]]
             table[method][str(n)] = summarise_predictions(samples, np.array(targets), [np.array(v) for v in all_medians[method]])
     return {"experiment": "E1 learning curve", "protocol": PROTOCOL, "fingerprint": fingerprint,
-            "training_audit_sha256": hashlib.sha256(audit_path.read_bytes()).hexdigest(),
+            "training_audit_sha256": audit_sha256(audit_path),
             "is_simulated": True, "dataset": dataset, "rho_rel": rho_rel, "n_grid": list(N_GRID),
             "resamples": resamples, "seed": seed, "n_draws": n_draws, "methods": table,
             "relative_extra_variance": discrepancy, "test_trips": len(test_obs), "vehicles": len(split["vehicles"]),
@@ -294,7 +303,7 @@ def main() -> None:
         _, split = load_eval_dataset(args.dataset)
         expected = protocol_fingerprint(args.dataset, split, args.rho, args.resamples, result["seed"], result["n_draws"])
         audit = out / "e1_training_audit_simulated.json"
-        if result["fingerprint"] != expected or result["training_audit_sha256"] != hashlib.sha256(audit.read_bytes()).hexdigest():
+        if result["fingerprint"] != expected or result["training_audit_sha256"] != audit_sha256(audit):
             raise ValueError("Frozen evaluation does not match code/training/settings; do not silently rerun held-out evaluation")
         print("E1: verified frozen final evaluation; no held-out trips opened", flush=True)
     else:
