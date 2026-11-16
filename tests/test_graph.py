@@ -16,14 +16,23 @@ import pytest
 from verity.paths import REPO_ROOT
 from verity.schemas import ChargerRecord, Report
 from tests.graph_fakes import FakeDriver
-from verity.trust.graph import NODE_LABELS, InMemoryGraph, Leg, Neo4jGraph, load_env
+from verity.trust.graph import (
+    NODE_LABELS,
+    Alternate,
+    GraphCounts,
+    InMemoryGraph,
+    Leg,
+    Neo4jGraph,
+    RoadSegmentRec,
+    load_env,
+)
 
 IST = timezone(timedelta(hours=5, minutes=30))
 T0 = datetime(2026, 10, 27, 10, 0, tzinfo=IST)
 PROTOCOL_METHODS = ("add_charger", "add_chargers", "add_report", "add_reports", "chargers", "reports", "add_leg",
                     "add_legs", "legs", "legs_from", "drop_legs", "sweep_stale_legs", "add_alternate", "add_alternates",
                     "alternates", "add_road_segments", "reset_road_network", "coverage_gaps", "report_rings",
-                    "prune_simulated_reports", "add_works_with", "works_with", "co_reporting_pairs")
+                    "prune_simulated_reports", "add_works_with", "works_with", "co_reporting_pairs", "counts")
 
 
 def charger(i: int, op: str = "OpA") -> ChargerRecord:
@@ -76,7 +85,44 @@ def test_co_reporting_pairs_count_shared_chargers() -> None:
     assert g.co_reporting_pairs(min_shared=6) == []
 
 
+def test_an_empty_graph_has_no_nodes_and_no_relationships() -> None:
+    assert InMemoryGraph().counts() == GraphCounts(0, 0)
+
+
+def test_counts_follow_the_documented_node_and_relationship_kinds() -> None:
+    g = InMemoryGraph()
+    g.add_chargers([charger(1, "OpA"), charger(2, "OpA"), charger(3, "OpB")])  # all at site type "mall"
+    g.add_reports([report("C1", "s1"), report("C2", "s1"), report("C3", "s2")])
+    g.add_legs([Leg("C1", "C2", 40, 60, 0.8, 70)], scope="req1")  # a scoped request adds START and END waypoints
+    g.add_leg(Leg("C2", "C3", 40, 60, 0.7, 50))  # unscoped: no waypoints
+    g.add_road_segments([RoadSegmentRec("seg-1", 0.0, 10.0)])
+    g.add_alternates([Alternate("seg-1", "C1", 0.9), Alternate("seg-2", "C2", 0.8)])  # seg-2 exists only as an edge end
+    g.add_works_with("model-x", "hw-y", 0.6, 12)
+    counts = g.counts()
+    # nodes: 3 Charger + 2 Operator + 1 Site + 2 Source + 1 VehicleModel + 1 HardwareModel
+    #        + 4 RoadSegment (seg-1, seg-2, req1:START, req1:END)
+    assert counts.nodes == 3 + 2 + 1 + 2 + 1 + 1 + 4
+    # relationships: 3 REPORTED + 3 RUN_BY + 3 AT + 2 LEG + 2 ALTERNATE + 1 WORKS_WITH
+    assert counts.relationships == 3 + 3 + 3 + 2 + 2 + 1
+
+
+def test_dropping_a_request_scope_takes_its_waypoints_and_legs_with_it() -> None:
+    g = InMemoryGraph()
+    g.add_chargers([charger(1), charger(2)])
+    g.add_legs([Leg("C1", "C2", 40, 60, 0.8, 70)], scope="req1")
+    before = g.counts()
+    g.drop_legs("req1")
+    assert (before.nodes - g.counts().nodes, before.relationships - g.counts().relationships) == (2, 1)
+
+
 # --- Neo4j through a fake driver ---------------------------------------------------------------------------
+
+
+def test_neo4j_counts_come_from_one_read_only_query() -> None:
+    drv = FakeDriver([[{"nodes": 41, "relationships": 87}]])
+    assert Neo4jGraph(driver=drv).counts() == GraphCounts(41, 87)
+    (query, _), = drv.log
+    assert "count(" in query and not any(w in query.upper() for w in ("MERGE", "CREATE", "DELETE", "SET "))
 
 
 def test_neo4j_graph_implements_the_whole_interface() -> None:

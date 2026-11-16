@@ -46,7 +46,11 @@ def plans(client: TestClient) -> dict[str, dict]:
 
 def test_health_matches_the_contract(client: TestClient) -> None:
     r = client.get("/api/health")
-    assert r.status_code == 200 and r.json() == {"status": "ok", "version": "0.1.0", "neo4j": "in_memory", "is_simulated": True}
+    body = r.json()
+    graph = body.pop("graph")  # contract v3 (W0.7): which graph is in use and what it holds
+    assert isinstance(body.pop("sarvam_key_present"), bool)  # whether voice can work; tests/test_api_hardening.py
+    assert r.status_code == 200 and body == {"status": "ok", "version": "0.1.0", "neo4j": "in_memory", "is_simulated": True}
+    assert set(graph) == {"backend", "nodes", "relationships"} and graph["backend"] == "memory"
 
 
 @pytest.mark.parametrize("origin", ALLOWED_ORIGINS)

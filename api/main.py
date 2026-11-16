@@ -8,6 +8,8 @@ contract). Errors always have the shape ``{"error": code, "message": text}``.
 
 from __future__ import annotations
 
+import math
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Query, Request
@@ -17,8 +19,10 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from verity.voice import SarvamClient, VoiceUnavailable, parse_multipart, parse_soc_percent
+from verity.trust.graph import load_env
+from verity.voice import SarvamClient, VoiceUnavailable, parse_multipart, parse_soc_percent, sarvam_key_present
 
+from .limits import RateLimiter, client_ip, parse_origins, positive_int, rate_key
 from .models import (
     ChargersResponse,
     DemoScenario,
@@ -38,8 +42,35 @@ from .models import (
 from .service import ApiError, EngineService
 
 # Origins her pages use: "null" (file:// double-click), VS Code Live Server, and GitHub Pages.
-ALLOWED_ORIGINS = ["null", "http://localhost:5500", "http://127.0.0.1:5500", "https://ansh-goyal01.github.io"]
+DEFAULT_ORIGINS = ["null", "http://localhost:5500", "http://127.0.0.1:5500", "https://ansh-goyal01.github.io"]
+DEFAULT_VOICE_RATE_PER_MIN = 20  # tts + stt together, per address: every call is paid, a demo needs a handful
+VOICE_WINDOW_S = 60.0
 VOICE_MESSAGE = "Voice is not configured on this server (no SARVAM_API_KEY); use browser speech and the keypad."
+
+
+def env_setting(name: str) -> str | None:
+    """A setting from the environment, else from .env (the environment wins, as for the Neo4j settings)."""
+    return os.environ.get(name) or load_env().get(name) or None
+
+
+def cors_origins() -> list[str]:
+    """VERITY_CORS_ORIGINS (comma-separated) REPLACES the defaults when set; unset or blank keeps them."""
+    return parse_origins(env_setting("VERITY_CORS_ORIGINS"), DEFAULT_ORIGINS)
+
+
+def voice_rate_per_min() -> int:
+    return positive_int(env_setting("VERITY_VOICE_RATE_PER_MIN"), DEFAULT_VOICE_RATE_PER_MIN,
+                        "VERITY_VOICE_RATE_PER_MIN")
+
+
+def trust_proxy_enabled() -> bool:
+    """Opt in only when exactly one proxy that appends X-Forwarded-For sits in front: otherwise the header is forgeable."""
+    return (env_setting("VERITY_TRUST_PROXY") or "").strip().lower() in {"1", "true", "yes"}
+
+
+ALLOWED_ORIGINS = cors_origins()
+TRUST_PROXY = trust_proxy_enabled()
+voice_limiter = RateLimiter(voice_rate_per_min(), VOICE_WINDOW_S)
 
 _service: EngineService | None = None
 
@@ -55,6 +86,28 @@ def get_voice_client() -> SarvamClient | None:
     return SarvamClient.from_env()
 
 
+def voice_key_present() -> bool:
+    return sarvam_key_present()
+
+
+def get_voice_limiter() -> RateLimiter:
+    return voice_limiter
+
+
+class RateLimited(ApiError):
+    def __init__(self, retry_after_s: float) -> None:
+        self.retry_after = max(1, math.ceil(retry_after_s))  # whole seconds, never "0"
+        super().__init__(429, "rate_limited", f"Too many voice requests from this address; try again in "
+                                              f"{self.retry_after} s.")
+
+
+def limit_voice(request: Request, limiter: RateLimiter = Depends(get_voice_limiter)) -> None:
+    """Both voice endpoints draw on one budget per address: it is the paid Sarvam calls that are being rationed."""
+    retry_after = limiter.hit(rate_key(client_ip(request, TRUST_PROXY)))
+    if retry_after is not None:
+        raise RateLimited(retry_after)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     svc = get_service()  # build the demo fleet and trust estimates once, before the first request
@@ -64,7 +117,8 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="Verity API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_methods=["*"], allow_headers=["*"],
-                   allow_credentials=False)
+                   allow_credentials=False,
+                   expose_headers=["Retry-After"])  # else a page on another origin reads it as null (W0.7 429)
 
 
 def _error(status: int, code: str, message: str) -> JSONResponse:
@@ -74,6 +128,12 @@ def _error(status: int, code: str, message: str) -> JSONResponse:
 @app.exception_handler(ApiError)
 async def _api_error(_: Request, exc: ApiError) -> JSONResponse:
     return _error(exc.status, exc.code, exc.message)
+
+
+@app.exception_handler(RateLimited)  # the most specific handler wins, so this one adds the Retry-After header
+async def _rate_limited(_: Request, exc: RateLimited) -> JSONResponse:
+    return JSONResponse(status_code=429, content={"error": exc.code, "message": exc.message},
+                        headers={"Retry-After": str(exc.retry_after)})
 
 
 @app.exception_handler(RequestValidationError)
@@ -94,8 +154,8 @@ async def _unexpected(_: Request, exc: Exception) -> JSONResponse:
 
 
 @app.get("/api/health", response_model=Health)
-def health(svc: EngineService = Depends(get_service)) -> dict:
-    return svc.health()
+def health(svc: EngineService = Depends(get_service), key_present: bool = Depends(voice_key_present)) -> dict:
+    return {**svc.health(), "sarvam_key_present": key_present}
 
 
 @app.get("/api/demo/scenario", response_model=DemoScenario)
@@ -137,7 +197,7 @@ def get_replay(plan_id: str, svc: EngineService = Depends(get_service)) -> dict:
     return svc.replay(plan_id)
 
 
-@app.post("/api/voice/tts", response_model=TtsResponse)
+@app.post("/api/voice/tts", response_model=TtsResponse, dependencies=[Depends(limit_voice)])
 def voice_tts(req: TtsRequest, voice: SarvamClient | None = Depends(get_voice_client)):
     if voice is None:
         return _error(503, "voice_unavailable", VOICE_MESSAGE)
@@ -147,7 +207,7 @@ def voice_tts(req: TtsRequest, voice: SarvamClient | None = Depends(get_voice_cl
         return _error(503, "voice_unavailable", str(exc))
 
 
-@app.post("/api/voice/stt", response_model=SttResponse)
+@app.post("/api/voice/stt", response_model=SttResponse, dependencies=[Depends(limit_voice)])
 async def voice_stt(request: Request, voice: SarvamClient | None = Depends(get_voice_client)):
     if voice is None:
         return _error(503, "voice_unavailable", VOICE_MESSAGE)

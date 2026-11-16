@@ -36,13 +36,14 @@ from verity.schemas import ChargerRecord, Report
 from verity.sim import generate_dataset, load_manifest
 from verity.trips import haversine_m, load_sim_observation
 from verity.trust.engine import ChargerTrust, TrustEngine
-from verity.trust.graph import TEST_PREFIX, ChargerGraph
+from verity.trust.graph import TEST_PREFIX, ChargerGraph, GraphCounts
 from verity.trust.graph_build import GraphHandle, open_graph, populate_road_network
 from verity.trust.reports_sim import NOW
 from verity.ridecheck import RideInput, ride_check
 from verity.routing import snapshot_to_route
 from verity.vehicles import get_prior
 
+from .limits import LruCache
 from .models import DispatchRequest, RideCheckRequest
 from .ride import (
     AFTER_DROP_RADIUS_KM,
@@ -63,6 +64,9 @@ AREA_MARGIN_DEG = 0.1  # ride checks serve points inside the charger directory's
 
 DEMO_SEED = 1028
 SWEEP_EVERY_S = 600.0  # how often to remove plan legs that a crashed or failed-cleanup request left behind
+PLAN_CACHE_SIZE = 300  # stored plans (W0.7): identical requests share one id, so this is distinct plans in play
+RIDE_CACHE_SIZE = 300  # fetched ride routes outside the committed bundles
+HEALTH_COUNTS_TTL_S = 30.0  # /api/health is polled; a Neo4j count is a ~200 ms round trip, so reuse it for a while
 DEMO_FLEET = (("V07", "compact_esuv", 0.78), ("V12", "compact_esuv", 0.98), ("V19", "compact_esuv", 0.95))
 # (label, start SoC %, number of trips used for calibration). Scenario inputs, not results.
 # V07 starts at 70 % (was 82 %): at 82 % the denser corridor lifts its raw confidence to the target and the
@@ -231,9 +235,10 @@ class EngineService:
         self.graph.populate(lambda g: populate_road_network(g, self.near, self.trust, float(self.poly_km[-1]),
                                                             ALT_AHEAD_KM))
         self.fleet = self._build_fleet()
-        self.plans: dict[str, StoredPlan] = {}
+        self.plans: LruCache[str, StoredPlan] = LruCache(PLAN_CACHE_SIZE)
         self.ride_bundles = load_bundles()  # committed ride routes (no network); others are fetched and cached
-        self._ride_cache: dict[tuple, dict] = {}
+        self._ride_cache: LruCache[tuple, dict] = LruCache(RIDE_CACHE_SIZE)
+        self._counts_cache: tuple[str, float, GraphCounts] | None = None  # (backend, taken at, counts)
         self.last_graph_timing: dict = {}
         self._last_sweep = time.monotonic()  # open_graph already swept at startup
 
@@ -260,9 +265,23 @@ class EngineService:
 
     # -- endpoints ----------------------------------------------------------------------------------------------
     def health(self) -> dict:
-        """``neo4j`` says "connected" only while Neo4j is the graph that trust and dispatch actually read."""
-        neo4j = "connected" if self.graph.backend == "neo4j" else "in_memory"
-        return {"status": "ok", "version": __version__, "neo4j": neo4j, "is_simulated": True}
+        """``neo4j`` says "connected" only while Neo4j is the graph that trust and dispatch actually read; ``graph``
+        names that backend and counts what it holds (W0.7). The counts are taken at most every HEALTH_COUNTS_TTL_S."""
+        backend, counts = self._graph_counts()  # one read of the backend: both labels below come from it
+        return {"status": "ok", "version": __version__, "neo4j": "connected" if backend == "neo4j" else "in_memory",
+                "is_simulated": True,
+                "graph": {"backend": backend, "nodes": counts.nodes, "relationships": counts.relationships}}
+
+    def _graph_counts(self) -> tuple[str, GraphCounts]:
+        """(backend the counts came from, counts). A Neo4j failure here falls back to the mirror like any other
+        request does, so the backend is read AFTER the call."""
+        cached = self._counts_cache
+        if cached is not None and cached[0] == self.graph.backend and time.monotonic() - cached[1] < HEALTH_COUNTS_TTL_S:
+            return cached[0], cached[2]
+        counts = self.graph.call(lambda g: g.counts())
+        backend = self.graph.backend
+        self._counts_cache = (backend, time.monotonic(), counts)
+        return backend, counts
 
     def close(self) -> None:
         self.graph.close()
@@ -318,6 +337,17 @@ class EngineService:
             raise ApiError(422, "unsupported_route", "This prototype serves the cached Noida to Agra route only "
                            f"(origin and destination must be within {ENDPOINT_TOLERANCE_KM:.0f} km of them).")
 
+    def _plan_id_for(self, key: str, req: dict) -> str:
+        """The shortest ``PL-`` prefix of the request hash (4 hex characters or more) that is free or already this
+        request's. After an eviction a different request can take an evicted plan's id: roughly 1 in 65 000 per new
+        distinct request, and only once more than PLAN_CACHE_SIZE plans have been made (docs/DECISIONS.md W0.7)."""
+        for n in range(4, 41):
+            plan_id = f"PL-{key[:n]}"
+            stored = self.plans.get(plan_id)
+            if stored is None or stored.request == req:
+                return plan_id
+        raise AssertionError("a 40-character hash prefix collided with a different request")
+
     def dispatch(self, req: dict) -> dict:
         req = canonical_request(DispatchRequest, req)
         fv = self.fleet.get(req["vehicle_id"])
@@ -325,10 +355,10 @@ class EngineService:
             raise ApiError(404, "unknown_vehicle", f"Unknown vehicle {req['vehicle_id']!r}; known: {sorted(self.fleet)}")
         self._check_endpoints(req["origin"], req["destination"])
         key = hashlib.sha1(json.dumps({k: req[k] for k in sorted(req)}, sort_keys=True).encode()).hexdigest()
-        plan_id = next(f"PL-{key[:n]}" for n in range(4, 41) if f"PL-{key[:n]}" not in self.plans
-                       or self.plans[f"PL-{key[:n]}"].request == req)
-        if plan_id in self.plans:
-            return self.plans[plan_id].response
+        plan_id = self._plan_id_for(key, req)
+        stored = self.plans.get(plan_id)  # one atomic read: the plan may be evicted between a check and a second read
+        if stored is not None:
+            return stored.response
         ctx = replace(fv.ctx, passengers=req["passengers"], ac_on=req["ac_on"])
         others = [(replace(o.ctx, passengers=req["passengers"], ac_on=req["ac_on"]), float(o.soc_pct))
                   for vid, o in self.fleet.items() if vid != req["vehicle_id"]]
@@ -378,11 +408,14 @@ class EngineService:
         if bundle is not None:
             return bundle
         key = tuple(round(v, 4) for p in (cur, pick, drop) for v in p)
-        if key not in self._ride_cache:
-            departure = datetime.fromisoformat(req["departure_time"]) if req.get("departure_time") else datetime.now(
-                timezone.utc)
-            self._ride_cache[key] = fetch_bundle(departure, cur, pick, drop, candidates_near_drop(view.chargers, drop))
-        return self._ride_cache[key]
+        cached = self._ride_cache.get(key)
+        if cached is not None:
+            return cached
+        departure = datetime.fromisoformat(req["departure_time"]) if req.get("departure_time") else datetime.now(
+            timezone.utc)
+        bundle = fetch_bundle(departure, cur, pick, drop, candidates_near_drop(view.chargers, drop))
+        self._ride_cache[key] = bundle
+        return bundle
 
     def ride_check(self, req: dict) -> dict:
         """GO / NO_GO / INSUFFICIENT_EVIDENCE for a ride plus the after-drop plan to a trusted charger (F8b)."""
@@ -424,9 +457,10 @@ class EngineService:
                 "is_simulated": True}
 
     def _plan(self, plan_id: str) -> StoredPlan:
-        if plan_id not in self.plans:
+        stored = self.plans.get(plan_id)
+        if stored is None:
             raise ApiError(404, "unknown_plan", f"No plan {plan_id!r}; call POST /api/dispatch first")
-        return self.plans[plan_id]
+        return stored
 
     def forecast_update(self, req: dict) -> dict:
         sp = self._plan(req["plan_id"])

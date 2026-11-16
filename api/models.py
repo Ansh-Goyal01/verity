@@ -30,11 +30,19 @@ class Req(BaseModel):
 # --- health and demo ---------------------------------------------------------------------------------------
 
 
+class GraphInfo(Resp):
+    backend: Literal["neo4j", "memory"]
+    nodes: int = Field(ge=0)
+    relationships: int = Field(ge=0)
+
+
 class Health(Resp):
     status: Literal["ok"]
     version: str
     neo4j: Literal["connected", "in_memory"]
     is_simulated: bool
+    graph: GraphInfo  # contract v3, additive (W0.7)
+    sarvam_key_present: bool  # whether voice can work; never the key itself
 
 
 class Place(Resp):

@@ -7,7 +7,7 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 
 - [x] S1 Bingo Line agrees with the plan (W0.1) + deadline line (W0.0)
 - [x] S2 No certainty on screen + reason sentence (W0.2, W0.6)
-- [ ] S3 Green on every machine + hardening (W0.4, W0.7)
+- [x] S3 Green on every machine + hardening (W0.4, W0.7)
 - [ ] S4 One source of truth + offline (W0.3, W0.5)
 - [ ] S5 Sarvam client + spoken ride-check (W3.1, W3.2)
 - [ ] S6 Graph structure + names + graph endpoints (W2.1, W2.5, W2.6)
@@ -64,3 +64,18 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
   has pytest's own "[100%]" progress marker only). Suite: 379 passed, 10 skipped (parity skipped with `NEO4J_URI=`).
 - Manual for Ansh: check the Hindi reason templates in `voice_loop.py` (`REASON_TEMPLATES["hi-IN"]`); regenerate
   `web/js/snapshot.js` (`scripts/export_web_snapshot.py`) and show `confidence_display` + `reason` in the frontend.
+
+### S3 (2026-11-16) — done
+- W0.4 `49ee00e`: `.gitattributes` (LF text; BMW CSV fixtures `-text`, now stored as CRLF); the CRLF test builds its own bytes (old
+  test fails on LF fixtures, new passes on both); E1 fingerprint + audit hash hash newline-normalised bytes. One-time re-stamp of
+  those two hash fields only, after the old hashes were re-verified; every E1 number identical, no held-out trip opened
+  (`tests/test_e1_fingerprint.py` guards it on every OS). `.github/workflows/ci.yml`: Ubuntu + Windows, Python 3.13, no secrets.
+- W0.7 (next commit): LRU(300) plan + ride caches (`api/limits.py`, atomic `get`); CORS from `VERITY_CORS_ORIGINS`; voice rate limit 20/min per
+  address shared by tts+stt (429 + `Retry-After`, exposed through CORS; IPv6 per /64); `/api/health` adds `graph{backend,nodes,relationships}` +
+  `sarvam_key_present`. `counts()` on both graph backends: memory 288/302 = live Aura 288/302 (by hand, not pinned). Contract v3 + CHANGES.
+- Suite: 442 passed, 10 skipped (parity, `NEO4J_URI=`). No pinned decision moved (V07 NO_GO 80%, V12 GO 95%+, V19 IE 90%). Code review run
+  (`code-reviewer`): no CRITICAL/HIGH; the MEDIUMs were fixed, limits logged in DECISIONS.md. Only `docs/api_examples/health.json` re-exported.
+- Manual for Ansh: (1) push, then watch the FIRST CI run on Ubuntu: pinned numbers (V07/V12/V19) were never run on Linux; (2) confirm the
+  20/min voice default (`VERITY_VOICE_RATE_PER_MIN`); (3) a hosted deploy must set `VERITY_TRUST_PROXY=1` and `VERITY_CORS_ORIGINS` (S11);
+  (4) `SarvamClient` reads `.env` only, so an env-var-only deploy shows `sarvam_key_present: false` (S5/S11).
+- Seen, not fixed: with live Aura, dispatch V12 `compute_ms` ~10 s vs ~2.4 s in memory (network writes; S8). Run `export_api_examples.py` with `VERITY_GRAPH=memory`.

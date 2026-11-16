@@ -331,3 +331,38 @@ speaks the same sentence (en-IN) or its Hindi template. `INSUFFICIENT_EVIDENCE` 
 Other forms: "NO_GO because the best plan relies on planned stop X (...) and reaches only 80% confidence (target
 90%).", and, for plans without a charging stop, "GO because the destination is reached with reserve, without
 charging, in 95%+ of runs." / "NO_GO because no charging plan reaches the 90% target; the best reaches 70%."
+
+## `graph` and `sarvam_key_present` on GET /api/health (W0.7)
+
+```json
+{"status": "ok", "version": "0.1.0", "neo4j": "in_memory", "is_simulated": true,
+ "graph": {"backend": "memory", "nodes": 288, "relationships": 302},
+ "sarvam_key_present": true}
+```
+
+`graph.backend` is the graph that trust and dispatch actually read (`"neo4j"` or `"memory"`; the older `neo4j` field
+says the same thing as `connected` / `in_memory`). `nodes` and `relationships` count what that backend holds: for
+Neo4j the whole database, for memory what it would have written. They are re-read at most every 30 s, so polling
+health is cheap. `sarvam_key_present` says only whether voice can work on this server; the key is never returned.
+Real values are in `docs/api_examples/health.json`.
+
+## HTTP 429 on the voice endpoints (W0.7)
+
+`POST /api/voice/tts` and `POST /api/voice/stt` share one budget per client address (default 20 calls per minute,
+`VERITY_VOICE_RATE_PER_MIN`; an IPv6 client is counted per /64), because every call is a paid Sarvam call. Over it:
+
+```json
+HTTP 429  Retry-After: 40
+{"error": "rate_limited", "message": "Too many voice requests from this address; try again in 40 s."}
+```
+
+`Retry-After` is whole seconds, and the server lists it in `Access-Control-Expose-Headers`, so `fetch()` on another
+origin can read it. Handle the 429 like `voice_unavailable`: fall back to browser speech and the keypad.
+Every other endpoint is unlimited.
+
+## Server settings (W0.7, not part of any response)
+
+`VERITY_CORS_ORIGINS` (comma-separated; REPLACES the built-in origins when set), `VERITY_VOICE_RATE_PER_MIN`,
+`VERITY_TRUST_PROXY=1` (only behind exactly one proxy that appends `X-Forwarded-For`). Environment first, then
+`.env`. A plan not requested for a while may be evicted (the server keeps the 300 most recently used plans): a replay
+or live update for an evicted plan returns the existing 404 `unknown_plan`; call `POST /api/dispatch` again.

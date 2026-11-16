@@ -2,5 +2,11 @@
  "status": "ok",
  "version": "0.1.0",
  "neo4j": "in_memory",
- "is_simulated": true
+ "is_simulated": true,
+ "graph": {
+  "backend": "memory",
+  "nodes": 288,
+  "relationships": 302
+ },
+ "sarvam_key_present": true
 }

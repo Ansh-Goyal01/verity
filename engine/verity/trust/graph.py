@@ -115,6 +115,14 @@ class QueryStats(NamedTuple):
     seconds: float
 
 
+class GraphCounts(NamedTuple):
+    """Everything the graph in use holds, for /api/health. Each backend counts its own store: Neo4j the whole
+    database (including anything else in it), memory the nodes and relationships it would have written."""
+
+    nodes: int
+    relationships: int
+
+
 def report_key(rep: Report) -> str:
     """Identity of a report: one source's verdict on one charger at one instant."""
     return f"{rep.source_id}|{rep.charger_id}|{rep.t.isoformat()}"
@@ -181,6 +189,7 @@ class ChargerGraph(Protocol):
     def works_with(self, vehicle_model: str, hardware_model: str) -> tuple[float, int] | None: ...
     def co_reporting_pairs(self, min_shared: int = 4) -> list[tuple[str, str, int]]: ...
     def report_rings(self, min_shared: int = 4, window_hours: float | None = RING_WINDOW_HOURS) -> list[Ring]: ...
+    def counts(self) -> GraphCounts: ...
 
 
 class InMemoryGraph:
@@ -274,6 +283,30 @@ class InMemoryGraph:
 
     def works_with(self, vehicle_model: str, hardware_model: str) -> tuple[float, int] | None:
         return self._works_with.get((vehicle_model, hardware_model))
+
+    def counts(self) -> GraphCounts:
+        """Nodes and relationships by the schema's kinds, the way the Neo4j writes create them: Operator and Site
+        nodes are shared by value, a scoped request adds START and END waypoints (RoadSegment), and a road segment
+        exists once it is stored or is the end of an ALTERNATE edge."""
+        # Snapshots first: request threads add legs and alternates (even a READ of ``alternates`` inserts into its
+        # defaultdict), and iterating a dict while another thread grows it raises. ``list(...)`` of a built-in dict
+        # view runs in C under the GIL, so each snapshot is consistent.
+        chargers = list(self._chargers.values())
+        reports = list(self._reports.values())
+        legs = list(self._legs.items())
+        alternates = list(self._alternates.items())
+        works_with = list(self._works_with)
+        segments = set(list(self._segments)) | {seg for seg, edges in alternates if edges}
+        waypoints = 2 * sum(1 for scope, scope_legs in legs if scope and scope_legs)
+        nodes = (len(chargers) + len({c.operator for c in chargers if c.operator})
+                 + len({c.site_type for c in chargers if c.site_type})
+                 + len({r.source_id for r in reports})
+                 + len({v for v, _ in works_with}) + len({h for _, h in works_with})
+                 + len(segments) + waypoints)
+        relationships = (len(reports) + sum(1 for c in chargers if c.operator)
+                         + sum(1 for c in chargers if c.site_type) + sum(len(scope_legs) for _, scope_legs in legs)
+                         + sum(len(edges) for _, edges in alternates) + len(works_with))
+        return GraphCounts(nodes, relationships)
 
     def co_reporting_pairs(self, min_shared: int = 4) -> list[tuple[str, str, int]]:
         by_source: dict[str, set[str]] = defaultdict(set)
@@ -385,6 +418,12 @@ class Neo4jGraph:
     def reset_query_stats(self) -> None:
         with self._lock:
             self._queries, self._seconds = 0, 0.0
+
+    def counts(self) -> GraphCounts:
+        """Every node and relationship in the database: one read-only round trip."""
+        rows = self._run("MATCH (n) WITH count(n) AS nodes OPTIONAL MATCH ()-[r]->() "
+                         "RETURN nodes, count(r) AS relationships")
+        return GraphCounts(int(rows[0]["nodes"]), int(rows[0]["relationships"]))
 
     def _run(self, query: str, **params: Any) -> list[dict]:
         start = time.perf_counter()

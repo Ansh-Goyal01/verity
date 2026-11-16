@@ -70,3 +70,14 @@ fits the project. Nothing here is applied unless both sides agree.
 
 - Reason: guide W0.6 / finding F11. V12 was GO with an unreported planned stop and nothing said why.
 - Old shape: no `reason` on dispatch. New shape: `reason` (string, always present). Additive.
+
+## 2026-11-16 - v3: health reports the graph and the voice key; 429 on voice; bounded plan cache (W0.7, F14)
+
+- Reason: guide W0.7. A judge or an uptime check needs to see which graph is live and that voice is configured; the two
+  voice endpoints cost money; a long-running server must not grow without bound; nothing deployed elsewhere could
+  call the API (CORS was a fixed list).
+- Old shape: health had `status, version, neo4j, is_simulated`. New shape: plus `graph {backend, nodes, relationships}`
+  and `sarvam_key_present` (bool, never the key). Additive.
+- New error: HTTP 429 `{"error": "rate_limited", ...}` with `Retry-After` on the two voice endpoints only.
+- A plan evicted from the 300-entry LRU gives the existing 404 `unknown_plan`; repeated identical requests reuse one id.
+- CORS origins come from `VERITY_CORS_ORIGINS` when set; the default list is unchanged.

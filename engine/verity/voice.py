@@ -45,6 +45,15 @@ class VoiceUnavailable(RuntimeError):
     """No Sarvam key configured, or the service could not be reached."""
 
 
+def _read_key(env_path: Path | None = None) -> str:
+    return load_env(env_path).get("SARVAM_API_KEY", "")
+
+
+def sarvam_key_present(env_path: Path | None = None) -> bool:
+    """Is a key configured? The rule ``SarvamClient.from_env`` uses, without building an HTTP client or exposing the key."""
+    return bool(_read_key(env_path))
+
+
 @dataclass
 class SarvamClient:
     api_key: str
@@ -53,7 +62,7 @@ class SarvamClient:
 
     @classmethod
     def from_env(cls, env_path: Path | None = None, client: httpx.Client | None = None) -> SarvamClient | None:
-        key = load_env(env_path).get("SARVAM_API_KEY", "")
+        key = _read_key(env_path)
         if not key:
             return None
         return cls(key, client or httpx.Client(base_url=SARVAM_BASE, timeout=TIMEOUT_S))
