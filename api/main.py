@@ -8,15 +8,16 @@ contract). Errors always have the shape ``{"error": code, "message": text}``.
 
 from __future__ import annotations
 
-import base64
 import math
 import os
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -40,14 +41,20 @@ from .models import (
     SttResponse,
     TtsRequest,
     TtsResponse,
+    VoiceRideConfirm,
+    VoiceRideDecided,
+    VoiceRideHeard,
 )
 from .service import ApiError, EngineService
+from .speech import VOICE_MESSAGE, synthesise
+from .voice_ride import decide_stage, hear_stage
 
 # Origins her pages use: "null" (file:// double-click), VS Code Live Server, and GitHub Pages.
 DEFAULT_ORIGINS = ["null", "http://localhost:5500", "http://127.0.0.1:5500", "https://ansh-goyal01.github.io"]
 DEFAULT_VOICE_RATE_PER_MIN = 20  # tts + stt together, per address: every call is paid, a demo needs a handful
 VOICE_WINDOW_S = 60.0
-VOICE_MESSAGE = "Voice is not configured on this server (no SARVAM_API_KEY); use browser speech and the keypad."
+MAX_RECORDING_BYTES = 5_000_000  # Sarvam takes clips under 30 s; a larger upload is not a driver's one sentence
+LANGUAGE_FIELD = re.compile(r"^(unknown|[a-z]{2,3}-[A-Z]{2})$")  # only a real language code is sent to a paid call
 
 
 def env_setting(name: str) -> str | None:
@@ -211,17 +218,10 @@ def voice_tts(req: TtsRequest, voice: SarvamClient | None = Depends(get_voice_cl
               cache: AudioCache = Depends(get_audio_cache)):
     """Live text-to-speech; when there is no key or Sarvam cannot be reached, the pre-generated clip of exactly this
     sentence (flagged ``cached: true``), and only if there is one. Anything else is the honest 503."""
-    if voice is None:
-        failure = VOICE_MESSAGE
-    else:
-        try:
-            return {**voice.tts(req.text, req.language), "cached": False}
-        except VoiceUnavailable as exc:
-            failure = str(exc)
-    clip = cache.lookup(req.text, req.language)
-    if clip is None:
-        return _error(503, "voice_unavailable", failure)
-    return {"audio_base64": base64.b64encode(clip).decode("ascii"), "format": "wav", "cached": True}
+    try:
+        return synthesise(req.text, req.language, voice, cache)
+    except VoiceUnavailable as exc:
+        return _error(503, "voice_unavailable", str(exc))
 
 
 @app.post("/api/voice/stt", response_model=SttResponse, dependencies=[Depends(limit_voice)])
@@ -241,3 +241,44 @@ async def voice_stt(request: Request, voice: SarvamClient | None = Depends(get_v
     except VoiceUnavailable as exc:
         return _error(503, "voice_unavailable", str(exc))
     return {"text": text, "soc_pct": parse_soc_percent(text)}
+
+
+def _validation_detail(exc: ValidationError) -> str:
+    return "; ".join(f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}" for e in exc.errors()) or "invalid request"
+
+
+@app.post("/api/voice/ride-check", response_model=VoiceRideHeard | VoiceRideDecided, dependencies=[Depends(limit_voice)])
+async def voice_ride_check(request: Request, svc: EngineService = Depends(get_service),
+                           voice: SarvamClient | None = Depends(get_voice_client),
+                           cache: AudioCache = Depends(get_audio_cache)):
+    """The spoken ride-check in two calls (W3.2). Multipart audio (+ ``language``, ``speak``) -> hear and read back, or ask
+    again; it never decides. JSON ``VoiceRideConfirm`` -> on ``confirmed`` the ordinary ride-check, spoken in a fixed template."""
+    content_type = request.headers.get("content-type", "")
+    body = await request.body()
+    if content_type.startswith("application/json"):
+        try:
+            confirm = VoiceRideConfirm.model_validate_json(body)
+        except ValidationError as exc:
+            return _error(422, "invalid_request", _validation_detail(exc))
+        return await run_in_threadpool(decide_stage, svc, voice, cache, confirm)
+
+    if voice is None:
+        return _error(503, "voice_unavailable", VOICE_MESSAGE)
+    try:
+        fields, files = parse_multipart(content_type, body)
+    except ValueError as exc:
+        return _error(422, "invalid_request", str(exc))
+    upload = files.get("audio") or files.get("file")
+    if upload is None:
+        return _error(422, "invalid_request", "multipart field 'audio' (the recording) is required")
+    filename, audio_type, audio = upload
+    if not audio or len(audio) > MAX_RECORDING_BYTES:
+        return _error(422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
+    language = fields.get("language", "unknown")
+    if not LANGUAGE_FIELD.match(language):
+        return _error(422, "invalid_request", "language must be 'unknown' or a code like hi-IN")
+    speak = fields.get("speak", "1").strip().lower() not in {"0", "false", "no"}
+    try:
+        return await run_in_threadpool(hear_stage, voice, cache, audio, filename, audio_type, language, speak)
+    except VoiceUnavailable as exc:
+        return _error(503, "voice_unavailable", str(exc))
