@@ -482,3 +482,21 @@ question), prompt_audio, timings_ms, is_simulated: false}`.
 plans_checked (<= 2), plans_pending (plans that use the charger but were not re-checked now: over the limit, the shown trust did not change, or another re-plan was running; they keep their old answer until asked for again), replan_failed (the report is stored, only the re-check failed), plans [{plan_id, vehicle_id, decision_before, decision_after, confidence_before, confidence_after,
 moved, changed ("decision"|"stops"|"backups")}], speech, audio, timings_ms, is_simulated}`. `from_real_person=false` stores a
 simulated report under source `driver:driver_voice_scripted` and is refused with 403 `scripted_reports_disabled` unless the server sets `VERITY_ALLOW_SCRIPTED_REPORTS=1` (demo only). `moved` means "changed since the plan was made" (time and other reports count too), not "caused by this report". The audio is never stored.
+
+## Evidence ledger (contract v6, W1.5)
+
+**`GET /api/evidence/ledger`** - read-only; every count is read from the saved result files on each call, so it moves when a
+file does (a new corpus upload and `scripts/run_real_data.py`, an OCM fetch, an experiment re-run) with no code change.
+Answers `{schema: "verity.evidence_ledger.v1", real: {trips {rows, usable, note}, charger_reports {corpus_evidence_usable,
+app_snapshot_usable, ocm_checkins (null = not fetched), total_real_reports, ocm_status}, voice_notes {count, status
+("NOT_RUN"|"MEASURED"), note}, app_reviews {rows, usable, text_rows_private}, bmw_i3_held_out {status ("DONE"|"NOT_RUN"),
+label, trips_scored, km_scored, preliminary, capacity_error_pct, capacity_truth_in_ci95, capacity_truth_in_ci80,
+soc_drop_median_abs_error_pp, soc_drop_band95_coverage}}, simulated: {monte_carlo_runs_per_answer, experiments [{experiment,
+present, is_simulated: true, units, file}], note}, driver_real: {needed_reports (3), real_reports_available, status
+("WAITING_FOR_DATA"|"READY_TO_CHECK"), reason}, sources: {real_data_summary, ocm_checkins, bmw_heldout}}`. A missing or
+unreadable file is reported as missing (`null` / `NOT_RUN`), never as a count of zero evidence of something else.
+`driver_real` only says whether a real-only demo scenario COULD be built (>= 3 real dated reports in total); it does not
+build one, and it does not claim the reports lie near the drop.
+
+Graph additions of S8/S9 (no endpoint changed): `Source` nodes may carry `ring_id` (written by `scripts/graph_rings.py`);
+`Neo4jGraph.shared_causes`, `chains` and `agreement_edges` are engine-internal, each with an in-memory twin.

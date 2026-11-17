@@ -25,6 +25,9 @@ from verity.audio_cache import AudioCache
 from verity.trust.graph import load_env
 from verity.voice import SarvamClient, VoiceUnavailable, parse_multipart, parse_soc_percent, sarvam_key_present
 
+from verity.paths import RESULTS_DIR
+
+from .ledger import build_ledger
 from .limits import RateLimiter, client_ip, parse_origins, positive_int, rate_key
 from .models import (
     ChargerGraphResponse,
@@ -219,6 +222,12 @@ def demo_scenario(svc: EngineService = Depends(get_service)) -> dict:
 @app.post("/api/dispatch", response_model=DispatchResponse)
 def post_dispatch(req: DispatchRequest, svc: EngineService = Depends(get_service)) -> dict:
     return svc.dispatch(req.model_dump())
+
+
+@app.get("/api/evidence/ledger")
+def evidence_ledger(svc: EngineService = Depends(get_service)) -> dict:
+    """W1.5: how much real evidence and how much simulation stand behind the answers, read from the saved result files."""
+    return build_ledger(RESULTS_DIR, n_runs=svc.cfg.n_runs)
 
 
 @app.get("/api/demo/driver", response_model=DriverDemo)

@@ -12,9 +12,9 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 - [x] S5 Sarvam client + spoken ride-check (W3.1, W3.2)
 - [x] S6 Graph structure + names + graph endpoints (W2.1, W2.5, W2.6)
 - [x] S7 Spoken report into the graph + OCM check-ins (W3.3, W1.2)
-- [ ] S8 Graph independence + Cypher chains + E6 (W2.2, W2.3)
-- [ ] S9 Rings as graph analytics + E5b (W2.4)
-- [ ] S10 Real data in, ledger out (W1.3, W1.4, W1.5, W3.6) — after corpus freeze
+- [x] S8 Graph independence + Cypher chains + E6 (W2.2, W2.3)
+- [x] S9 Rings as graph analytics + E5b (W2.4)
+- [x] S10 Real data in, ledger out (W1.3, W1.4, W1.5, W3.6) — BUILT AROUND an empty corpus: W1.4 DONE, W1.5 DONE, W1.3/W3.6 wait for the 19 Nov rows (re-run S10 steps then)
 - [ ] S11 README, disclosure, deploy + Done-means audit (W5.1–W5.3)
 - [ ] S12 Venue voice kit + extra languages (W3.5, W3.4)
 
@@ -127,4 +127,19 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 - W1.2: `verity/ocm.py` + `scripts/fetch_ocm_checkins.py` + tests (SYNTHETIC point). **BLOCKED:** the one fetch got `ConnectError 10054` from api.openchargemap.io (key IS in .env); n = 0 real check-ins, `results/ocm_checkins.json` not written. Field names are from memory (docs unreadable, reference data 403): `mapping_verified: false`. Manual: re-run from another network, check `data/cache/ocm_checkins_raw.json`, report the n. Details: `docs/EVIDENCE_STATUS.md`.
 - Suite offline (`NEO4J_URI=`): 688 passed, 21 skipped (live-Aura tests + stale `web/js/snapshot.js`); the live parity tests were NOT re-run this session (graph code untouched apart from `add_report` arguments). No paid Sarvam calls in S7; the new reply sentences are not in the offline audio cache (live TTS, else text).
 - Manual for Ansh: (1) the frontend: audio -> `/api/voice/report` -> show `prompt` + candidates -> consent tick -> `/report/confirm` -> speak `speech`; (2) listen to the Hindi sentences in `report_voice.py` (machine-written); (3) real Hindi speech writes charger names in Devanagari, which will not match Latin directory names (not measured; needs transliteration or verified aliases in `data/gazetteer/charger_aliases.json`); (4) decide whether to set `VERITY_ALLOW_SCRIPTED_REPORTS=1` for the demo; (5) `export_web_snapshot.py` still pending.
-- S8 not started.
+
+### S8 (2026-11-17) - done
+- W2.2: chargers of one operator share an operator-wide common cause (`BETA_OPERATOR = 0.2`, an ASSUMPTION; Site wins when both apply). The graph answers "who shares a Site/operator/hardware" in one query (`SHARED_CAUSES_CYPHER`, memory twin, live parity OK); hardware is always null (no field in the directory). `link_operators=False` keeps E3/E4 on the Site-only model: E3 re-run identical except timings. One existing fixture (`test_dispatch.charger`) set to operator "" (it declared one placeholder operator for six co-located chargers).
+- W2.3: `chains_cypher` + `dispatch.graph_chains`; Yen stays the fallback. Live parity on V07/V12/V19: same chains. Latency on Aura (216 queries): Cypher p50 121 ms / p95 517 ms vs Yen 1.5 / 5.2 ms per proposal -> `results/chains_latency.json`. The graph is the visible path, not the fast one.
+- E6 (300 trips x 6 scenarios, simulated): plan changes 26-28 % but the control changes 26 % too (noise); stranding differences inside the 95 % intervals; both planners over-claim (95 % vs 90 % realised in the harshest case). Published as is.
+- Pinned decisions unchanged (V07 NO_GO 80 %, V12 GO 95 %+, V19 IE 90 %; dispatch examples byte-equal bar compute_ms). Ride-check secondary numbers moved (confidence_as_primary 0.90 -> 0.95 on one option); the decision did not. Examples + snapshot re-exported.
+- Neo4j was unreachable for a while (Bolt port timed out, same network blocked OCM); it came back and every live test ran on Aura. Docker was started once and closed again, not used.
+
+### S9 (2026-11-17) - done
+- W2.4: `AGREEMENT_CYPHER` (Jaccard agreement edges between sources), `graph.communities`, `Source.ring_id` written back by `scripts/graph_rings.py`; pure definition in `trust/ring_edges.py`; memory communities == numpy detector rings; live Cypher parity OK. Aura Graph Analytics NOT used (client not verified); pure Cypher + union-find is the guide's fallback.
+- E5b: E5's burst detector misses the 10-day evasive ring (recall 0); overlap with no window finds all of it but flags 19-28 % of honest repeat reporters with E5's thresholds; thresholds tuned on dev seeds (min_shared 16) flag none, but that is fitted to simulated sizes (upper bound). The simulator gained `WorldConfig.n_repeat` (drawn last: E5 worlds unchanged).
+
+### S10 (2026-11-17) - done around an EMPTY corpus
+- W1.4 DONE: i3 prior v2 frozen (cited CdA 0.69 m2; per-vehicle reference capacity x1.25 because the global 1.05 bound is fingerprinted by E1 and was left alone), logged and committed BEFORE the held-out split was opened once (`--final`, lock file). Held-out: 19 trips, 399 km: capacity error -10.5 % (truth inside the 95 % CI, outside 80 %; F9's prior -13.0 %); per-trip SoC drop mean error -0.1 %, median 0.95 points, but parameter-only bands cover 26 % / 47 %. Capacity claim NOT validated: Range Passport stays in Lab. Training-trip record: -14.5 % -> -12.1 %.
+- W1.5 DONE: `GET /api/evidence/ledger` (contract v6). W1.3: `driver_real` is a status (WAITING_FOR_DATA, 0 real reports). W3.6 not run (0 review rows). `run_real_data.py --no-paid` re-run, all steps OK, all real rows 0. OCM re-fetched once the network cleared: 78 points, 0 check-ins (no `UserComments` key at all): n = 0, mapping still unverified.
+- Manual for Ansh: (1) the corpus rows (guide W1.1) by 19 Nov, then `uv run python scripts/run_real_data.py` and `scripts/export_snapshot.py`; (2) `export_web_snapshot.py` for the frontend (still pending from S4-S7); (3) decide whether `BETA_OPERATOR = 0.2` and the i3 ceiling scale 1.25 are acceptable assumptions; (4) a first CI run (Windows) is still unseen.

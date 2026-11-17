@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-13T12:58:51+00:00",
+ "generated_at": "2026-11-17T17:06:40+00:00",
  "is_simulated": false,
  "note": "Corpus sizes and step statuses for the REAL-data track; the numbers live in each step's result file.",
  "corpus": {
@@ -35,14 +35,14 @@
   }
  },
  "private_review_texts": 0,
- "no_paid": false,
+ "no_paid": true,
  "all_ok": true,
  "steps": [
   {
    "step": "validate",
    "ok": true,
    "returncode": 0,
-   "seconds": 0.2,
+   "seconds": 0.4,
    "missing_outputs": [],
    "last_line": "All files pass (no errors).",
    "headline": null
@@ -51,7 +51,7 @@
    "step": "F3",
    "ok": true,
    "returncode": 0,
-   "seconds": 2.3,
+   "seconds": 2.1,
    "missing_outputs": [],
    "last_line": "}",
    "headline": {
@@ -72,7 +72,7 @@
    "step": "F4",
    "ok": true,
    "returncode": 0,
-   "seconds": 3.1,
+   "seconds": 3.2,
    "missing_outputs": [],
    "last_line": "}",
    "headline": {
@@ -96,7 +96,7 @@
    "step": "F5",
    "ok": true,
    "returncode": 0,
-   "seconds": 22.6,
+   "seconds": 7.7,
    "missing_outputs": [],
    "last_line": " -> D:\\hackfront-verity\\results\\e3_real_evidence.json",
    "headline": {
@@ -117,12 +117,12 @@
    "step": "F6",
    "ok": true,
    "returncode": 0,
-   "seconds": 0.8,
+   "seconds": 2.2,
    "missing_outputs": [],
    "last_line": "REAL: hand-collected public app-store reviews (text kept private): NOT_RUN | rows 0, with text 0, classified 0, paid calls 0 -> D:\\hackfront-verity\\results\\voc_app_reviews.json",
    "headline": {
     "status": "NOT_RUN",
-    "method": "sarvam-chat",
+    "method": "keyword",
     "n_review_rows": 0,
     "n_with_private_text": 0,
     "n_human_labelled": null,
@@ -133,9 +133,9 @@
    "step": "F9",
    "ok": true,
    "returncode": 0,
-   "seconds": 42.1,
+   "seconds": 78.1,
    "missing_outputs": [],
-   "last_line": "demo V07: Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False.  (32.9 s)",
+   "last_line": "demo V07: Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False.  (67.7 s)",
    "headline": {
     "bmw_i3_trips_usable": 40,
     "bmw_i3_label": "REAL: BMW i3 60 Ah, Germany (TU Munich, DOI 10.21227/6jr9-5235), TRAINING-split trips only; not Indian conditions",

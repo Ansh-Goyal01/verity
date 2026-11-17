@@ -9,8 +9,8 @@
    "is_simulated": true,
    "graph": {
     "backend": "memory",
-    "nodes": 288,
-    "relationships": 302
+    "nodes": 479,
+    "relationships": 519
    },
    "sarvam_key_present": true
   },
@@ -7478,7 +7478,7 @@
      }
     ],
     "refusal_reason": null,
-    "compute_ms": 7904,
+    "compute_ms": 9565,
     "n_runs": 1500,
     "is_simulated": true
    },
@@ -14842,7 +14842,7 @@
      }
     ],
     "refusal_reason": null,
-    "compute_ms": 7068,
+    "compute_ms": 8969,
     "n_runs": 1500,
     "is_simulated": true
    },
@@ -22244,7 +22244,7 @@
      }
     ],
     "refusal_reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
-    "compute_ms": 6992,
+    "compute_ms": 8364,
     "n_runs": 1500,
     "is_simulated": true
    }
@@ -25375,8 +25375,8 @@
       "trust_level": "medium"
      },
      "recent_failure_days": 1,
-     "confidence_as_primary": 0.9,
-     "expected_lost_min": 102,
+     "confidence_as_primary": 0.95,
+     "expected_lost_min": 98,
      "expected_lost_rs": 100,
      "chosen": false,
      "note": "Avoided: a failure was reported 1 day ago."
@@ -25481,7 +25481,7 @@
      },
      "recent_failure_days": null,
      "confidence_as_primary": 0.95,
-     "expected_lost_min": 111,
+     "expected_lost_min": 108,
      "expected_lost_rs": 110,
      "chosen": false,
      "note": "Not chosen: few or no recent reports."
@@ -25502,7 +25502,7 @@
      },
      "recent_failure_days": null,
      "confidence_as_primary": 0.95,
-     "expected_lost_min": 101,
+     "expected_lost_min": 102,
      "expected_lost_rs": 100,
      "chosen": false,
      "note": "Not chosen: few or no recent reports."
@@ -25727,7 +25727,7 @@
    ],
    "levers": [],
    "earning_rs_per_hour": 60.0,
-   "compute_ms": 1412,
+   "compute_ms": 1578,
    "n_runs": 1500,
    "speech": {
     "en-IN": "Take the ride. The chance of completing it and reaching a working charger is 95 percent or more. After the drop, charge at Radisson Blu Plaza Delhi Airport: about 79 minutes, roughly 80 rupees at an example earning rate.",
@@ -27893,8 +27893,8 @@
      "mean_minutes_blind_not_stranded": 215.8,
      "mean_minutes_aware_not_stranded": 215.4,
      "mean_minutes_lost_by_being_aware": -0.4,
-     "plan_ms_blind_mean": 75.0,
-     "plan_ms_aware_mean": 69.0
+     "plan_ms_blind_mean": 350.0,
+     "plan_ms_aware_mean": 320.0
     },
     "40% chargers down": {
      "trips": 200,
@@ -27907,8 +27907,8 @@
      "mean_minutes_blind_not_stranded": 217.0,
      "mean_minutes_aware_not_stranded": 217.0,
      "mean_minutes_lost_by_being_aware": -0.0,
-     "plan_ms_blind_mean": 74.0,
-     "plan_ms_aware_mean": 69.0
+     "plan_ms_blind_mean": 415.0,
+     "plan_ms_aware_mean": 381.0
     }
    },
    "notes": [
@@ -27940,8 +27940,8 @@
      "stranded_only_dispatch": 2,
      "mean_minutes_fixed_not_stranded": 208.5,
      "mean_minutes_dispatch_not_stranded": 208.2,
-     "plan_ms_fixed_mean": 79.0,
-     "plan_ms_dispatch_mean": 72.0
+     "plan_ms_fixed_mean": 392.0,
+     "plan_ms_dispatch_mean": 354.0
     },
     "10% chargers down": {
      "trips": 200,
@@ -27961,8 +27961,8 @@
      "stranded_only_dispatch": 2,
      "mean_minutes_fixed_not_stranded": 210.8,
      "mean_minutes_dispatch_not_stranded": 210.8,
-     "plan_ms_fixed_mean": 76.0,
-     "plan_ms_dispatch_mean": 69.0
+     "plan_ms_fixed_mean": 526.0,
+     "plan_ms_dispatch_mean": 466.0
     },
     "20% chargers down": {
      "trips": 200,
@@ -27982,8 +27982,8 @@
      "stranded_only_dispatch": 0,
      "mean_minutes_fixed_not_stranded": 216.3,
      "mean_minutes_dispatch_not_stranded": 216.8,
-     "plan_ms_fixed_mean": 76.0,
-     "plan_ms_dispatch_mean": 70.0
+     "plan_ms_fixed_mean": 392.0,
+     "plan_ms_dispatch_mean": 370.0
     },
     "40% chargers down": {
      "trips": 200,
@@ -28003,16 +28003,16 @@
      "stranded_only_dispatch": 0,
      "mean_minutes_fixed_not_stranded": 217.0,
      "mean_minutes_dispatch_not_stranded": 218.9,
-     "plan_ms_fixed_mean": 88.0,
-     "plan_ms_dispatch_mean": 81.0
+     "plan_ms_fixed_mean": 265.0,
+     "plan_ms_dispatch_mean": 246.0
     }
    },
    "compute": {
     "real_route_km": 190.77,
     "chargers_near_route": 10,
     "runs_per_forecast": 2000,
-    "full_dispatch_ms_mean": 1708.0,
-    "full_dispatch_ms_max": 2259
+    "full_dispatch_ms_mean": 4425.0,
+    "full_dispatch_ms_max": 4734
    },
    "notes": [
     "The 0 % row is the control: stranding there comes from energy-forecast error, not chargers.",
@@ -28267,7 +28267,7 @@
    ]
   },
   "real_data": {
-   "generated_at": "2026-11-13T12:58:51+00:00",
+   "generated_at": "2026-11-17T17:06:40+00:00",
    "is_simulated": false,
    "note": "Corpus sizes and step statuses for the REAL-data track; the numbers live in each step's result file.",
    "corpus": {
@@ -28303,14 +28303,14 @@
     }
    },
    "private_review_texts": 0,
-   "no_paid": false,
+   "no_paid": true,
    "all_ok": true,
    "steps": [
     {
      "step": "validate",
      "ok": true,
      "returncode": 0,
-     "seconds": 0.2,
+     "seconds": 0.4,
      "missing_outputs": [],
      "last_line": "All files pass (no errors).",
      "headline": null
@@ -28319,7 +28319,7 @@
      "step": "F3",
      "ok": true,
      "returncode": 0,
-     "seconds": 2.3,
+     "seconds": 2.1,
      "missing_outputs": [],
      "last_line": "}",
      "headline": {
@@ -28340,7 +28340,7 @@
      "step": "F4",
      "ok": true,
      "returncode": 0,
-     "seconds": 3.1,
+     "seconds": 3.2,
      "missing_outputs": [],
      "last_line": "}",
      "headline": {
@@ -28364,7 +28364,7 @@
      "step": "F5",
      "ok": true,
      "returncode": 0,
-     "seconds": 22.6,
+     "seconds": 7.7,
      "missing_outputs": [],
      "last_line": " -> D:\\hackfront-verity\\results\\e3_real_evidence.json",
      "headline": {
@@ -28385,12 +28385,12 @@
      "step": "F6",
      "ok": true,
      "returncode": 0,
-     "seconds": 0.8,
+     "seconds": 2.2,
      "missing_outputs": [],
      "last_line": "REAL: hand-collected public app-store reviews (text kept private): NOT_RUN | rows 0, with text 0, classified 0, paid calls 0 -> D:\\hackfront-verity\\results\\voc_app_reviews.json",
      "headline": {
       "status": "NOT_RUN",
-      "method": "sarvam-chat",
+      "method": "keyword",
       "n_review_rows": 0,
       "n_with_private_text": 0,
       "n_human_labelled": null,
@@ -28401,9 +28401,9 @@
      "step": "F9",
      "ok": true,
      "returncode": 0,
-     "seconds": 42.1,
+     "seconds": 78.1,
      "missing_outputs": [],
-     "last_line": "demo V07: Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False.  (32.9 s)",
+     "last_line": "demo V07: Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False.  (67.7 s)",
      "headline": {
       "bmw_i3_trips_usable": 40,
       "bmw_i3_label": "REAL: BMW i3 60 Ah, Germany (TU Munich, DOI 10.21227/6jr9-5235), TRAINING-split trips only; not Indian conditions",

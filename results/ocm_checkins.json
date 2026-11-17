@@ -1,0 +1,12 @@
+{
+  "source": "public:ocm_checkin",
+  "status": "fetched",
+  "n_pois_fetched": 78,
+  "n_checkins": 0,
+  "skipped": {},
+  "warnings": [],
+  "mapping_verified": false,
+  "is_simulated": false,
+  "fetched_at": "2026-11-17T17:18:03.505192+00:00",
+  "reports": []
+}

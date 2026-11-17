@@ -173,6 +173,10 @@ LEG is stored per battery band, never as one fixed probability.
   Open Charge Map check-ins (needs `OCM_API_KEY`; mapping unverified until the raw response is checked): `uv run python scripts/fetch_ocm_checkins.py` -> `results/ocm_checkins.json`
 - Aura keep-alive (one write-and-delete, log in data/cache/aura_keepalive.log): `uv run python scripts/aura_keepalive.py`;
   scheduled 10:00 + 22:00 daily until 2026-11-23 as Windows task `VerityAuraKeepAlive`
+- Graph analytics (S8/S9): candidate-chain latency on Aura `uv run python scripts/bench_chains.py` -> `results/chains_latency.json`; report rings +
+  `Source.ring_id` `uv run python scripts/graph_rings.py`; `experiments/e5b_ring_overlap.py` and `e6_operator_correlation.py` -> `results/` (simulated)
+- BMW i3 energy-model evaluation: `uv run python scripts/bmw_heldout.py --dev` (training trips only); `--final` opens the held-out split ONCE (refuses if
+  `results/bmw_i3_heldout.json` exists). Evidence ledger: `GET /api/evidence/ledger`.
 
 ## How to work in this repo
 

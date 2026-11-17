@@ -129,3 +129,11 @@ fits the project. Nothing here is applied unless both sides agree.
 - `POST /api/reports` behaviour change (not the shape): real reports are now aged by real time, simulated by the frozen demo clock (`trust_before` / `trust_after` of a report you just wrote are unchanged in meaning).
 
 - v5 addendum (review of S7): `from_real_person=false` needs `VERITY_ALLOW_SCRIPTED_REPORTS=1` on the server (403 `scripted_reports_disabled` otherwise); the confirm answer gains `plans_pending` and `replan_failed`; the old plan is served until its re-plan is ready.
+
+## 2026-11-17 - v6: `GET /api/evidence/ledger` (W1.5)
+
+- Reason: guide W1.5. A judge should see in one call how many REAL trips, charger reports, voice notes and reviews, and how many
+  simulated runs and experiments, stand behind the answers; the BMW i3 held-out result is part of it.
+- Old shape: none. New shape: see the last section of API_CONTRACT.md. Additive; nothing existing changed.
+- Honesty: counts are read from result files at request time; missing files are `null`/`NOT_RUN`. `driver_real` is a status, not a
+  scenario (WAITING_FOR_DATA while fewer than 3 real reports exist).
