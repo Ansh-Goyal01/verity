@@ -44,6 +44,31 @@ def i3_prior() -> VehiclePrior:
                        usable_frac=I3_USABLE_KWH_SPEC / I3_NOMINAL_KWH)
 
 
+# --- i3 prior v2 (W1.4): the two causes of F9's -14.5 % bias, removed WITHOUT looking at any held-out trip ------------
+# Cause 1, the capacity ceiling. The model bounds usable capacity at 1.05 x its reference capacity, a core assumption
+# that E1's frozen held-out evaluation fingerprints (calibrate/physics/vehicles/trips), so it cannot change here. What
+# the Passport estimates is energy per 100 GAUGE points as measured at the battery terminals, which can exceed the cited
+# gross 21.6 kWh (BMS window, terminal losses): on the training trips the measured value sits at 1.05 x 21.6, exactly
+# at the old ceiling. For the i3 the reference capacity is therefore scaled by I3_CEILING_SCALE; the prior CENTRE stays
+# the cited net 18.8 kWh. The scale is an assumption (a generous allowance), not a fit to any trip.
+I3_CEILING_SCALE = 1.25
+# Cause 2, class priors standing in for i3 values. Cited: Cd 0.29 and frontal area 2.38 m2 (BMW i3 60 Ah technical data,
+# 2014/2017, as listed by evkx.net; read 2026-11-17) -> CdA 0.69 m2. Crr, drivetrain efficiency and the climate load
+# have NO cited i3 value and stay at the small_ecar class prior (still disclosed, still a source of bias).
+I3_CD = 0.29
+I3_FRONTAL_AREA_M2 = 2.38
+I3_CDA_M2 = I3_CD * I3_FRONTAL_AREA_M2
+
+
+def i3_prior_v2() -> VehiclePrior:
+    """The frozen i3 prior for the held-out evaluation: same net-capacity centre and mass as ``i3_prior`` plus the
+    cited CdA, with the capacity ceiling lifted to ``1.05 * I3_CEILING_SCALE * 21.6`` kWh."""
+    reference = I3_NOMINAL_KWH * I3_CEILING_SCALE
+    return model_prior("small_ecar", "bmw_i3_60ah_v2", "BMW i3 60 Ah (cited battery, mass and CdA; class prior otherwise)",
+                       nominal_kwh=reference, curb_mass_kg=I3_CURB_KG, usable_frac=I3_USABLE_KWH_SPEC / reference,
+                       cda_m2=I3_CDA_M2)
+
+
 def usable_for_passport(trip: BmwTrip) -> bool:
     """Fixed rule: no known data problem and a SoC drop of at least MIN_SOC_DROP_PCT."""
     if any(f.startswith(x) for f in trip.flags for x in EXCLUDE_FLAGS):
