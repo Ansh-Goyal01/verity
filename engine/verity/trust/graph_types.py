@@ -22,6 +22,17 @@ class SiteRec(NamedTuple):
     charger_ids: tuple[str, ...]
 
 
+class SharedCause(NamedTuple):
+    """Two chargers of one route that can fail for the same reason (W2.2). ``None`` = that cause is not shared.
+    ``shared_hardware`` is always ``None`` today: the charger directory has no hardware field, and none is invented."""
+
+    a: str  # charger ids, a < b
+    b: str
+    shared_site: str | None
+    shared_operator: str | None
+    shared_hardware: str | None
+
+
 class PlanStopRec(NamedTuple):
     order: int
     charger_id: str

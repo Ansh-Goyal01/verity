@@ -28,6 +28,7 @@ from .graph_types import (
     PlanBackupRec,
     PlanRec,
     PlanStopRec,
+    SharedCause,
     SiteRec,
 )
 
@@ -73,6 +74,18 @@ CALL {{
 }}
 RETURN c {{.id, .name, .lat, .lon, .operator, .site_type}} AS charger, s.id AS site, o.id AS operator,
        same_site, reports, aliases, plans"""
+
+# W2.2: which chargers of a route can fail for the same reason? One query for all pairs of the route's chargers.
+# Only linked pairs come back. ``IS`` (hardware) is in the query for when a hardware field exists; today no edge does.
+SHARED_CAUSES_CYPHER = """\
+MATCH (p:Charger) WHERE p.id IN $ids
+MATCH (b:Charger) WHERE b.id IN $ids AND b.id > p.id
+OPTIONAL MATCH (p)-[:AT]->(s:Site)<-[:AT]-(b)
+OPTIONAL MATCH (p)-[:RUN_BY]->(o:Operator)<-[:RUN_BY]-(b)
+OPTIONAL MATCH (p)-[:IS]->(h:HardwareModel)<-[:IS]-(b)
+WITH p, b, s, o, h WHERE s IS NOT NULL OR o IS NOT NULL OR h IS NOT NULL
+RETURN p.id AS a, b.id AS b, s.id AS shared_site, o.id AS shared_operator, h.id AS shared_hardware
+ORDER BY a, b"""
 
 SEARCH_CYPHER = (
     "CALL db.index.fulltext.queryNodes('charger_names', $q, {limit: $limit}) YIELD node, score "
@@ -209,6 +222,20 @@ class MemoryStructure:
     def sites(self) -> list[SiteRec]:
         return build_site_recs(list(self._chargers.values()))
 
+    def shared_causes(self, ids: Sequence[str]) -> list[SharedCause]:
+        """The Python twin of ``SHARED_CAUSES_CYPHER``: same pairs, same order."""
+        wanted = sorted({i for i in ids if i in self._chargers})
+        site_of = {cid: s.site_id for s in self.sites() for cid in s.charger_ids}
+        out = []
+        for i, a in enumerate(wanted):
+            for b in wanted[i + 1:]:
+                site = site_of.get(a) if site_of.get(a) is not None and site_of.get(a) == site_of.get(b) else None
+                op = self._chargers[a].operator
+                op = op if op and op == self._chargers[b].operator else None
+                if site or op:
+                    out.append(SharedCause(a, b, site, op, None))
+        return out
+
     def add_plan(self, plan: PlanRec) -> None:
         self._plans[plan.plan_id] = plan
 
@@ -326,6 +353,10 @@ class Neo4jStructure:
         rows = self._run("MATCH (s:Site) OPTIONAL MATCH (c:Charger)-[:AT]->(s) WITH s, c ORDER BY c.id "
                          "RETURN s.id AS id, s.site_type AS site_type, collect(c.id) AS chargers ORDER BY id")
         return [SiteRec(r["id"], r["site_type"], tuple(r["chargers"])) for r in rows]
+
+    def shared_causes(self, ids: Sequence[str]) -> list[SharedCause]:
+        rows = self._run(SHARED_CAUSES_CYPHER, ids=sorted(set(ids)))
+        return [SharedCause(r["a"], r["b"], r["shared_site"], r["shared_operator"], r["shared_hardware"]) for r in rows]
 
     def add_plan(self, plan: PlanRec) -> None:
         self._run(

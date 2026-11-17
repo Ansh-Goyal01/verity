@@ -87,11 +87,13 @@ def one_trial(fx: Fixture, failure_rate: float, seed: int, diversity: bool = Tru
     route_chargers = [RouteCharger(c, float(k), 0.1) for c, k in zip(chargers, kms)]
 
     t0 = time.perf_counter()
+    # link_operators=False: every simulated charger here carries the placeholder operator "SimOp"; E3/E4 predate the
+    # operator-level common cause (W2.2) and keep their Site-only model, so their published numbers do not move.
     blind_stops, _, ctx = plan_only(vehicle, route, route_chargers, trust, start_soc=START_SOC, seed=seed, cfg=CFG,
-                                    trust_aware=False)
+                                    trust_aware=False, link_operators=False)
     t1 = time.perf_counter()
     aware_stops, aware_ev, _ = plan_only(vehicle, route, route_chargers, trust, start_soc=START_SOC, seed=seed, cfg=CFG,
-                                         trust_aware=True, diversity=diversity)
+                                         trust_aware=True, diversity=diversity, link_operators=False)
     t2 = time.perf_counter()
 
     works = {c.id: bool(rng.random() < r) for c, r in zip(chargers, true_r)}

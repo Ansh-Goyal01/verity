@@ -48,7 +48,9 @@ def vehicle(trips: int = 5, vid: str = "V1") -> VehicleContext:
 
 
 def charger(cid: str, km: float, p: float = 0.9, *, kw: float | None = 50.0, level: str = "high", p_lo: float | None = None):
-    rec = ChargerRecord(id=cid, name=f"Charger {cid}", lat=28.0, lon=77.5, operator="Op", site_type="highway",
+    # operator="" (unknown): these fixtures sit at one point (one Site) and test planning, not correlation; a shared
+    # placeholder operator would add the operator-level common cause of W2.2 on top (tests/test_s8_independence.py).
+    rec = ChargerRecord(id=cid, name=f"Charger {cid}", lat=28.0, lon=77.5, operator="", site_type="highway",
                         connectors=[{"type": "CCS2", "kw": kw}] if kw else [])
     n_rep, days = {"high": (8, 3.0), "medium": (3, 20.0), "low": (1, 50.0), "unknown": (0, None)}[level]
     trust = ChargerTrust(cid, p, p if p_lo is None else p_lo, min(p + 0.05, 1.0), n_rep, days, level, 0.82)

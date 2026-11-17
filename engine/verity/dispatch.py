@@ -41,7 +41,7 @@ from .forecast import (
 )
 from .physics import total_mass_kg
 from .schemas import ChargerRecord
-from .sites import WorksSampler, assign_sites, p_all_fail
+from .sites import WorksSampler, assign_sites, operators_from_pairs, p_all_fail
 from .trust.engine import ChargerTrust
 from .trust.graph import ChargerGraph, InMemoryGraph, Leg
 from .vehicles import get_prior
@@ -98,6 +98,7 @@ class Node:
     site: str = ""  # Site id (chargers within ~150 m); "" = a Site of its own
     detour_min: float = 0.0  # there and back between the route and the charger
     wait_min: float = 0.0  # expected queue wait from queue evidence
+    operator: str = ""  # operator shared with another charger of this route (W2.2); "" = no shared operator
 
     @property
     def site_id(self) -> str:
@@ -180,11 +181,27 @@ class PlanEval:
 # --- nodes, graph, candidates -----------------------------------------------------------------------------
 
 
+def graph_operators(graph: ChargerGraph, route_chargers: Sequence[RouteCharger]) -> dict[str, str]:
+    """W2.2: which chargers of this route share an operator, asked of the graph (one query for every pair)."""
+    pairs = graph.shared_causes([rc.charger.id for rc in route_chargers])
+    return operators_from_pairs([(cid, sc.shared_operator or "") for sc in pairs for cid in (sc.a, sc.b)])
+
+
 def make_nodes(route_chargers: Sequence[RouteCharger], trust: dict[str, ChargerTrust], *, trust_aware: bool = True,
-               prior_p: float = 0.82, queue_wait_min: dict[str, float] | None = None) -> list[Node]:
+               prior_p: float = 0.82, queue_wait_min: dict[str, float] | None = None,
+               operators: dict[str, str] | None = None, link_operators: bool = True) -> list[Node]:
     """Route chargers as planning nodes. A reliability-blind planner (E3) assumes every charger works.
-    Chargers within ~150 m share a Site (correlated failures); the detour is there and back at DETOUR_SPEED_KMH."""
+    Chargers within ~150 m share a Site (correlated failures); the detour is there and back at DETOUR_SPEED_KMH.
+    Chargers of one operator share a weaker operator-wide cause (W2.2). ``operators`` (charger id -> operator, from
+    the graph's shared-cause query) decides which; without it the directory's own operator field does (the Python
+    fallback, same answer). ``link_operators=False`` is the Site-only model of before W2.2 (E3/E4, E6's baseline)."""
     sites = assign_sites([(rc.charger.id, rc.charger.lat, rc.charger.lon) for rc in route_chargers])
+    if not link_operators:
+        ops: dict[str, str] = {}
+    elif operators is not None:
+        ops = dict(operators)
+    else:
+        ops = {rc.charger.id: rc.charger.operator for rc in route_chargers if rc.charger.operator}
     waits = queue_wait_min or {}
     nodes = []
     for rc in route_chargers:
@@ -198,7 +215,7 @@ def make_nodes(route_chargers: Sequence[RouteCharger], trust: dict[str, ChargerT
         kw = max((c.kw for c in rc.charger.connectors), default=None)
         nodes.append(Node(rc.charger.id, rc.km_along, float(p), float(lo), float(hi), kw, rc.charger, t,
                           sites[rc.charger.id], 2.0 * rc.offset_km / DETOUR_SPEED_KMH * 60.0,
-                          float(waits.get(rc.charger.id, 0.0))))
+                          float(waits.get(rc.charger.id, 0.0)), ops.get(rc.charger.id, "")))
     return sorted(nodes, key=lambda n: n.km)
 
 
@@ -337,13 +354,39 @@ def diverse_paths(adj: dict[str, dict[str, float]], nodes: Sequence[Node], k: in
                  for b, w in out.items()} for a, out in adj.items()}
     extra = [p[1:-1] for _, p in k_shortest_paths(risky, "START", "END", K_RELIABLE)]
     if found and found[0]:
-        base = [by_id[i] for i in found[0]]
-        banned = {n.id for n in nodes if any(n.site_id == b.site_id or abs(n.km - b.km) < SPATIAL_SEP_KM for b in base)}
+        banned = _spatially_banned(nodes, found[0])
         apart = {a: {b: w for b, w in out.items() if b not in banned} for a, out in adj.items() if a not in banned}
         extra += [p[1:-1] for _, p in k_shortest_paths(apart, "START", "END", K_SPATIAL)]
     for p in extra:
         if p not in found:
             found.append(p)
+    return found
+
+
+def _spatially_banned(nodes: Sequence[Node], base_chain: Sequence[str]) -> set[str]:
+    """Chargers a spatially distinct chain must avoid: the cheapest chain's Sites and everything near its stops."""
+    by_id = {n.id: n for n in nodes}
+    base = [by_id[i] for i in base_chain]
+    return {n.id for n in nodes if any(n.site_id == b.site_id or abs(n.km - b.km) < SPATIAL_SEP_KM for b in base)}
+
+
+def graph_chains(graph: ChargerGraph, scope: str, nodes: Sequence[Node], k: int = K_CANDIDATES, *,
+                 diversity: bool = True) -> list[list[str]] | None:
+    """``diverse_paths`` with the chains proposed by the graph itself (W2.3, Cypher in ``chains_cypher``): the same three
+    candidate families, each one query. ``None`` when the graph has no such query (the in-memory fallback)."""
+    first = graph.chains(scope, k)
+    if first is None:
+        return None
+    found = [c for _, c in first]
+    if not diversity:
+        return found
+    fail = {n.id: 1.0 - n.p_works for n in nodes}
+    extra = [c for _, c in graph.chains(scope, K_RELIABLE, fail=fail, weight=RELIABILITY_WEIGHT_MIN) or []]
+    if found and found[0]:
+        extra += [c for _, c in graph.chains(scope, K_SPATIAL, banned=_spatially_banned(nodes, found[0])) or []]
+    for c in extra:
+        if c not in found:
+            found.append(c)
     return found
 
 
@@ -356,8 +399,10 @@ def propose_paths(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool, k: int 
         leg_graph, _ = build_leg_graph(ctx, nodes, trust_aware=trust_aware, graph=graph, scope=scope)
         ids = ["START"] + [n.id for n in nodes] + ["END"]
         by_id = {n.id: n for n in nodes}
-        paths = [[by_id[i] for i in p]
-                 for p in diverse_paths(_adjacency(leg_graph, ids, scope), nodes, k, diversity=diversity)]
+        chains = graph_chains(leg_graph, scope, nodes, k, diversity=diversity) if graph is not None else None
+        if chains is None:  # no graph, or the in-memory fallback: the Python path (Yen) proposes the same chains
+            chains = diverse_paths(_adjacency(leg_graph, ids, scope), nodes, k, diversity=diversity)
+        paths = [[by_id[i] for i in p] for p in chains]
     finally:
         if graph is not None:
             _drop_best_effort(graph, scope)
@@ -376,7 +421,7 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
     else carry on if the next stop is still reachable, else stranded."""
     runs, n = ctx.runs, ctx.runs.n_runs
     p_of = lambda node: (p_override or {}).get(node.id, node.p_works)  # noqa: E731
-    sampler = WorksSampler(rng, n)  # chargers of one Site share common-cause failures (F8c)
+    sampler = WorksSampler(rng, n)  # chargers of one Site (and, weaker, one operator) share common-cause failures
     soc = np.full(n, ctx.start_soc)
     pos_km, pos_used = np.zeros(n), np.zeros(n)
     alive = np.ones(n, dtype=bool)
@@ -390,7 +435,7 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
         used_st = runs.used_at_km(node.km)
         arr = soc - (used_st - pos_used)
         stop_arrival.append(np.where(active, arr, np.nan))
-        works = sampler.works(node.site_id, p_of(node))
+        works = sampler.works(node.site_id, p_of(node), node.operator)
         tried = active & (arr >= RES_STOP)
         ok = tried & works
         minutes = minutes + np.where(tried, node.detour_min, 0.0) + np.where(tried & ~works, FAILED_STOP_MIN, 0.0)
@@ -402,7 +447,7 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
             for j, alt in enumerate(st.alts):
                 used_alt = runs.used_at_km(alt.km)
                 arr_alt = soc - (used_alt - pos_used)
-                can = need & (arr_alt >= RES_STOP) & sampler.works(alt.site_id, p_of(alt))
+                can = need & (arr_alt >= RES_STOP) & sampler.works(alt.site_id, p_of(alt), alt.operator)
                 cur_km, cur_used, cur_soc = (np.where(can, v, w) for v, w in
                                              ((alt.km, cur_km), (used_alt, cur_used), (arr_alt, cur_soc)))
                 cur_wait = np.where(can, alt.wait_min, cur_wait)
@@ -457,13 +502,14 @@ def bingo_line(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator) -> lis
     out = []
     for si, km in enumerate(runs.km_end):
         used_x = runs.soc_used_cum[sub, si]
-        cands: list[tuple[Array, float, float, str]] = [(dest_used - used_x, 1.0, RESERVE_PCT, "__destination__")]
+        cands: list[tuple[Array, float, float, str, str]] = [(dest_used - used_x, 1.0, RESERVE_PCT, "__destination__", "")]
         for n in policy_ahead(stops, float(km)):
-            cands.append((runs.used_at_km(n.km)[sub] - used_x, n.p_works, RES_STOP, n.site_id))
+            cands.append((runs.used_at_km(n.km)[sub] - used_x, n.p_works, RES_STOP, n.site_id, n.operator))
         energy = np.stack([c[0] for c in cands])  # (C, n)
         res = np.array([c[2] for c in cands])[:, None, None]
         reach = (grid[None, None, :] - energy[:, :, None]) >= res  # (C, n, G)
-        fail = p_all_fail([c[1] for c in cands], [c[3] for c in cands], reach)  # (n, G), Site-correlated (F8c)
+        fail = p_all_fail([c[1] for c in cands], [c[3] for c in cands], reach,  # (n, G), Site- and operator-correlated
+                          operators=[c[4] for c in cands])
         prob = 1.0 - fail.mean(axis=0)  # (G,)
         ok = np.nonzero(meets_target(prob, ctx.target))[0]
         bingo = float(grid[ok[0]]) if len(ok) else 100.0
@@ -573,12 +619,15 @@ def _choose(ctx: Ctx, nodes: Sequence[Node], rng: np.random.Generator, *, trust_
 def plan_only(vehicle: VehicleContext, route: PlannedRoute, route_chargers: Sequence[RouteCharger],
               trust: dict[str, ChargerTrust], *, start_soc: float, target_confidence: float = 0.9, seed: int = 0,
               cfg: ForecastConfig = ForecastConfig(), trust_aware: bool = True,
-              graph: ChargerGraph | None = None, diversity: bool = True) -> tuple[list[Stop], PlanEval, Ctx]:
+              graph: ChargerGraph | None = None, diversity: bool = True, link_operators: bool = True
+              ) -> tuple[list[Stop], PlanEval, Ctx]:
     """Propose and score candidate chains and return the chosen plan (no Bingo Line, levers or texts):
-    the light path used by the simulation experiments E3 and E4."""
+    the light path used by the simulation experiments E3, E4 and E6."""
     rng = np.random.default_rng(seed)
     ctx = _build_ctx(vehicle, route, start_soc, target_confidence, rng, cfg)
-    stops, ev, _ = _choose(ctx, make_nodes(route_chargers, trust, trust_aware=trust_aware), rng, trust_aware=trust_aware,
+    ops = graph_operators(graph, route_chargers) if graph is not None and link_operators else None
+    stops, ev, _ = _choose(ctx, make_nodes(route_chargers, trust, trust_aware=trust_aware, operators=ops,
+                                           link_operators=link_operators), rng, trust_aware=trust_aware,
                            graph=graph, diversity=diversity)
     return stops, ev, ctx
 
@@ -604,7 +653,8 @@ def dispatch(
     t0 = time.perf_counter()
     rng = np.random.default_rng(seed)
     ctx = _build_ctx(vehicle, route, start_soc, target_confidence, rng, cfg, highway_speed_mps)
-    nodes = make_nodes(route_chargers, trust, trust_aware=trust_aware, queue_wait_min=queue_wait_min)
+    nodes = make_nodes(route_chargers, trust, trust_aware=trust_aware, queue_wait_min=queue_wait_min,
+                       operators=graph_operators(graph, route_chargers) if graph is not None else None)
     stops, ev, _ = _choose(ctx, nodes, rng, trust_aware=trust_aware, graph=graph)
     conf = ev.confidence
 

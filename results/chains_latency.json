@@ -1,0 +1,26 @@
+{
+ "experiment": "W2.3 candidate chains: Cypher on Neo4j vs Yen's algorithm in Python",
+ "is_simulated": false,
+ "note": "Real queries on the live graph, demo routes only; the demo vehicles' chargers and reports are simulated.",
+ "dispatches_per_vehicle": 6,
+ "vehicles": [
+  "V07",
+  "V12",
+  "V19"
+ ],
+ "max_legs": 6,
+ "neo4j_cypher_chains": {
+  "n": 216,
+  "p50_ms": 121.4,
+  "p95_ms": 516.6,
+  "max_ms": 2026.8
+ },
+ "python_yen_diverse_paths": {
+  "n": 72,
+  "p50_ms": 1.5,
+  "p95_ms": 5.2,
+  "max_ms": 10.2
+ },
+ "cypher": "MATCH p = (:RoadSegment {id: $start})-[legs:LEG*1..6 {scope: $scope, soc_band: $band}]->(:RoadSegment {id: $end}) WHERE none(n IN nodes(p)[1..-1] WHERE n.id IN $banned) WITH [n IN nodes(p) | n.id] AS chain, reduce(c = 0.0, l IN legs | c + l.minutes + $w * coalesce($fail[startNode(l).id], 0.0)) AS cost RETURN chain, cost ORDER BY cost, chain LIMIT $k",
+ "reading": "One dispatch makes three chain queries (cheapest, reliability-weighted, spatially distinct)."
+}

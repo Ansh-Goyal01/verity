@@ -1,0 +1,167 @@
+{
+ "experiment": "E6 operator-correlated outages: Site-only vs operator-aware planning",
+ "is_simulated": true,
+ "trips_per_scenario": 300,
+ "vehicle_calibrated_trips": 10,
+ "assumed_beta_operator": 0.2,
+ "operators_in_world": 3,
+ "scenarios": {
+  "20% chargers down, 0% of failures operator-wide": {
+   "failure_rate": 0.2,
+   "operator_share": 0.0,
+   "trips": 300,
+   "plan_changes": 0.26,
+   "first_stop_changes": 0.247,
+   "stranding_rate_site_only": 0.027,
+   "stranding_ci95_site_only": [
+    0.014,
+    0.052
+   ],
+   "stranding_rate_operator_aware": 0.03,
+   "stranding_ci95_operator_aware": [
+    0.016,
+    0.056
+   ],
+   "stranded_only_when_site_only": 0,
+   "stranded_only_when_operator_aware": 1,
+   "trips_with_an_operator_down": 0,
+   "mean_extra_minutes_of_operator_aware": 0.1,
+   "claimed_confidence_site_only": 0.956,
+   "realised_success_site_only": 0.973,
+   "claimed_confidence_operator_aware": 0.954,
+   "realised_success_operator_aware": 0.97
+  },
+  "20% chargers down, 30% of failures operator-wide": {
+   "failure_rate": 0.2,
+   "operator_share": 0.3,
+   "trips": 300,
+   "plan_changes": 0.28,
+   "first_stop_changes": 0.28,
+   "stranding_rate_site_only": 0.023,
+   "stranding_ci95_site_only": [
+    0.011,
+    0.047
+   ],
+   "stranding_rate_operator_aware": 0.027,
+   "stranding_ci95_operator_aware": [
+    0.014,
+    0.052
+   ],
+   "stranded_only_when_site_only": 1,
+   "stranded_only_when_operator_aware": 2,
+   "trips_with_an_operator_down": 58,
+   "mean_extra_minutes_of_operator_aware": 0.0,
+   "claimed_confidence_site_only": 0.955,
+   "realised_success_site_only": 0.977,
+   "claimed_confidence_operator_aware": 0.951,
+   "realised_success_operator_aware": 0.973
+  },
+  "20% chargers down, 60% of failures operator-wide": {
+   "failure_rate": 0.2,
+   "operator_share": 0.6,
+   "trips": 300,
+   "plan_changes": 0.283,
+   "first_stop_changes": 0.28,
+   "stranding_rate_site_only": 0.037,
+   "stranding_ci95_site_only": [
+    0.021,
+    0.064
+   ],
+   "stranding_rate_operator_aware": 0.023,
+   "stranding_ci95_operator_aware": [
+    0.011,
+    0.047
+   ],
+   "stranded_only_when_site_only": 4,
+   "stranded_only_when_operator_aware": 0,
+   "trips_with_an_operator_down": 100,
+   "mean_extra_minutes_of_operator_aware": -0.0,
+   "claimed_confidence_site_only": 0.958,
+   "realised_success_site_only": 0.963,
+   "claimed_confidence_operator_aware": 0.955,
+   "realised_success_operator_aware": 0.977
+  },
+  "40% chargers down, 0% of failures operator-wide": {
+   "failure_rate": 0.4,
+   "operator_share": 0.0,
+   "trips": 300,
+   "plan_changes": 0.273,
+   "first_stop_changes": 0.263,
+   "stranding_rate_site_only": 0.057,
+   "stranding_ci95_site_only": [
+    0.036,
+    0.089
+   ],
+   "stranding_rate_operator_aware": 0.057,
+   "stranding_ci95_operator_aware": [
+    0.036,
+    0.089
+   ],
+   "stranded_only_when_site_only": 2,
+   "stranded_only_when_operator_aware": 2,
+   "trips_with_an_operator_down": 0,
+   "mean_extra_minutes_of_operator_aware": 0.2,
+   "claimed_confidence_site_only": 0.954,
+   "realised_success_site_only": 0.943,
+   "claimed_confidence_operator_aware": 0.95,
+   "realised_success_operator_aware": 0.943
+  },
+  "40% chargers down, 30% of failures operator-wide": {
+   "failure_rate": 0.4,
+   "operator_share": 0.3,
+   "trips": 300,
+   "plan_changes": 0.283,
+   "first_stop_changes": 0.277,
+   "stranding_rate_site_only": 0.067,
+   "stranding_ci95_site_only": [
+    0.044,
+    0.101
+   ],
+   "stranding_rate_operator_aware": 0.06,
+   "stranding_ci95_operator_aware": [
+    0.038,
+    0.093
+   ],
+   "stranded_only_when_site_only": 2,
+   "stranded_only_when_operator_aware": 0,
+   "trips_with_an_operator_down": 104,
+   "mean_extra_minutes_of_operator_aware": 0.1,
+   "claimed_confidence_site_only": 0.955,
+   "realised_success_site_only": 0.933,
+   "claimed_confidence_operator_aware": 0.951,
+   "realised_success_operator_aware": 0.94
+  },
+  "40% chargers down, 60% of failures operator-wide": {
+   "failure_rate": 0.4,
+   "operator_share": 0.6,
+   "trips": 300,
+   "plan_changes": 0.283,
+   "first_stop_changes": 0.277,
+   "stranding_rate_site_only": 0.1,
+   "stranding_ci95_site_only": [
+    0.071,
+    0.139
+   ],
+   "stranding_rate_operator_aware": 0.097,
+   "stranding_ci95_operator_aware": [
+    0.068,
+    0.135
+   ],
+   "stranded_only_when_site_only": 3,
+   "stranded_only_when_operator_aware": 2,
+   "trips_with_an_operator_down": 158,
+   "mean_extra_minutes_of_operator_aware": 0.0,
+   "claimed_confidence_site_only": 0.955,
+   "realised_success_site_only": 0.9,
+   "claimed_confidence_operator_aware": 0.951,
+   "realised_success_operator_aware": 0.903
+  }
+ },
+ "runtime_s": 1917.1,
+ "notes": [
+  "Chargers, operators, reports and outages are SIMULATED; energy truth comes from verity.sim.",
+  "BETA_OPERATOR = 0.2 is an assumption; the world's outage mechanism differs from the planner's model.",
+  "operator_share 0 is the control: the world has no operator effect, so the operator-aware planner pays for a correlation that does not exist.",
+  "Stranding is rare in this world (see E3), so many differences are inside the 95 % intervals."
+ ]
+}

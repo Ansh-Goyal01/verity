@@ -149,7 +149,7 @@ def evaluate_chain(ctx: Ctx, inp: RideInput, chain: Sequence[int], rng: np.rando
         drive_min = opt.leg_min if prev is None else dist / URBAN_KMH * 60.0
         arr = soc - (runs.used_at_km(ride_km + off + dist) - runs.used_at_km(ride_km + off))
         reach = pending & (arr >= RES_STOP)
-        works = sampler.works(node.site_id, (p_override or {}).get(node.id, node.p_works))
+        works = sampler.works(node.site_id, (p_override or {}).get(node.id, node.p_works), node.operator)
         ok = reach & works
         parts["drive" if k == 0 else "backup_drive"] += np.where(reach, drive_min, 0.0)
         parts["failed_stops"] += np.where(reach & ~works, FAILED_STOP_MIN, 0.0)
@@ -185,6 +185,7 @@ def ride_bingo_line(ctx: Ctx, inp: RideInput, rng: np.random.Generator, n_sub: i
     leg_used = [(runs.used_at_km(ride_km + o.leg_km) - runs.used_at_km(ride_km))[sub] for o in inp.options]
     p = [o.node.p_works for o in inp.options]
     sites = [o.node.site_id for o in inp.options]
+    operators = [o.node.operator for o in inp.options]
     out = []
     for si, km in enumerate(runs.km_end):
         if km > ride_km + 1e-6:
@@ -192,7 +193,7 @@ def ride_bingo_line(ctx: Ctx, inp: RideInput, rng: np.random.Generator, n_sub: i
         used_x = runs.soc_used_cum[sub, si]
         energy = np.stack([used_drop - used_x + lu for lu in leg_used])  # (C, n)
         reach = (grid[None, None, :] - energy[:, :, None]) >= RES_STOP
-        prob = 1.0 - p_all_fail(p, sites, reach).mean(axis=0)
+        prob = 1.0 - p_all_fail(p, sites, reach, operators=operators).mean(axis=0)
         ok = np.nonzero(prob >= ctx.target)[0]
         out.append({"km": round(float(km), 1), "bingo_soc_pct": int(grid[ok[0]]) if len(ok) else 100,
                     "expected_soc_pct": int(round(ctx.start_soc - float(np.median(runs.soc_used_cum[:, si]))))})

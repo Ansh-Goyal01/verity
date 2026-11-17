@@ -26,7 +26,7 @@ import os
 import threading
 import time
 from collections import defaultdict
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, NamedTuple, Protocol
@@ -35,7 +35,8 @@ from ..paths import REPO_ROOT
 from ..schemas import ChargerRecord, Report
 from .channels import channel_of
 from .graph_structure import MemoryStructure, Neo4jStructure
-from .graph_types import AliasRec, AuditView, NameHit, PlanRec, SiteRec
+from .graph_types import AliasRec, AuditView, NameHit, PlanRec, SharedCause, SiteRec
+from .ring_edges import AgreementEdge, agreement_edges, verdicts_of
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +47,24 @@ RING_WINDOW_HOURS = 72.0  # reports this close in time can belong to one burst (
 STALE_LEG_SECONDS = 3600.0  # scoped LEGs older than this were left behind by a crashed request
 QUERY_TIMEOUT_S = 30.0  # server-side limit per query (the driver has no socket read timeout; see DECISIONS A12)
 CLIENT_DEADLINE_S = QUERY_TIMEOUT_S + 5.0  # client-side wall clock per query: a stalled socket must not hang (F8e)
+MAX_CHAIN_LEGS = 6  # START -> up to 5 stops -> END; the chains the planner scores are far shorter (W2.3)
+CHAINS_BAND = "0-10"  # every band of a leg carries the same ``minutes``, so ONE band proposes each chain once
+
+
+def chains_cypher(max_legs: int) -> str:
+    """W2.3: the k cheapest loopless chains START -> chargers -> END over this scope's LEGs. Legs only point forward
+    along the route, so a path cannot revisit a node. ``$fail`` (charger id -> failure probability) with ``$w`` adds
+    the reliability-weighted cost of the planner's second candidate family; ``$banned`` removes chargers for the
+    third (spatially distinct) one. The length bound cannot be a parameter in Cypher, hence the checked int."""
+    n = int(max_legs)
+    if not 1 <= n <= 12:
+        raise ValueError("max_legs must be between 1 and 12")
+    return (f"MATCH p = (:RoadSegment {{id: $start}})-[legs:LEG*1..{n} {{scope: $scope, soc_band: $band}}]->"
+            "(:RoadSegment {id: $end}) "
+            "WHERE none(n IN nodes(p)[1..-1] WHERE n.id IN $banned) "
+            "WITH [n IN nodes(p) | n.id] AS chain, "
+            "reduce(c = 0.0, l IN legs | c + l.minutes + $w * coalesce($fail[startNode(l).id], 0.0)) AS cost "
+            "RETURN chain, cost ORDER BY cost, chain LIMIT $k")
 
 
 class Neo4jStalled(TimeoutError):
@@ -169,6 +188,36 @@ def group_rings(pairs: Sequence[tuple[str, str, int]]) -> list[Ring]:
     return sorted(rings, key=lambda ring: (-len(ring.sources), ring.sources))
 
 
+def communities(edges: Sequence[AgreementEdge], min_size: int = 3) -> list[Ring]:
+    """W2.4: connected components of the agreement edges with at least ``min_size`` sources (the rings)."""
+    return [r for r in group_rings([(e.a, e.b, e.shared) for e in edges]) if len(r.sources) >= min_size]
+
+
+def ring_id_of(ring: Ring) -> str:
+    """A ring's id: its smallest member, so the same ring keeps its id from one batch to the next."""
+    return f"ring:{ring.sources[0]}"
+
+
+# W2.4: Jaccard agreement edges between sources, computed inside Neo4j. One verdict per (source, charger) (the majority
+# of that source's reports there), every pair of sources per charger, then the shared / agreeing counts and Jaccard.
+AGREEMENT_CYPHER = """\
+CALL {
+  MATCH (s:Source)-[r:REPORTED]->(c:Charger)
+  RETURN s.id AS sid, c.id AS cid, avg(CASE WHEN r.status IN ['working', 'occupied'] THEN 1.0 ELSE 0.0 END) >= 0.5 AS v
+}
+WITH cid, collect({s: sid, v: v}) AS cl
+UNWIND range(0, size(cl) - 2) AS i
+UNWIND range(i + 1, size(cl) - 1) AS j
+WITH cl[i] AS x, cl[j] AS y
+WITH CASE WHEN x.s < y.s THEN x.s ELSE y.s END AS a, CASE WHEN x.s < y.s THEN y.s ELSE x.s END AS b,
+     count(*) AS shared, sum(CASE WHEN x.v = y.v THEN 1 ELSE 0 END) AS same
+WHERE shared >= $min_shared AND same >= $min_agree * shared
+CALL { WITH a MATCH (:Source {id: a})-[:REPORTED]->(c:Charger) RETURN count(DISTINCT c) AS na }
+CALL { WITH b MATCH (:Source {id: b})-[:REPORTED]->(c:Charger) RETURN count(DISTINCT c) AS nb }
+WITH a, b, shared, toFloat(shared) / (na + nb - shared) AS jaccard WHERE jaccard >= $min_jaccard
+RETURN a, b, shared, jaccard ORDER BY shared DESC, a, b"""
+
+
 class ChargerGraph(Protocol):
     def add_charger(self, rec: ChargerRecord) -> None: ...
     def add_chargers(self, recs: Sequence[ChargerRecord]) -> None: ...
@@ -183,6 +232,9 @@ class ChargerGraph(Protocol):
     def legs_from(self, charger_id: str, scope: str = "") -> list[Leg]: ...
     def drop_legs(self, scope: str) -> None: ...
     def sweep_stale_legs(self, max_age_s: float = STALE_LEG_SECONDS) -> None: ...
+    def chains(self, scope: str, k: int, *, fail: Mapping[str, float] | None = None, weight: float = 0.0,
+               banned: Collection[str] = (), max_legs: int = MAX_CHAIN_LEGS) -> list[tuple[float, list[str]]] | None: ...
+    def shared_causes(self, ids: Sequence[str]) -> list[SharedCause]: ...
     def add_alternate(self, segment_id: str, charger_id: str, p_works: float) -> None: ...
     def add_alternates(self, edges: Sequence[Alternate]) -> None: ...
     def alternates(self, segment_id: str) -> list[tuple[str, float]]: ...
@@ -193,6 +245,10 @@ class ChargerGraph(Protocol):
     def works_with(self, vehicle_model: str, hardware_model: str) -> tuple[float, int] | None: ...
     def co_reporting_pairs(self, min_shared: int = 4) -> list[tuple[str, str, int]]: ...
     def report_rings(self, min_shared: int = 4, window_hours: float | None = RING_WINDOW_HOURS) -> list[Ring]: ...
+    def agreement_edges(self, min_shared: int = 4, min_jaccard: float = 0.5,
+                        min_agree: float = 0.9) -> list[AgreementEdge]: ...
+    def write_ring_ids(self, rings: Sequence[Ring]) -> None: ...
+    def ring_ids(self) -> dict[str, str]: ...
     def counts(self) -> GraphCounts: ...
     # W2.1 / W2.5 / W2.6: physical sites, plans, aliases, name search, audit views
     def sync_sites(self) -> None: ...
@@ -219,6 +275,7 @@ class InMemoryGraph(MemoryStructure):
         self._segments: dict[str, RoadSegmentRec] = {}
         self._alternates: dict[str, dict[str, tuple[float, float | None]]] = defaultdict(dict)
         self._works_with: dict[tuple[str, str], tuple[float, int]] = {}
+        self._ring_ids: dict[str, str] = {}
 
     def add_charger(self, rec: ChargerRecord) -> None:
         self.add_chargers([rec])
@@ -326,6 +383,11 @@ class InMemoryGraph(MemoryStructure):
                          + sum(len(edges) for _, edges in alternates) + len(works_with) + extra_rels)
         return GraphCounts(nodes, relationships)
 
+    def chains(self, scope: str, k: int, *, fail: Mapping[str, float] | None = None, weight: float = 0.0,
+               banned: Collection[str] = (), max_legs: int = MAX_CHAIN_LEGS) -> list[tuple[float, list[str]]] | None:
+        """``None`` = "ask the planner's own Python path": the in-memory graph is the fallback for the Cypher query."""
+        return None
+
     def co_reporting_pairs(self, min_shared: int = 4) -> list[tuple[str, str, int]]:
         by_source: dict[str, set[str]] = defaultdict(set)
         for r in list(self._reports.values()):
@@ -349,6 +411,19 @@ class InMemoryGraph(MemoryStructure):
                         continue
                     shared[tuple(sorted((a.source_id, b.source_id)))].add(cid)  # type: ignore[arg-type]
         return group_rings([(a, b, len(c)) for (a, b), c in shared.items() if len(c) >= min_shared])
+
+    def agreement_edges(self, min_shared: int = 4, min_jaccard: float = 0.5,
+                        min_agree: float = 0.9) -> list[AgreementEdge]:
+        """The Python twin of ``AGREEMENT_CYPHER`` (same verdicts, same thresholds, same order)."""
+        verdicts = verdicts_of((r.source_id, r.charger_id, r.status) for r in list(self._reports.values()))
+        return agreement_edges(verdicts, min_shared=min_shared, min_jaccard=min_jaccard, min_agree=min_agree)
+
+    def write_ring_ids(self, rings: Sequence[Ring]) -> None:
+        """Replace every Source's ``ring_id`` with this batch's (derived data: the last batch is the truth)."""
+        self._ring_ids = {s: ring_id_of(r) for r in rings for s in r.sources}
+
+    def ring_ids(self) -> dict[str, str]:
+        return dict(sorted(self._ring_ids.items()))
 
 
 def load_env(path: Path | None = None) -> dict[str, str]:
@@ -548,6 +623,17 @@ class Neo4jGraph(Neo4jStructure):
     def legs_from(self, charger_id: str, scope: str = "") -> list[Leg]:
         return [leg for leg in self.legs(scope) if leg.from_id == charger_id]
 
+    def chains(self, scope: str, k: int, *, fail: Mapping[str, float] | None = None, weight: float = 0.0,
+               banned: Collection[str] = (), max_legs: int = MAX_CHAIN_LEGS) -> list[tuple[float, list[str]]] | None:
+        """Candidate chains (cost, charger ids without START/END) computed INSIDE Neo4j (W2.3, ``chains_cypher``)."""
+        if not scope:
+            raise ValueError("chains need a scope")
+        _check_scope(scope)
+        rows = self._run(chains_cypher(max_legs), start=f"{scope}:START", end=f"{scope}:END", scope=scope,
+                         band=CHAINS_BAND, fail=dict(fail or {}), w=float(weight), banned=sorted(banned), k=int(k))
+        prefix = f"{scope}:"
+        return [(float(r["cost"]), [i.removeprefix(prefix) for i in r["chain"]][1:-1]) for r in rows]
+
     def drop_legs(self, scope: str) -> None:
         if not scope:
             raise ValueError("refusing to drop the unscoped legs")
@@ -620,6 +706,25 @@ class Neo4jGraph(Neo4jStructure):
                          "RETURN a, b, shared", k=min_shared,
                          **({} if window_hours is None else {"window_s": window_hours * 3600.0}))
         return group_rings([(r["a"], r["b"], r["shared"]) for r in rows])
+
+    def agreement_edges(self, min_shared: int = 4, min_jaccard: float = 0.5,
+                        min_agree: float = 0.9) -> list[AgreementEdge]:
+        rows = self._run(AGREEMENT_CYPHER, min_shared=int(min_shared), min_jaccard=float(min_jaccard),
+                         min_agree=float(min_agree))
+        return [AgreementEdge(r["a"], r["b"], int(r["shared"]), float(r["jaccard"])) for r in rows]
+
+    def write_ring_ids(self, rings: Sequence[Ring]) -> None:
+        rows = [{"sid": s, "rid": ring_id_of(r)} for r in rings for s in r.sources]
+        self._run("MATCH (s:Source) WHERE s.ring_id IS NOT NULL REMOVE s.ring_id")
+        if rows:
+            out = self._run("UNWIND $rows AS row MATCH (s:Source {id: row.sid}) SET s.ring_id = row.rid "
+                            "RETURN count(s) AS n", rows=rows)
+            if (out[0]["n"] if out else 0) != len(rows):
+                raise KeyError("a ring member is not a Source in the graph")
+
+    def ring_ids(self) -> dict[str, str]:
+        rows = self._run("MATCH (s:Source) WHERE s.ring_id IS NOT NULL RETURN s.id AS sid, s.ring_id AS rid ORDER BY sid")
+        return {r["sid"]: r["rid"] for r in rows}
 
     def delete_test_data(self, prefix: str = TEST_PREFIX) -> None:
         """Delete only nodes whose id starts with ``prefix`` (the smoke test's clearly fake data)."""
