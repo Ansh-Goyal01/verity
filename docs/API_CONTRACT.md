@@ -479,6 +479,6 @@ question), prompt_audio, timings_ms, is_simulated: false}`.
 `{confirmed, charger_id, status, consent, language, transcript?, from_real_person (default true), speak}`. Writes only when
 `confirmed` and `consent` are true (422 `consent_required`, 404 `unknown_charger`, 429 `already_reported`). Answers `{stage
 ("recorded"|"not_recorded"), reply_language, report (the `POST /api/reports` answer, with trust_before / trust_after, or null),
-plans_checked (<= 2), plans [{plan_id, vehicle_id, decision_before, decision_after, confidence_before, confidence_after,
+plans_checked (<= 2), plans_pending (plans that use the charger but were not re-checked now: over the limit, the shown trust did not change, or another re-plan was running; they keep their old answer until asked for again), replan_failed (the report is stored, only the re-check failed), plans [{plan_id, vehicle_id, decision_before, decision_after, confidence_before, confidence_after,
 moved, changed ("decision"|"stops"|"backups")}], speech, audio, timings_ms, is_simulated}`. `from_real_person=false` stores a
-simulated report under source `driver:driver_voice_scripted`. The audio is never stored.
+simulated report under source `driver:driver_voice_scripted` and is refused with 403 `scripted_reports_disabled` unless the server sets `VERITY_ALLOW_SCRIPTED_REPORTS=1` (demo only). `moved` means "changed since the plan was made" (time and other reports count too), not "caused by this report". The audio is never stored.

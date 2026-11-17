@@ -39,3 +39,9 @@ validation. Numbers with their n and intervals are in [RESULTS_FOR_DECK.md](RESU
 
 Older progress documents (PROGRESS_ENGINE, PROGRESS_FINISH, FINAL_REPORT) are historical; this file and
 RESULTS_FOR_DECK.md describe the current state.
+
+## Open Charge Map check-ins (W1.2, S7) - BLOCKED on the first real fetch
+
+- `scripts/fetch_ocm_checkins.py` + `verity/ocm.py` are built and tested on a SYNTHETIC point (`tests/test_ocm.py`). An `OCM_API_KEY` is in `.env`, but the one run (2026-11-17) ended with `ConnectError: [WinError 10054] connection forcibly closed` from `api.openchargemap.io` after the client's three retries. Not retried in a loop. Result: n = 0 real check-ins, `results/ocm_checkins.json` NOT written.
+- The field names the parser reads (`UserComments`, `CheckinStatusType.IsPositive`, `DateCreated`) are from memory: the official API docs page was not readable (navigation only) and `/v3/referencedata/` returned HTTP 403. Mapping: positive -> `working`, negative -> `broken`; anything unclear is skipped and counted, never guessed. **Manual step:** re-run `uv run python scripts/fetch_ocm_checkins.py` from another network, open `data/cache/ocm_checkins_raw.json`, confirm those three fields exist, then report the n it prints (whatever it is: coverage of Indian chargers may be thin).
+- The reports are not yet fed to the graph or the ledger: S10 (W1.5) decides how they enter `GET /api/evidence/ledger`.

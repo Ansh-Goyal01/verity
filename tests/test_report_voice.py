@@ -75,10 +75,23 @@ def test_the_plan_line_says_same_or_what_moved() -> None:
     moved = {"moved": True, "changed": ["backups", "decision"]}
     assert recorded_sentence("X", BEFORE, AFTER, [same], "en-IN").endswith("Your plan did not change.")
     assert recorded_sentence("X", BEFORE, AFTER, [same, moved], "en-IN").endswith(
-        "Your plan changed: the decision, the backup charger.")
+        "Your plan has changed since it was made: the decision, the backup charger.")
+
+
+def test_plans_that_were_not_re_checked_are_counted_not_called_unchanged() -> None:
+    same = {"moved": False, "changed": []}
+    text = recorded_sentence("X", BEFORE, AFTER, [same], "en-IN", pending=3)
+    assert text.endswith("Your plan did not change. 3 more plans use this charger and will be re-checked when you ask again.")
+    only_pending = recorded_sentence("X", BEFORE, AFTER, [], "en-IN", pending=2)
+    assert "No plan" not in only_pending and "2 more plans" in only_pending
+
+
+def test_a_failed_re_check_says_so_and_claims_nothing_about_the_plan() -> None:
+    text = recorded_sentence("X", BEFORE, AFTER, [], "en-IN", failed=True)
+    assert text.endswith("I could not re-check your plans just now.") and "did not change" not in text
 
 
 def test_every_sentence_exists_in_hindi_too() -> None:
     moved = {"moved": True, "changed": ["stops"]}
-    assert "योजना बदली" in recorded_sentence("X", BEFORE, AFTER, [moved], "hi-IN")
+    assert "बदली है" in recorded_sentence("X", BEFORE, AFTER, [moved], "hi-IN")
     assert "प्रतिशत" in recorded_sentence("X", BEFORE, AFTER, [], "hi-IN")

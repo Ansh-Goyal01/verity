@@ -627,6 +627,8 @@ class VoiceReportDecided(Resp):
     reply_language: Literal["en-IN", "hi-IN"]
     report: ReportResponse | None  # includes trust before and after
     plans_checked: int  # cached plans that use this charger and were re-planned (at most 2)
+    plans_pending: int  # plans that use it but were not re-checked now (over the limit, trust unchanged, or busy)
+    replan_failed: bool  # the report is stored; only the re-check failed
     plans: list[PlanChange]
     speech: str
     audio: SpokenClip | None

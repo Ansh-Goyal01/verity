@@ -18,6 +18,7 @@ import hashlib
 import json
 import logging
 import os
+import threading
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
@@ -291,6 +292,7 @@ class EngineService(GraphEndpoints):
         self._counts_cache: tuple[str, float, GraphCounts] | None = None  # (backend, taken at, counts)
         self.last_graph_timing: dict = {}
         self._last_sweep = time.monotonic()  # open_graph already swept at startup
+        self._replan_slot = threading.Semaphore(1)  # one report-triggered re-plan at a time (each is a full Monte Carlo)
 
     # -- setup ----------------------------------------------------------------------------------------------
     def _build_fleet(self) -> dict[str, FleetVehicle]:
@@ -411,7 +413,9 @@ class EngineService(GraphEndpoints):
                 return plan_id
         raise AssertionError("a 40-character hash prefix collided with a different request")
 
-    def dispatch(self, req: dict) -> dict:
+    def dispatch(self, req: dict, *, refresh: bool = False) -> dict:
+        """The plan for a request. ``refresh`` recomputes against the graph as it is now and replaces the cached plan only
+        when the new one is ready (the old one keeps being served until then)."""
         req = canonical_request(DispatchRequest, req)
         fv = self.fleet.get(req["vehicle_id"])
         if fv is None:
@@ -420,7 +424,7 @@ class EngineService(GraphEndpoints):
         key = hashlib.sha1(json.dumps({k: req[k] for k in sorted(req)}, sort_keys=True).encode()).hexdigest()
         plan_id = self._plan_id_for(key, req)
         stored = self.plans.get(plan_id)  # one atomic read: the plan may be evicted between a check and a second read
-        if stored is not None:
+        if stored is not None and not refresh:
             return stored.response
         ctx = replace(fv.ctx, passengers=req["passengers"], ac_on=req["ac_on"])
         others = [(replace(o.ctx, passengers=req["passengers"], ac_on=req["ac_on"]), float(o.soc_pct))
@@ -464,21 +468,23 @@ class EngineService(GraphEndpoints):
         return response
 
     # -- did a new report move a plan? (W3.3) -----------------------------------------------------------------------
-    def replan_after_report(self, charger_id: str, limit: int = REPLAN_LIMIT) -> list[dict]:
-        """Re-plan the newest cached plans that use ``charger_id`` (as a stop or a backup) against the graph as it is now,
-        and say, for each, whether the answer moved. A plan nobody has asked for is not touched. Same request, same seed:
-        any difference comes from the new trust numbers alone. Costs one dispatch per plan (``limit`` at most)."""
+    def replan_after_report(self, charger_id: str, *, trust_changed: bool = True,
+                            limit: int = REPLAN_LIMIT) -> tuple[list[dict], int]:
+        """(changes, pending): re-plan the newest cached plans that use ``charger_id`` (stop or backup) against the graph as it
+        is now, and say for each whether the answer moved since it was made. ``pending`` counts the plans that use the charger
+        but were not re-checked (over ``limit``, the shown trust did not change, or another re-plan was running): they keep
+        their old answer until asked for again. The old plan is served until its replacement is ready. Same request, same seed,
+        but the clock and other reports have moved too, so a change is "since it was made", not "caused by this report"."""
         uses = [(pid, st) for pid, st in reversed(self.plans.snapshot()) if charger_id in plan_charger_ids(st.response)]
-        out = []
-        for plan_id, stored in uses[:limit]:
-            self.plans.pop(plan_id)
-            try:
-                after = self.dispatch(stored.request)
-            except Exception:
-                self.plans[plan_id] = stored  # a failed re-plan must not lose the plan the driver is following
-                raise
-            out.append(plan_change(plan_id, stored.response, after))
-        return out
+        if not uses:
+            return [], 0
+        if not trust_changed or not self._replan_slot.acquire(blocking=False):
+            return [], len(uses)
+        try:
+            out = [plan_change(pid, st.response, self.dispatch(st.request, refresh=True)) for pid, st in uses[:limit]]
+        finally:
+            self._replan_slot.release()
+        return out, len(uses) - len(out)
 
     # -- ride check (F8b) --------------------------------------------------------------------------------------------
     def _check_area(self, *points: tuple[float, float]) -> None:

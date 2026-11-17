@@ -127,3 +127,5 @@ fits the project. Nothing here is applied unless both sides agree.
 - Old shape: reports came only from `POST /api/reports` (typed charger id). New shape: see the last section of API_CONTRACT.md. Additive.
 - Call 1 (multipart `audio` or JSON `{transcript}`) hears and reads back or asks; it never writes. Call 2 (JSON) writes only with `confirmed` and `consent`.
 - `POST /api/reports` behaviour change (not the shape): real reports are now aged by real time, simulated by the frozen demo clock (`trust_before` / `trust_after` of a report you just wrote are unchanged in meaning).
+
+- v5 addendum (review of S7): `from_real_person=false` needs `VERITY_ALLOW_SCRIPTED_REPORTS=1` on the server (403 `scripted_reports_disabled` otherwise); the confirm answer gains `plans_pending` and `replan_failed`; the old plan is served until its re-plan is ready.

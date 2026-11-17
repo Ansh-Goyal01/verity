@@ -111,6 +111,12 @@ def get_voice_client() -> SarvamClient | None:
     return SarvamClient.from_env()
 
 
+def scripted_reports_allowed() -> bool:
+    """Scripted (simulated) voice notes are a demo feature: off unless the server operator turns them on. The flag is
+    client-supplied, so without this switch anyone could plant a simulated report that never ages."""
+    return os.environ.get("VERITY_ALLOW_SCRIPTED_REPORTS", "").strip().lower() in {"1", "true", "yes"}
+
+
 def voice_key_present() -> bool:
     return sarvam_key_present()
 
@@ -408,7 +414,12 @@ async def voice_report_confirm(req: VoiceReportConfirm, request: Request, svc: E
     """Call 2 of 2: the driver said yes or no to the read-back. On ``confirmed`` + ``consent`` the report is written (the same
     path and the same per-address, per-charger cooldown as ``POST /api/reports``), the plans that use the charger are
     re-planned, and the reply says the charger's trust before and after and whether the plan moved."""
-    if req.confirmed and req.consent:  # a refused request must not use up the cooldown
+    if not req.from_real_person and not scripted_reports_allowed():
+        raise ApiError(403, "scripted_reports_disabled", "Scripted demo notes are switched off on this server "
+                       "(VERITY_ALLOW_SCRIPTED_REPORTS); send from_real_person=true for a real report.")
+    if req.confirmed and req.consent:  # a refused request must not use up the cooldown, nor must an unknown charger
+        if req.charger_id not in {c.id for c in svc.chargers}:
+            raise ApiError(404, "unknown_charger", f"No charger {req.charger_id!r}")
         retry_after = cooldown.hit(f"{rate_key(client_ip(request, TRUST_PROXY))}|{req.charger_id}")
         if retry_after is not None:
             raise RateLimited(retry_after, code="already_reported",

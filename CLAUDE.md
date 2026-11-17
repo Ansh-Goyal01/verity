@@ -169,6 +169,8 @@ LEG is stored per battery band, never as one fixed probability.
 - Spoken ride-check: `POST /api/voice/ride-check` in two calls (hear + read back, then `confirmed` -> decide + speak), see
   docs/API_CONTRACT.md. Voice latency bench (22 PAID Sarvam calls; a dry run unless `--run`):
   `uv run python scripts/bench_voice_ride_check.py` -> `results/voice_ride_check_latency.json`.
+- Spoken charger report: `POST /api/voice/report` (hear + read back, never writes) then `POST /api/voice/report/confirm` (consent + yes -> graph, re-plans, says what changed), see docs/API_CONTRACT.md.
+  Open Charge Map check-ins (needs `OCM_API_KEY`; mapping unverified until the raw response is checked): `uv run python scripts/fetch_ocm_checkins.py` -> `results/ocm_checkins.json`
 - Aura keep-alive (one write-and-delete, log in data/cache/aura_keepalive.log): `uv run python scripts/aura_keepalive.py`;
   scheduled 10:00 + 22:00 daily until 2026-11-23 as Windows task `VerityAuraKeepAlive`
 

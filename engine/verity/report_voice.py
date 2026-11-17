@@ -51,10 +51,14 @@ PERCENT = {"en-IN": "{p} percent", "hi-IN": "{p} प्रतिशत"}
 PLAN_LINE = {
     "en-IN": {"none": "No plan you asked for uses this charger.",
               "same": "Your plan did not change.",
-              "moved": "Your plan changed: {changes}."},
+              "moved": "Your plan has changed since it was made: {changes}.",
+              "pending": "{n} more plans use this charger and will be re-checked when you ask again.",
+              "failed": "I could not re-check your plans just now."},
     "hi-IN": {"none": "आपकी किसी योजना में यह चार्जर नहीं है।",
               "same": "आपकी योजना नहीं बदली।",
-              "moved": "आपकी योजना बदली: {changes}।"},
+              "moved": "योजना बनने के बाद से बदली है: {changes}।",
+              "pending": "{n} और योजनाओं में यह चार्जर है; दोबारा पूछने पर उन्हें फिर जाँचा जाएगा।",
+              "failed": "अभी मैं आपकी योजनाएँ दोबारा नहीं जाँच पाया।"},
 }
 CHANGE_WORDS = {"en-IN": {"decision": "the decision", "stops": "the charging stop", "backups": "the backup charger"},
                 "hi-IN": {"decision": "फ़ैसला", "stops": "चार्जिंग स्टॉप", "backups": "बैकअप चार्जर"}}
@@ -95,17 +99,20 @@ def prompt_for(reading: ReportReading, language: str) -> tuple[str, bool]:
 
 
 def recorded_sentence(charger_name: str, trust_before: dict, trust_after: dict, plans: Sequence[dict],
-                      language: str) -> str:
+                      language: str, *, pending: int = 0, failed: bool = False) -> str:
     """The reply after the write: the charger's trust before and after (rounded to 5 %, with how many recent reports it
     rests on) and whether the plans that use this charger moved. Only what the engine measured is said."""
     trust = TRUST_LINE[language].format(charger=charger_name, before=_percent(trust_before["p_works"], language),
                                         after=_percent(trust_after["p_works"], language), n=trust_after["n_reports"])
     words = PLAN_LINE[language]
+    if failed:
+        return f"{trust} {words['failed']}"
+    tail = f" {words['pending'].format(n=pending)}" if pending else ""
     if not plans:
-        return f"{trust} {words['none']}"
+        return f"{trust} {words['pending'].format(n=pending) if pending else words['none']}"
     moved = [p for p in plans if p["moved"]]
     if not moved:
-        return f"{trust} {words['same']}"
+        return f"{trust} {words['same']}{tail}"
     changed = {c for p in moved for c in p["changed"]}
     ordered = [c for c in CHANGE_WORDS[language] if c in changed]  # the decision first, then the stop, then the backup
-    return f"{trust} " + words["moved"].format(changes=", ".join(CHANGE_WORDS[language][c] for c in ordered))
+    return f"{trust} " + words["moved"].format(changes=", ".join(CHANGE_WORDS[language][c] for c in ordered)) + tail

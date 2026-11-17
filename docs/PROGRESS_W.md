@@ -11,7 +11,7 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 - [x] S4 One source of truth + offline (W0.3, W0.5)
 - [x] S5 Sarvam client + spoken ride-check (W3.1, W3.2)
 - [x] S6 Graph structure + names + graph endpoints (W2.1, W2.5, W2.6)
-- [ ] S7 Spoken report into the graph + OCM check-ins (W3.3, W1.2)
+- [x] S7 Spoken report into the graph + OCM check-ins (W3.3, W1.2)
 - [ ] S8 Graph independence + Cypher chains + E6 (W2.2, W2.3)
 - [ ] S9 Rings as graph analytics + E5b (W2.4)
 - [ ] S10 Real data in, ledger out (W1.3, W1.4, W1.5, W3.6) — after corpus freeze
@@ -119,3 +119,12 @@ Start every session with `/clear`, then `continue docs/TASKS_W.md`. One session 
 - DEVIATION (Ansh to overrule): the S5 ride-place parser is NOT swapped to the charger index (charger names like "Subway"/"Tata" would match ordinary words in a pinned flow; no routes exist for them). Logged in DECISIONS.
 - Manual for Ansh: (1) the frontend can now draw `/api/graph/why/{plan_id}` (nodes/edges/cypher) and show the backend pill; (2) add verified spoken names to `data/gazetteer/charger_aliases.json` (text, charger_id, source) when you visit/verify chargers; (3) confirm the 10-minute per-charger report cooldown; (4) `export_web_snapshot.py` is still pending from S4/S5.
 - For S7: `names.decide(graph.search_names(spoken))` is the resolver for the spoken report; `service.add_report` is the write path (plan cache is NOT invalidated: S7 must recompute "did the plan move"); fix the `NOW` clock (trust uses it); live reports are never expired.
+
+### S7 (2026-11-17) - done (OCM half blocked on the network)
+- W3.3 `d46dd33` + review fixes: `POST /api/voice/report` (hear, read back, NEVER writes; status by rule, charger by `names.decide` over the name index) and `/report/confirm` (needs `confirmed` + `consent`; writes through the `POST /api/reports` path; re-plans up to 2 cached plans that use the charger; reply = trust before/after + whether the plan changed since it was made). Contract v5. Audio never stored; transcript stored as the note.
+- `NOW` fixed (`trust/clock.py`): simulated reports stay on the frozen 27 Oct clock (pinned decisions unchanged: V07 NO_GO 80 %, V12 GO 95 %+, V19 IE 90 %); real reports age by real time. Before, a real November report stayed age 0 for ever.
+- Review (`code-reviewer`): 1 HIGH + 6 MEDIUM, all fixed or logged in DECISIONS. HIGH: scripted (`from_real_person=false`) notes are now refused unless the server sets `VERITY_ALLOW_SCRIPTED_REPORTS=1` (anyone could plant a never-aging simulated report). Re-plan no longer pops the plan; pending/failed re-checks are said, never "did not change".
+- W1.2: `verity/ocm.py` + `scripts/fetch_ocm_checkins.py` + tests (SYNTHETIC point). **BLOCKED:** the one fetch got `ConnectError 10054` from api.openchargemap.io (key IS in .env); n = 0 real check-ins, `results/ocm_checkins.json` not written. Field names are from memory (docs unreadable, reference data 403): `mapping_verified: false`. Manual: re-run from another network, check `data/cache/ocm_checkins_raw.json`, report the n. Details: `docs/EVIDENCE_STATUS.md`.
+- Suite offline (`NEO4J_URI=`): 688 passed, 21 skipped (live-Aura tests + stale `web/js/snapshot.js`); the live parity tests were NOT re-run this session (graph code untouched apart from `add_report` arguments). No paid Sarvam calls in S7; the new reply sentences are not in the offline audio cache (live TTS, else text).
+- Manual for Ansh: (1) the frontend: audio -> `/api/voice/report` -> show `prompt` + candidates -> consent tick -> `/report/confirm` -> speak `speech`; (2) listen to the Hindi sentences in `report_voice.py` (machine-written); (3) real Hindi speech writes charger names in Devanagari, which will not match Latin directory names (not measured; needs transliteration or verified aliases in `data/gazetteer/charger_aliases.json`); (4) decide whether to set `VERITY_ALLOW_SCRIPTED_REPORTS=1` for the demo; (5) `export_web_snapshot.py` still pending.
+- S8 not started.

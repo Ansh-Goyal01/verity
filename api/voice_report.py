@@ -12,6 +12,7 @@ The audio is never stored; the transcript is, as the report's note, with the dri
 
 from __future__ import annotations
 
+import logging
 import time
 
 from verity.audio_cache import AudioCache
@@ -22,6 +23,9 @@ from verity.voice import SarvamClient
 from .models import VoiceReportConfirm
 from .service import EngineService
 from .speech import try_synthesise
+
+
+log = logging.getLogger(__name__)
 
 
 def _ms(since: float) -> int:
@@ -78,7 +82,7 @@ def record_report_stage(svc: EngineService, voice: SarvamClient | None, cache: A
     if not confirm.confirmed:
         speech = NOT_RECORDED[confirm.language]
         return {"stage": "not_recorded", "reply_language": confirm.language, "report": None, "plans_checked": 0,
-                "plans": [], "speech": speech, "audio": _speak(confirm, speech, voice, cache, timings),
+                "plans_pending": 0, "replan_failed": False, "plans": [], "speech": speech, "audio": _speak(confirm, speech, voice, cache, timings),
                 "timings_ms": {**timings, "total": _ms(started)}, "is_simulated": scripted}
 
     note = f"voice: {confirm.transcript}" if confirm.transcript else "voice report"
@@ -87,13 +91,20 @@ def record_report_stage(svc: EngineService, voice: SarvamClient | None, cache: A
                              "channel": "driver_voice", "note": note}, is_simulated=scripted)
     timings["write"] = _ms(t)
     t = time.perf_counter()
-    plans = svc.replan_after_report(confirm.charger_id)
+    plans, pending, failed = [], 0, False
+    changed = report["trust_before"]["p_works"] != report["trust_after"]["p_works"]  # shown (5 %) trust, the same the driver hears
+    try:  # the report is already written: a failed re-plan must not turn it into an error
+        plans, pending = svc.replan_after_report(confirm.charger_id, trust_changed=changed)
+    except Exception:  # noqa: BLE001 - logged with its traceback, reported to the driver as "could not re-check"
+        log.exception("re-plan after a report on %s failed", confirm.charger_id)
+        failed = True
     timings["replan"] = _ms(t)
 
     name = next((c.name for c in svc.chargers if c.id == confirm.charger_id), confirm.charger_id)
-    speech = recorded_sentence(name, report["trust_before"], report["trust_after"], plans, confirm.language)
+    speech = recorded_sentence(name, report["trust_before"], report["trust_after"], plans, confirm.language,
+                               pending=pending, failed=failed)
     return {"stage": "recorded", "reply_language": confirm.language, "report": report, "plans_checked": len(plans),
-            "plans": plans, "speech": speech, "audio": _speak(confirm, speech, voice, cache, timings),
+            "plans_pending": pending, "replan_failed": failed, "plans": plans, "speech": speech, "audio": _speak(confirm, speech, voice, cache, timings),
             "timings_ms": {**timings, "total": _ms(started)}, "is_simulated": scripted}
 
 

@@ -128,7 +128,77 @@ def test_an_unknown_charger_is_a_404(client) -> None:
     assert r.status_code == 404 and r.json()["error"] == "unknown_charger"
 
 
-def test_a_scripted_note_is_simulated_under_its_own_source(client, svc, plan) -> None:
+def test_a_scripted_note_is_refused_unless_the_server_allows_it(client, svc, plan, monkeypatch) -> None:
+    monkeypatch.delenv("VERITY_ALLOW_SCRIPTED_REPORTS", raising=False)
+    before = _n_reports(svc)
+    r = _confirm(client, _stop(plan)["charger_id"], from_real_person=False)
+    assert r.status_code == 403 and r.json()["error"] == "scripted_reports_disabled"
+    assert _n_reports(svc) == before
+
+
+def test_an_unknown_charger_does_not_use_up_the_cooldown(svc, plan) -> None:
+    cooldown = RateLimiter(1, 600.0)
+    app.dependency_overrides[get_service] = lambda: svc
+    app.dependency_overrides[get_voice_client] = lambda: None
+    app.dependency_overrides[get_report_limiter] = lambda: RateLimiter(1000, 60.0)
+    app.dependency_overrides[get_report_cooldown] = lambda: cooldown
+    try:
+        c = TestClient(app)
+        assert _confirm(c, "NO-SUCH-CHARGER").status_code == 404
+        assert cooldown.tracked_keys() == 0
+        assert _confirm(c, plan["alternates"][-1]["charger_id"], status="working").status_code == 200
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_a_failed_re_plan_keeps_the_report_and_says_it_could_not_re_check(client, svc, plan, monkeypatch) -> None:
+    def boom(*a, **k):
+        raise RuntimeError("synthetic failure")
+
+    monkeypatch.setattr(svc, "replan_after_report", boom)
+    cid = plan["stops"][-1]["charger_id"]
+    r = _confirm(client, cid, status="occupied")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["stage"] == "recorded" and body["replan_failed"] is True and body["plans"] == []
+    assert body["speech"].endswith("I could not re-check your plans just now.")
+    stored = [x for x in svc.graph.call(lambda g: g.reports()) if x.charger_id == cid and x.source_id == "driver:driver_voice"]
+    assert stored and stored[-1].status == "occupied"  # the report is stored although the re-check failed
+
+
+def test_the_old_plan_keeps_being_served_while_it_is_re_planned(svc, plan) -> None:
+    plan_id = plan["plan_id"]
+    seen = []
+    original = svc.dispatch
+
+    def watching(req, *, refresh=False):
+        seen.append(svc.plans.get(plan_id) is not None)  # is the old plan still there while the new one is computed?
+        return original(req, refresh=refresh)
+
+    svc.dispatch = watching
+    try:
+        changes, pending = svc.replan_after_report(_stop(plan)["charger_id"])
+    finally:
+        svc.dispatch = original
+    assert changes and all(seen) and svc.plans.get(plan_id) is not None
+
+
+def test_an_unchanged_shown_trust_skips_the_re_plan_and_counts_the_plans_pending(svc, plan) -> None:
+    changes, pending = svc.replan_after_report(_stop(plan)["charger_id"], trust_changed=False)
+    assert changes == [] and pending >= 1
+
+
+def test_only_one_re_plan_runs_at_a_time(svc, plan) -> None:
+    assert svc._replan_slot.acquire(blocking=False)
+    try:
+        changes, pending = svc.replan_after_report(_stop(plan)["charger_id"])
+    finally:
+        svc._replan_slot.release()
+    assert changes == [] and pending >= 1
+
+
+def test_a_scripted_note_is_simulated_under_its_own_source(client, svc, plan, monkeypatch) -> None:
+    monkeypatch.setenv("VERITY_ALLOW_SCRIPTED_REPORTS", "1")
     body = _confirm(client, _stop(plan)["charger_id"], from_real_person=False, status="working").json()
     assert body["is_simulated"] is True and body["report"]["is_simulated"] is True
     assert body["report"]["source_id"] == "driver:driver_voice_scripted"
