@@ -1,0 +1,227 @@
+{
+ "experiment": "E5b ring detection without a time window",
+ "is_simulated": true,
+ "eval_seeds": [
+  100,
+  119
+ ],
+ "dev_seeds": [
+  0,
+  7
+ ],
+ "worlds_per_scenario": 20,
+ "world": {
+  "n_honest": 100,
+  "reports_per_honest": [
+   6,
+   24
+  ],
+  "repeat_reporters": 8
+ },
+ "tuned_thresholds": {
+  "min_shared": 16,
+  "min_jaccard": 0.5,
+  "min_agree": 0.9
+ },
+ "dev_grid": [
+  {
+   "min_shared": 4,
+   "min_jaccard": 0.5,
+   "dev_score": 0.9403
+  },
+  {
+   "min_shared": 4,
+   "min_jaccard": 0.7,
+   "dev_score": 0.9332
+  },
+  {
+   "min_shared": 4,
+   "min_jaccard": 0.9,
+   "dev_score": 0.3833
+  },
+  {
+   "min_shared": 8,
+   "min_jaccard": 0.5,
+   "dev_score": 0.9603
+  },
+  {
+   "min_shared": 8,
+   "min_jaccard": 0.7,
+   "dev_score": 0.953
+  },
+  {
+   "min_shared": 8,
+   "min_jaccard": 0.9,
+   "dev_score": 0.3875
+  },
+  {
+   "min_shared": 12,
+   "min_jaccard": 0.5,
+   "dev_score": 0.9603
+  },
+  {
+   "min_shared": 12,
+   "min_jaccard": 0.7,
+   "dev_score": 0.953
+  },
+  {
+   "min_shared": 12,
+   "min_jaccard": 0.9,
+   "dev_score": 0.3875
+  },
+  {
+   "min_shared": 16,
+   "min_jaccard": 0.5,
+   "dev_score": 1.0
+  },
+  {
+   "min_shared": 16,
+   "min_jaccard": 0.7,
+   "dev_score": 0.9928
+  },
+  {
+   "min_shared": 16,
+   "min_jaccard": 0.9,
+   "dev_score": 0.4083
+  },
+  {
+   "min_shared": 20,
+   "min_jaccard": 0.5,
+   "dev_score": 0.9928
+  },
+  {
+   "min_shared": 20,
+   "min_jaccard": 0.7,
+   "dev_score": 0.9928
+  },
+  {
+   "min_shared": 20,
+   "min_jaccard": 0.9,
+   "dev_score": 0.4083
+  }
+ ],
+ "scenarios": {
+  "evasive ring of 12 (10 days)": {
+   "burst_window": {
+    "ring_recall": 0.0,
+    "ring_precision": null,
+    "worlds_with_any_flag": 0,
+    "repeat_reporters_flagged_share": null,
+    "other_honest_flagged_mean": 0.0
+   },
+   "overlap_default": {
+    "ring_recall": 1.0,
+    "ring_precision": 1.0,
+    "worlds_with_any_flag": 20,
+    "repeat_reporters_flagged_share": null,
+    "other_honest_flagged_mean": 0.0
+   },
+   "overlap_tuned": {
+    "ring_recall": 1.0,
+    "ring_precision": 1.0,
+    "worlds_with_any_flag": 20,
+    "repeat_reporters_flagged_share": null,
+    "other_honest_flagged_mean": 0.0
+   }
+  },
+  "evasive ring + 8 repeat reporters on 6 chargers": {
+   "burst_window": {
+    "ring_recall": 0.0,
+    "ring_precision": null,
+    "worlds_with_any_flag": 0,
+    "repeat_reporters_flagged_share": 0.0,
+    "other_honest_flagged_mean": 0.0
+   },
+   "overlap_default": {
+    "ring_recall": 1.0,
+    "ring_precision": 0.866,
+    "worlds_with_any_flag": 20,
+    "repeat_reporters_flagged_share": 0.275,
+    "other_honest_flagged_mean": 0.0
+   },
+   "overlap_tuned": {
+    "ring_recall": 1.0,
+    "ring_precision": 1.0,
+    "worlds_with_any_flag": 20,
+    "repeat_reporters_flagged_share": 0.0,
+    "other_honest_flagged_mean": 0.0
+   }
+  },
+  "evasive ring + 8 repeat reporters on 15 chargers": {
+   "burst_window": {
+    "ring_recall": 0.0,
+    "ring_precision": null,
+    "worlds_with_any_flag": 0,
+    "repeat_reporters_flagged_share": 0.0,
+    "other_honest_flagged_mean": 0.0
+   },
+   "overlap_default": {
+    "ring_recall": 1.0,
+    "ring_precision": 0.91,
+    "worlds_with_any_flag": 20,
+    "repeat_reporters_flagged_share": 0.188,
+    "other_honest_flagged_mean": 0.0
+   },
+   "overlap_tuned": {
+    "ring_recall": 1.0,
+    "ring_precision": 1.0,
+    "worlds_with_any_flag": 20,
+    "repeat_reporters_flagged_share": 0.0,
+    "other_honest_flagged_mean": 0.0
+   }
+  },
+  "no ring, 8 repeat reporters on 15 chargers": {
+   "burst_window": {
+    "ring_recall": null,
+    "ring_precision": null,
+    "worlds_with_any_flag": 0,
+    "repeat_reporters_flagged_share": 0.0,
+    "other_honest_flagged_mean": 0.0
+   },
+   "overlap_default": {
+    "ring_recall": null,
+    "ring_precision": null,
+    "worlds_with_any_flag": 3,
+    "repeat_reporters_flagged_share": 0.056,
+    "other_honest_flagged_mean": 0.0
+   },
+   "overlap_tuned": {
+    "ring_recall": null,
+    "ring_precision": null,
+    "worlds_with_any_flag": 0,
+    "repeat_reporters_flagged_share": 0.0,
+    "other_honest_flagged_mean": 0.0
+   }
+  },
+  "burst ring of 12 (6 h) + 8 repeat reporters on 15 chargers": {
+   "burst_window": {
+    "ring_recall": 1.0,
+    "ring_precision": 1.0,
+    "worlds_with_any_flag": 20,
+    "repeat_reporters_flagged_share": 0.0,
+    "other_honest_flagged_mean": 0.0
+   },
+   "overlap_default": {
+    "ring_recall": 1.0,
+    "ring_precision": 0.91,
+    "worlds_with_any_flag": 20,
+    "repeat_reporters_flagged_share": 0.188,
+    "other_honest_flagged_mean": 0.0
+   },
+   "overlap_tuned": {
+    "ring_recall": 1.0,
+    "ring_precision": 1.0,
+    "worlds_with_any_flag": 20,
+    "repeat_reporters_flagged_share": 0.0,
+    "other_honest_flagged_mean": 0.0
+   }
+  }
+ },
+ "runtime_s": 384.7,
+ "notes": [
+  "All reports, rings and repeat reporters are SIMULATED (verity.trust.reports_sim).",
+  "Thresholds were chosen on dev seeds 0-7 and evaluated on seeds 100-119.",
+  "The tuned thresholds are fitted to the simulated sizes (ring 30 targets, repeat groups 6 or 15) and need not transfer: an upper bound.",
+  "Precision is None where nothing was flagged in any world."
+ ]
+}

@@ -34,6 +34,11 @@ class WorldConfig:
     operator_feed: bool = False
     usage_visits_mean: float = 5.0
     seed: int = 0
+    # Honest repeat reporters (E5b): a group of drivers who all use the SAME few chargers (one depot, one corridor)
+    # and report on them again and again. Added after every other draw, so worlds without them are unchanged.
+    n_repeat: int = 0
+    repeat_targets: int = 6
+    repeat_reports_per_target: tuple[int, int] = (4, 8)
 
 
 @dataclass
@@ -119,5 +124,18 @@ def simulate_world(cfg: WorldConfig) -> World:
         works = rng.random(visits) < true_r[c]
         bounces = int(np.sum(rng.random(visits) < np.where(works, BOUNCE_IF_WORKING, BOUNCE_IF_BROKEN)))
         usage[chargers[c].id] = (visits, bounces)
+
+    if cfg.n_repeat > 0:  # drawn LAST: every stream above, and so every existing world, is untouched
+        group = rng.choice(n, size=min(cfg.repeat_targets, n), replace=False, p=popularity)
+        for m in range(cfg.n_repeat):
+            sid = f"repeat-{m:02d}"
+            kinds[sid] = "honest_repeat"
+            sens, spec = rng.uniform(0.80, 0.97), rng.uniform(0.70, 0.95)
+            for c in group:
+                for _ in range(int(rng.integers(cfg.repeat_reports_per_target[0], cfg.repeat_reports_per_target[1] + 1))):
+                    working = rng.random() < true_r[int(c)]
+                    label = int(rng.random() < sens) if working else int(rng.random() >= spec)
+                    rep, st = _report(chargers[int(c)].id, sid, label, float(rng.uniform(0, cfg.days)), rng)
+                    reports.append(rep); stars.append(st)
 
     return World(chargers, true_r, reports, np.array(stars, dtype=float), usage, ring, kinds, ring_targets)
