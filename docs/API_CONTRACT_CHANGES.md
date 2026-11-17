@@ -120,3 +120,10 @@ fits the project. Nothing here is applied unless both sides agree.
 - A second guard: one report per address per charger per 10 minutes (429 `already_reported`).
 - Not yet: a stored plan is NOT recomputed after a report (S7 decides how a report moves a plan); trust uses the engine's
   fixed demo clock, as dispatch does (S7 replaces it).
+
+## 2026-11-17 - v5: `POST /api/voice/report` and `POST /api/voice/report/confirm` (W3.3)
+
+- Reason: guide W3.3. A driver can say "Radisson wala charger band hai"; it becomes a report in the graph and the reply says what changed.
+- Old shape: reports came only from `POST /api/reports` (typed charger id). New shape: see the last section of API_CONTRACT.md. Additive.
+- Call 1 (multipart `audio` or JSON `{transcript}`) hears and reads back or asks; it never writes. Call 2 (JSON) writes only with `confirmed` and `consent`.
+- `POST /api/reports` behaviour change (not the shape): real reports are now aged by real time, simulated by the frozen demo clock (`trust_before` / `trust_after` of a report you just wrote are unchanged in meaning).

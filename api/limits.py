@@ -59,6 +59,15 @@ class LruCache(Generic[K, V]):
         with self._lock:
             return len(self._data)
 
+    def snapshot(self) -> list[tuple[K, V]]:
+        """The entries, oldest first, without counting as a use (a scan must not reorder the cache)."""
+        with self._lock:
+            return list(self._data.items())
+
+    def pop(self, key: K) -> V | None:
+        with self._lock:
+            return self._data.pop(key, None)
+
     def clear(self) -> None:
         with self._lock:
             self._data.clear()

@@ -19,7 +19,7 @@ import json
 import logging
 import os
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 
@@ -45,6 +45,7 @@ from verity.trust.graph_build import (
     plan_record,
     populate_road_network,
 )
+from verity.trust.clock import rebase_real_reports
 from verity.trust.reports_sim import NOW
 from verity.ridecheck import RideInput, ride_check
 from verity.routing import snapshot_to_route
@@ -212,6 +213,33 @@ class StoredPlan:
     request: dict
 
 
+REPLAN_LIMIT = 2  # plans re-planned after one report: each is a full Monte Carlo (about 2.4 s in memory)
+
+
+def plan_charger_ids(response: dict) -> set[str]:
+    """Every charger a plan relies on: its stops and the alternates backing them."""
+    return {s["charger_id"] for s in response["stops"]} | {a["charger_id"] for a in response["alternates"]}
+
+
+def _stop_ids(response: dict) -> list[str]:
+    return [s["charger_id"] for s in response["stops"]]
+
+
+def _backups(response: dict) -> list[tuple[int, str]]:
+    return sorted((a["for_stop_index"], a["charger_id"]) for a in response["alternates"])
+
+
+def plan_change(plan_id: str, before: dict, after: dict) -> dict:
+    """What a new report did to one plan. ``moved`` = the decision or the chargers it relies on changed; a shifted
+    confidence alone is shown (both displays) but is not a move."""
+    changed = [name for name, differs in (("decision", before["decision"] != after["decision"]),
+                                          ("stops", _stop_ids(before) != _stop_ids(after)),
+                                          ("backups", _backups(before) != _backups(after))) if differs]
+    return {"plan_id": plan_id, "vehicle_id": after["vehicle_id"], "decision_before": before["decision"],
+            "decision_after": after["decision"], "confidence_before": before["confidence_display"],
+            "confidence_after": after["confidence_display"], "moved": bool(changed), "changed": changed}
+
+
 @dataclass(frozen=True)
 class GraphView:
     """What trust and dispatch read from the graph: chargers, per-charger trust, and the chargers near the route."""
@@ -238,7 +266,10 @@ def canonical_request(model: type, req: dict) -> dict:
 
 
 class EngineService(GraphEndpoints):
-    def __init__(self, n_runs: int | None = None, graph_backend: str | None = None) -> None:
+    def __init__(self, n_runs: int | None = None, graph_backend: str | None = None,
+                 clock: Callable[[], datetime] | None = None) -> None:
+        # Real reports are aged by this clock, simulated ones by reports_sim.NOW (trust/clock.py); injectable for tests.
+        self.clock: Callable[[], datetime] = clock or (lambda: datetime.now(timezone.utc))
         self.cfg = ForecastConfig(n_runs=n_runs or int(os.environ.get("VERITY_N_RUNS", "1500")))
         self.route, self.snap = load_planned_route()
         self.poly = np.array(self.snap["polyline"])
@@ -310,7 +341,7 @@ class EngineService(GraphEndpoints):
         # The live tests plant clearly fake TEST- chargers in the shared database: planning never sees them.
         chargers = [c for c in graph.chargers() if not c.id.startswith(TEST_PREFIX)]
         known = {c.id for c in chargers}
-        reports = [r for r in graph.reports() if r.charger_id in known]
+        reports = rebase_real_reports([r for r in graph.reports() if r.charger_id in known], self.clock())
         trust = TrustEngine(chargers).estimate(reports, NOW).chargers
         return GraphView(chargers, trust, chargers_near_route(chargers, self.poly, self.poly_km, CORRIDOR_KM),
                          tuple(reports))
@@ -431,6 +462,23 @@ class EngineService(GraphEndpoints):
         self.plans[plan_id] = StoredPlan(result.state, response, dict(req))
         self._record_plan(plan_id, response, view)
         return response
+
+    # -- did a new report move a plan? (W3.3) -----------------------------------------------------------------------
+    def replan_after_report(self, charger_id: str, limit: int = REPLAN_LIMIT) -> list[dict]:
+        """Re-plan the newest cached plans that use ``charger_id`` (as a stop or a backup) against the graph as it is now,
+        and say, for each, whether the answer moved. A plan nobody has asked for is not touched. Same request, same seed:
+        any difference comes from the new trust numbers alone. Costs one dispatch per plan (``limit`` at most)."""
+        uses = [(pid, st) for pid, st in reversed(self.plans.snapshot()) if charger_id in plan_charger_ids(st.response)]
+        out = []
+        for plan_id, stored in uses[:limit]:
+            self.plans.pop(plan_id)
+            try:
+                after = self.dispatch(stored.request)
+            except Exception:
+                self.plans[plan_id] = stored  # a failed re-plan must not lose the plan the driver is following
+                raise
+            out.append(plan_change(plan_id, stored.response, after))
+        return out
 
     # -- ride check (F8b) --------------------------------------------------------------------------------------------
     def _check_area(self, *points: tuple[float, float]) -> None:

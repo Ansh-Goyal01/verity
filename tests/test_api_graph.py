@@ -50,7 +50,8 @@ def test_trust_for_a_dispatch_is_read_from_the_graph_not_from_a_side_copy(svc: E
     cid = svc.demo_reports[0].charger_id
     before = svc.trust[cid].p_works
     svc.graph.populate(lambda g: g.add_reports([
-        Report(charger_id=cid, source_id=f"late-{i}", status="broken", t=NOW - timedelta(days=1, minutes=i))
+        Report(charger_id=cid, source_id=f"late-{i}", status="broken", t=NOW - timedelta(days=1, minutes=i),
+               is_simulated=True)  # dated on the simulation clock; a real report would be aged by real time
         for i in range(8)]))
     svc.dispatch(request("V07", 81))
     assert svc.trust[cid].p_works < before - 0.05

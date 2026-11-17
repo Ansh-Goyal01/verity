@@ -466,3 +466,19 @@ with channels, aliases, the latest 5 plans that used or avoided it. Response as 
 channel ("driver_voice"), note? (<= 200 chars)}`. Writes one `REPORTED` edge (`is_simulated: false`, source
 `driver:driver_voice`, channel `driver_voice`) and answers `{charger_id, status, source_id, t, trust_before, trust_after,
 backend, is_simulated: false}`; trust is evaluated at the engine's own clock, the same one dispatch uses. 422 `consent_required`, 404 `unknown_charger`, 429 `rate_limited` (own budget, not the voice one) or `already_reported` (one report per address per charger per 10 minutes; `Retry-After` says when).
+
+## Spoken charger report (contract v5, W3.3)
+
+**`POST /api/voice/report`** (call 1 of 2; voice rate limit) - multipart `audio` (+ `language`, `speak`) or JSON
+`{transcript (<= 300 chars), language ("unknown"|"en-IN"|"hi-IN"), speak}`. Never writes. Answers `{stage ("confirm"|"clarify"),
+transcript, language_code, reply_language, status (or null), charger ({charger_id, name, score} only when exactly one charger
+fits every distinctive spoken word, else null), candidates (the best few), needs_confirmation, prompt (the read-back or the
+question), prompt_audio, timings_ms, is_simulated: false}`.
+
+**`POST /api/voice/report/confirm`** (call 2 of 2; voice + report rate limits and the per-address per-charger cooldown) - JSON
+`{confirmed, charger_id, status, consent, language, transcript?, from_real_person (default true), speak}`. Writes only when
+`confirmed` and `consent` are true (422 `consent_required`, 404 `unknown_charger`, 429 `already_reported`). Answers `{stage
+("recorded"|"not_recorded"), reply_language, report (the `POST /api/reports` answer, with trust_before / trust_after, or null),
+plans_checked (<= 2), plans [{plan_id, vehicle_id, decision_before, decision_after, confidence_before, confidence_after,
+moved, changed ("decision"|"stops"|"backups")}], speech, audio, timings_ms, is_simulated}`. `from_real_person=false` stores a
+simulated report under source `driver:driver_voice_scripted`. The audio is never stored.

@@ -45,6 +45,10 @@ from .models import (
     TtsRequest,
     TtsResponse,
     VoiceRideConfirm,
+    VoiceReportConfirm,
+    VoiceReportDecided,
+    VoiceReportHeard,
+    VoiceReportText,
     VoiceRideDecided,
     VoiceRideHeard,
     WhyResponse,
@@ -52,6 +56,7 @@ from .models import (
 from .service import ApiError, EngineService
 from .speech import VOICE_MESSAGE, synthesise
 from .voice_ride import decide_stage, hear_stage
+from .voice_report import hear_report_stage, record_report_stage
 
 # Origins her pages use: "null" (file:// double-click), VS Code Live Server, and GitHub Pages.
 DEFAULT_ORIGINS = ["null", "http://localhost:5500", "http://127.0.0.1:5500", "https://ansh-goyal01.github.io"]
@@ -349,3 +354,63 @@ async def voice_ride_check(request: Request, svc: EngineService = Depends(get_se
         return await run_in_threadpool(hear_stage, voice, cache, audio, filename, audio_type, language, speak)
     except VoiceUnavailable as exc:
         return _error(503, "voice_unavailable", str(exc))
+
+
+@app.post("/api/voice/report", response_model=VoiceReportHeard, dependencies=[Depends(limit_voice)])
+async def voice_report(request: Request, svc: EngineService = Depends(get_service),
+                       voice: SarvamClient | None = Depends(get_voice_client),
+                       cache: AudioCache = Depends(get_audio_cache)):
+    """A spoken charger report, call 1 of 2 (W3.3): hear it and read it back, or ask what was unclear. Writes nothing.
+    Multipart audio (+ ``language``, ``speak``) or JSON ``VoiceReportText`` (a transcript the app already has)."""
+    content_type = request.headers.get("content-type", "")
+    is_json = content_type.startswith("application/json")
+    body = await read_body_limited(request, MAX_CONFIRM_JSON_BYTES if is_json else MAX_RECORDING_BYTES + MULTIPART_OVERHEAD_BYTES)
+    if body is None:
+        return _error(413, "payload_too_large", f"the request is larger than this endpoint accepts "
+                                                f"({MAX_RECORDING_BYTES} bytes of audio, one sentence under 30 s)")
+    if is_json:
+        try:
+            text = VoiceReportText.model_validate_json(body)
+        except ValidationError as exc:
+            return _error(422, "invalid_request", _validation_detail(exc))
+        return await run_in_threadpool(lambda: hear_report_stage(svc, voice, cache, transcript=text.transcript,
+                                                                 language=text.language, speak=text.speak))
+    if voice is None:
+        return _error(503, "voice_unavailable", VOICE_MESSAGE)
+    try:
+        fields, files = await run_in_threadpool(parse_multipart, content_type, body)
+    except ValueError as exc:
+        return _error(422, "invalid_request", str(exc))
+    upload = files.get("audio") or files.get("file")
+    if upload is None:
+        return _error(422, "invalid_request", "multipart field 'audio' (the recording) is required")
+    filename, audio_type, audio = upload
+    if not audio or len(audio) > MAX_RECORDING_BYTES:
+        return _error(422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
+    language = fields.get("language", "unknown")
+    if not LANGUAGE_FIELD.fullmatch(language):
+        return _error(422, "invalid_request", "language must be 'unknown' or a code like hi-IN")
+    speak = fields.get("speak", "1").strip().lower() not in {"0", "false", "no"}
+    try:
+        return await run_in_threadpool(lambda: hear_report_stage(svc, voice, cache, transcript=None, audio=audio,
+                                                                 filename=filename, content_type=audio_type,
+                                                                 language=language, speak=speak))
+    except VoiceUnavailable as exc:
+        return _error(503, "voice_unavailable", str(exc))
+
+
+@app.post("/api/voice/report/confirm", response_model=VoiceReportDecided,
+          dependencies=[Depends(limit_voice), Depends(limit_reports)])
+async def voice_report_confirm(req: VoiceReportConfirm, request: Request, svc: EngineService = Depends(get_service),
+                               voice: SarvamClient | None = Depends(get_voice_client),
+                               cache: AudioCache = Depends(get_audio_cache),
+                               cooldown: RateLimiter = Depends(get_report_cooldown)):
+    """Call 2 of 2: the driver said yes or no to the read-back. On ``confirmed`` + ``consent`` the report is written (the same
+    path and the same per-address, per-charger cooldown as ``POST /api/reports``), the plans that use the charger are
+    re-planned, and the reply says the charger's trust before and after and whether the plan moved."""
+    if req.confirmed and req.consent:  # a refused request must not use up the cooldown
+        retry_after = cooldown.hit(f"{rate_key(client_ip(request, TRUST_PROXY))}|{req.charger_id}")
+        if retry_after is not None:
+            raise RateLimited(retry_after, code="already_reported",
+                              message=f"This address already reported on this charger; try again in {math.ceil(retry_after)} s.")
+    return await run_in_threadpool(record_report_stage, svc, voice, cache, req)

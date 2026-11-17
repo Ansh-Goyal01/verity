@@ -7,16 +7,18 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from verity.forecast import round_prob
 from verity.schemas import Report
 from verity.trust.engine import ChargerTrust, TrustEngine
 from verity.trust.graph import TEST_PREFIX, ChargerGraph
+from verity.trust.clock import rebase_real_reports
 from verity.trust.graph_types import AuditView
 from verity.trust.reports_sim import NOW
 
 REPORT_CHANNELS = {"driver_voice": "driver:driver_voice"}  # channel -> source id (one source per channel, as for public evidence)
+SCRIPTED_SOURCE_ID = "driver:driver_voice_scripted"  # a demo voice note: its own source, so it never lends a real driver's reputation
 MAX_NOTE_CHARS = 200
 
 
@@ -58,23 +60,25 @@ class GraphEndpoints:
             raise _api_error(404, "unknown_charger", f"No charger {charger_id!r}")
         return {"charger_id": charger_id, "trust": trust_block(self.trust.get(charger_id)), **view_response(view)}
 
-    def add_report(self, req: dict, now: datetime | None = None) -> dict:
-        """One REPORTED edge from a person, with the charger's trust before and after, evaluated at the engine's clock
-        (the same one dispatch uses; a report newer than it counts as age 0). The clock itself is S7's to fix."""
+    def add_report(self, req: dict, now: datetime | None = None, *, is_simulated: bool = False) -> dict:
+        """One REPORTED edge, with the charger's trust before and after. Trust is evaluated the way dispatch does it:
+        simulated reports on the frozen simulation clock, real ones aged by real time (``trust/clock.py``).
+        ``is_simulated`` is true only for a scripted report (a demo voice note), never for a person."""
         if not req.get("consent"):
             raise _api_error(422, "consent_required", "A report is stored with the charger's history: consent must be true.")
         cid = req["charger_id"]
         if cid not in {c.id for c in self.chargers}:
             raise _api_error(404, "unknown_charger", f"No charger {cid!r}")
-        when = now or datetime.now(timezone.utc)
-        rep = Report(charger_id=cid, source_id=REPORT_CHANNELS[req["channel"]], status=req["status"], t=when,
-                     evidence=(req.get("note") or "")[:MAX_NOTE_CHARS] or "driver report", is_simulated=False)
-        as_of = NOW  # the clock dispatch uses, so the numbers here match the plan; a newer report's age is clamped to 0
+        when = now or (NOW if is_simulated else self.clock())  # simulated reports live on the simulation clock
+        rep = Report(charger_id=cid, source_id=SCRIPTED_SOURCE_ID if is_simulated else REPORT_CHANNELS[req["channel"]], status=req["status"], t=when,
+                     evidence=(req.get("note") or "")[:MAX_NOTE_CHARS] or "driver report", is_simulated=is_simulated)
+        as_of = NOW  # the engine's clock (real reports are rebased onto it), so the numbers here match the plan
 
         def trust_now(g: ChargerGraph) -> ChargerTrust | None:
             known = [c for c in g.chargers() if not c.id.startswith(TEST_PREFIX)]
             ids = {c.id for c in known}
-            return TrustEngine(known).estimate([r for r in g.reports() if r.charger_id in ids], as_of).chargers.get(cid)
+            reports = rebase_real_reports([r for r in g.reports() if r.charger_id in ids], self.clock())
+            return TrustEngine(known).estimate(reports, as_of).chargers.get(cid)
 
         before = self.graph.call(trust_now)
         self.graph.populate(lambda g: g.add_report(rep))
@@ -82,4 +86,4 @@ class GraphEndpoints:
         self._adopt(self.graph.call(self._read_view))
         return {"charger_id": cid, "status": rep.status, "source_id": rep.source_id, "t": when.isoformat(),
                 "trust_before": trust_block(before), "trust_after": trust_block(after),
-                "backend": self.graph.backend, "is_simulated": False}
+                "backend": self.graph.backend, "is_simulated": is_simulated}

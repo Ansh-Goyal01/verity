@@ -562,3 +562,73 @@ class ReportResponse(Resp):
     trust_after: TrustBlock
     backend: Literal["neo4j", "memory"]
     is_simulated: bool
+
+
+# --- spoken charger report (contract v5, additive; W3.3) -------------------------------------------------------------
+
+
+class ReportCandidate(Resp):
+    charger_id: str
+    name: str
+    score: float  # share of the spoken name words found in this charger's name
+
+
+class VoiceReportText(Req):
+    """First call without audio: the transcript the app already has (e.g. from /api/voice/stt)."""
+
+    transcript: str = Field(min_length=1, max_length=300)
+    language: Literal["unknown", "en-IN", "hi-IN"] = "unknown"
+    speak: bool = True
+
+
+class VoiceReportHeard(Resp):
+    """What was heard, read back. Nothing is written by this call."""
+
+    stage: Literal["confirm", "clarify"]  # confirm: one charger + one status, waiting for yes; clarify: a question
+    transcript: str
+    language_code: str | None
+    reply_language: Literal["en-IN", "hi-IN"]
+    status: ReportStatus | None
+    charger: ReportCandidate | None  # set only when exactly one charger fits every distinctive spoken word
+    candidates: list[ReportCandidate]  # the few best fits when it was not clear
+    needs_confirmation: bool
+    prompt: str
+    prompt_audio: SpokenClip | None
+    timings_ms: dict[str, int | None]
+    is_simulated: Literal[False] = False
+
+
+class VoiceReportConfirm(Req):
+    """Second call: the driver said yes (or no) to the read-back. Nothing is stored unless ``confirmed`` and ``consent``."""
+
+    confirmed: bool
+    charger_id: str = Field(min_length=1, max_length=64)
+    status: ReportStatus
+    consent: bool  # the report and its transcript join the charger's history; the audio is never stored
+    language: Literal["en-IN", "hi-IN"]
+    transcript: str | None = Field(default=None, max_length=300)
+    from_real_person: bool = True  # false = a scripted demo note: stored as simulated, under its own source
+    speak: bool = True
+
+
+class PlanChange(Resp):
+    plan_id: str
+    vehicle_id: str
+    decision_before: str
+    decision_after: str
+    confidence_before: str
+    confidence_after: str
+    moved: bool  # the decision or the chargers it relies on changed
+    changed: list[Literal["decision", "stops", "backups"]]
+
+
+class VoiceReportDecided(Resp):
+    stage: Literal["recorded", "not_recorded"]
+    reply_language: Literal["en-IN", "hi-IN"]
+    report: ReportResponse | None  # includes trust before and after
+    plans_checked: int  # cached plans that use this charger and were re-planned (at most 2)
+    plans: list[PlanChange]
+    speech: str
+    audio: SpokenClip | None
+    timings_ms: dict[str, int | None]
+    is_simulated: bool
