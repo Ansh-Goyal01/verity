@@ -488,8 +488,8 @@ simulated report under source `driver:driver_voice_scripted` and is refused with
 **`GET /api/evidence/ledger`** - read-only; every count is read from the saved result files on each call, so it moves when a
 file does (a new corpus upload and `scripts/run_real_data.py`, an OCM fetch, an experiment re-run) with no code change.
 Answers `{schema: "verity.evidence_ledger.v1", real: {trips {rows, usable, note}, charger_reports {corpus_evidence_usable,
-app_snapshot_usable, ocm_checkins (null = not fetched), total_real_reports, ocm_status}, voice_notes {count, status
-("NOT_RUN"|"MEASURED"), note}, app_reviews {rows, usable, text_rows_private}, bmw_i3_held_out {status ("DONE"|"NOT_RUN"),
+app_snapshot_usable, ocm_checkins (null = not fetched), total_real_reports, ocm_status}, voice_notes {count, speakers, status
+("NOT_RUN"|"PRELIMINARY"|"MEASURED"), note}, app_reviews {rows, usable, text_rows_private}, bmw_i3_held_out {status ("DONE"|"NOT_RUN"),
 label, trips_scored, km_scored, preliminary, capacity_error_pct, capacity_truth_in_ci95, capacity_truth_in_ci80,
 soc_drop_median_abs_error_pp, soc_drop_band95_coverage}}, simulated: {monte_carlo_runs_per_answer, experiments [{experiment,
 present, is_simulated: true, units, file}], note}, driver_real: {needed_reports (3), real_reports_available, status
@@ -500,3 +500,38 @@ build one, and it does not claim the reports lie near the drop.
 
 Graph additions of S8/S9 (no endpoint changed): `Source` nodes may carry `ring_id` (written by `scripts/graph_rings.py`);
 `Neo4jGraph.shared_causes`, `chains` and `agreement_edges` are engine-internal, each with an in-memory twin.
+
+## Venue voice kit: `POST /api/lab/voice-sample` (contract v7, guide W3.5)
+
+Captures ONE consented utterance for the real-speaker measurement and stores a scored sample. **Off by default**: the server
+answers `403 lab_disabled` unless the operator sets `VERITY_LAB_MODE=1` (otherwise anyone could add rows to the dataset the
+results are computed from). It draws on the same per-address voice budget as the other voice endpoints.
+
+Request: multipart form with the recording in `audio` (under 30 s, at most 5,000,000 bytes: `413` beyond) and the text fields
+`consent` (must be `true`, else `422 consent_required`; nothing is sent to Sarvam or stored without it), `speaker_id` (an
+ANONYMOUS label, 1-16 of `A-Z a-z 0-9 _ -`, for example `s07`; a name with a space is refused), `spoken_language`
+(`hindi` | `hinglish` | `english`), `device` (1-40 characters), `language` (optional: `unknown` or a code like `hi-IN`, default `unknown`),
+and what the speaker was asked to say: `expected_soc_pct` (0-100) and/or `expected_charger_id` (a directory id; `404 unknown_charger`).
+With neither, `422 nothing_to_score`. Optional `compare=true` replays the SAME audio through `saaras:v3` and `saaras:v4`, each in
+`transcribe` and `codemix` (4 more paid calls; the audio itself is never stored).
+
+Answer `200`: the stored sample `{schema: "verity.voice_sample.v1", sample_id, recorded_at, speaker_id, spoken_language, device,
+language_detected, stt_model, stt_mode, stt_ms, transcript, expected_soc_pct, parsed_soc_pct, battery_correct (bool|null),
+expected_charger_id, matched_charger_id, charger_kind ("match"|"which_one"|"none"|null), charger_correct (bool|null), comparisons
+[{model, mode, transcript, correct, ms, error}], consent: true, is_simulated: false}`. A comparison that failed keeps its `error`
+and a `null` `correct`; it is not dropped. `503 voice_unavailable` without a Sarvam key or when it cannot be reached.
+
+No audio, name or address is stored. The transcript is stored, so tell speakers not to say personal details. Samples go to
+`data/lab/voice_samples.jsonl` (`VERITY_LAB_DIR` moves it; gitignored). `uv run python scripts/voice_real_eval.py` summarises them into
+`results/voice_real.json` (`verity.voice_real.v1`): battery and charger-match accuracy with Wilson 95% intervals, overall and by language,
+speech-to-text latency p50 and p95, and the model/mode comparison. It writes NOTHING when there are no samples, and marks the file
+`"preliminary": true` below 30 samples or 10 speakers.
+
+Ledger (`GET /api/evidence/ledger`): `real.voice_notes` is now `{count, speakers, status ("NOT_RUN"|"PRELIMINARY"|"MEASURED"), note}`;
+`MEASURED` only once `voice_real.json` says it is no longer preliminary.
+
+v7 addendum (review of S12): the lab is on only when BOTH `VERITY_LAB_MODE=1` and `VERITY_LAB_TOKEN` are set, and every call must send that token in the
+`X-Lab-Token` header (`403 lab_token_invalid` otherwise): the endpoint is unauthenticated otherwise and a stranger could post 30 samples as ten invented speakers.
+A `compare=true` request is charged FIVE hits of the per-address voice budget, not one (`429` before any paid call if that overruns it). `expected_soc_pct`
+takes ASCII digits only. `model_comparison` rows add `success_over_all_calls` (+ `_wilson95`): failed calls count against a config, and the table is ranked by the
+lower end of that interval. Rows in the samples file that are not consented, non-simulated, `verity.voice_sample.v1` rows are skipped and counted in `skipped_lines`.

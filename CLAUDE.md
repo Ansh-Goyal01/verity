@@ -167,6 +167,8 @@ LEG is stored per battery band, never as one fixed probability.
 - README tables (evidence ledger + results, generated from saved files; a test fails when stale):
   `uv run python scripts/export_readme_tables.py` (`--check` only reports). Engine notes moved to `docs/ENGINE_NOTES.md`;
   hosting + the (unbuilt, no Docker here) `Dockerfile`: `docs/DEPLOY.md`.
+- Venue voice kit (guide W3.5): run the API with `VERITY_LAB_MODE=1`, capture through `POST /api/lab/voice-sample` (consent, anonymous
+  speaker ids), then `uv run python scripts/voice_real_eval.py` -> `results/voice_real.json` (writes nothing for 0 samples).
 - Offline voice (PAID Sarvam TTS, only for sentences not yet cached): `uv run python scripts/build_audio_cache.py`
   (`--dry-run` lists them, calls nothing); clips in `data/audio_cache/`; `tests/test_offline_demo.py` fails if one is missing.
 - Spoken ride-check: `POST /api/voice/ride-check` in two calls (hear + read back, then `confirmed` -> decide + speak), see

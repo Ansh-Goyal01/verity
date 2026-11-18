@@ -137,3 +137,10 @@ fits the project. Nothing here is applied unless both sides agree.
 - Old shape: none. New shape: see the last section of API_CONTRACT.md. Additive; nothing existing changed.
 - Honesty: counts are read from result files at request time; missing files are `null`/`NOT_RUN`. `driver_real` is a status, not a
   scenario (WAITING_FOR_DATA while fewer than 3 real reports exist).
+
+## 2026-11-18 - v7: `POST /api/lab/voice-sample` (W3.5), ledger `voice_notes` gains `speakers` and `PRELIMINARY`
+
+- Reason: guide W3.5, the one real Indian measurement the team can collect at the venue (30+ utterances, 10+ speakers). The capture page itself is the frontend's.
+- Old shape: none for the endpoint; `voice_notes` was `{count, status ("NOT_RUN"|"MEASURED"), note}`. New shape: see the last section of API_CONTRACT.md. Additive, apart from one new `status` value.
+- Safety: off unless `VERITY_LAB_MODE=1`; consent required; speaker ids are anonymous labels; no audio, name or address stored.
+- v7 addendum (review of S12): `VERITY_LAB_TOKEN` + `X-Lab-Token` required; `compare=true` costs 5 rate-limit hits; comparison rows gain `success_over_all_calls`; foreign rows are skipped.

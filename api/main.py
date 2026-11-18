@@ -58,6 +58,7 @@ from .models import (
 )
 from .service import ApiError, EngineService
 from .speech import VOICE_MESSAGE, synthesise
+from .voice_lab import capture_stage, lab_enabled, token_ok, validate as validate_lab_form
 from .voice_ride import decide_stage, hear_stage
 from .voice_report import hear_report_stage, record_report_stage
 
@@ -367,6 +368,44 @@ async def voice_ride_check(request: Request, svc: EngineService = Depends(get_se
     speak = fields.get("speak", "1").strip().lower() not in {"0", "false", "no"}
     try:
         return await run_in_threadpool(hear_stage, voice, cache, audio, filename, audio_type, language, speak)
+    except VoiceUnavailable as exc:
+        return _error(503, "voice_unavailable", str(exc))
+
+
+@app.post("/api/lab/voice-sample", dependencies=[Depends(limit_voice)])
+async def lab_voice_sample(request: Request, svc: EngineService = Depends(get_service),
+                           voice: SarvamClient | None = Depends(get_voice_client),
+                           limiter: RateLimiter = Depends(get_voice_limiter)):
+    """The venue voice kit (W3.5): one consented utterance, heard, scored against what the speaker was asked to say, stored
+    (transcript and scores only; never audio, a name or an address). Off unless the operator sets ``VERITY_LAB_MODE=1`` and
+    ``VERITY_LAB_TOKEN``; every call must carry that token in ``X-Lab-Token``."""
+    if not lab_enabled():
+        return _error(403, "lab_disabled", "The voice lab is switched off on this server (VERITY_LAB_MODE and VERITY_LAB_TOKEN).")
+    if not token_ok(request.headers.get("x-lab-token")):
+        return _error(403, "lab_token_invalid", "Send the lab token in the X-Lab-Token header.")
+    body = await read_body_limited(request, MAX_RECORDING_BYTES + MULTIPART_OVERHEAD_BYTES)
+    if body is None:
+        return _error(413, "payload_too_large", f"the request is larger than this endpoint accepts ({MAX_RECORDING_BYTES} bytes of audio)")
+    try:
+        fields, files = await run_in_threadpool(parse_multipart, request.headers.get("content-type", ""), body)
+    except ValueError as exc:
+        return _error(422, "invalid_request", str(exc))
+    upload = files.get("audio") or files.get("file")
+    if upload is None:
+        return _error(422, "invalid_request", "multipart field 'audio' (the recording) is required")
+    filename, audio_type, audio = upload
+    if not audio or len(audio) > MAX_RECORDING_BYTES:
+        return _error(422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
+    form = validate_lab_form(fields, {c.id for c in svc.chargers})
+    if form["compare"]:  # a comparison is five paid calls: charge the voice budget five hits, not one (limit_voice charged the first)
+        for _ in range(4):
+            retry_after = limiter.hit(rate_key(client_ip(request, TRUST_PROXY)))
+            if retry_after is not None:
+                raise RateLimited(retry_after)
+    if voice is None:
+        return _error(503, "voice_unavailable", VOICE_MESSAGE)
+    try:
+        return await run_in_threadpool(capture_stage, svc, voice, form, audio, filename, audio_type)
     except VoiceUnavailable as exc:
         return _error(503, "voice_unavailable", str(exc))
 

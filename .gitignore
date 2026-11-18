@@ -25,3 +25,6 @@ results/logs/
 
 # Private text (full app-review text, anything with personal data): never committed
 data/private/
+
+# Venue voice samples (transcripts of consenting speakers): never committed
+data/lab/

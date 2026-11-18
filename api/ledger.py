@@ -35,6 +35,17 @@ def _corpus(summary: dict | None, name: str) -> dict:
     return {"rows": row["rows"], "usable": row["usable"]} if row else {"rows": None, "usable": None}
 
 
+def _voice_notes(voice: dict | None) -> dict:
+    """Venue voice measurement (guide W3.5): NOT_RUN without the file, PRELIMINARY below the 30-sample / 10-speaker target."""
+    if voice is None:
+        return {"count": 0, "speakers": 0, "status": "NOT_RUN",
+                "note": "venue measurement on real speakers (guide W3.5) has not happened"}
+    preliminary = bool(voice.get("preliminary", True))  # a file that does not say is not trusted as complete
+    return {"count": int(voice.get("n_samples", 0)), "speakers": int(voice.get("n_speakers", 0)),
+            "status": "PRELIMINARY" if preliminary else "MEASURED",
+            "note": voice.get("preliminary_reason") or "venue measurement on real speakers (guide W3.5)"}
+
+
 def _bmw(results: Path) -> dict:
     data = _read(results / "bmw_i3_heldout.json")
     if data is None:
@@ -73,9 +84,7 @@ def build_ledger(results_dir: Path, *, n_runs: int | None = None) -> dict[str, A
             "charger_reports": {"corpus_evidence_usable": evidence["usable"], "app_snapshot_usable": snapshots["usable"],
                                 "ocm_checkins": n_ocm, "total_real_reports": real_reports,
                                 "ocm_status": "FETCHED" if n_ocm is not None else "NOT_FETCHED"},
-            "voice_notes": {"count": int(voice["n_samples"]) if voice and "n_samples" in voice else 0,
-                            "status": "MEASURED" if voice else "NOT_RUN",
-                            "note": "venue measurement on real speakers (guide W3.5) has not happened"},
+            "voice_notes": _voice_notes(voice),
             "app_reviews": {**reviews, "text_rows_private": (summary or {}).get("private_review_texts")},
             "bmw_i3_held_out": _bmw(results_dir),
         },

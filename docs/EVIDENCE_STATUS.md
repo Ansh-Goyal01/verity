@@ -56,3 +56,11 @@ RESULTS_FOR_DECK.md describe the current state.
 ## Real-data corpus (W1.1) - still EMPTY on 2026-11-17
 
 - `data/corpus/`: 0 usable charger-evidence rows, 0 app-status snapshots, 0 app reviews, 6 trip rows of which 0 usable (13 vehicle rows). `scripts/run_real_data.py --no-paid` re-ran: every step OK, E1-India / E3-real / reviews NOT_RUN for lack of rows. The corpus freeze is Thursday 19 Nov; the ledger (`GET /api/evidence/ledger`) and `driver_real` (WAITING_FOR_DATA) update by themselves when the rows arrive and `run_real_data.py` is re-run.
+
+## Venue voice measurement (guide W3.5) - NOT DONE
+
+The capture endpoint (`POST /api/lab/voice-sample`, off unless `VERITY_LAB_MODE=1`) and `scripts/voice_real_eval.py` exist and are tested on
+synthetic data with a fake Sarvam client. No real speaker has been recorded, so there is no `results/voice_real.json` and the ledger
+says `NOT_RUN`. Manual steps at the venue: run the API with `VERITY_LAB_MODE=1`, record 30+ utterances from 10+ people (Hindi, Hinglish,
+English) through a capture page (the frontend's), ask each for consent, give each an anonymous id, then run the script. Under the target the
+file is marked preliminary. The v3-vs-v4 and mode comparison needs `compare=true` on each capture (4 extra paid Sarvam calls per utterance).

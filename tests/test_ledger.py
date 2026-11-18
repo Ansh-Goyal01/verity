@@ -27,7 +27,8 @@ def test_an_empty_results_folder_is_reported_as_missing_never_as_data(tmp_path: 
     assert ledger["real"]["trips"] == {"rows": None, "usable": None, "note": ledger["real"]["trips"]["note"]}
     assert ledger["real"]["charger_reports"]["total_real_reports"] == 0
     assert ledger["real"]["charger_reports"]["ocm_status"] == "NOT_FETCHED"
-    assert ledger["real"]["voice_notes"] == {"count": 0, "status": "NOT_RUN", "note": ledger["real"]["voice_notes"]["note"]}
+    assert ledger["real"]["voice_notes"] == {"count": 0, "speakers": 0, "status": "NOT_RUN",
+                                             "note": ledger["real"]["voice_notes"]["note"]}
     assert ledger["real"]["bmw_i3_held_out"]["status"] == "NOT_RUN"
     assert all(not e["present"] for e in ledger["simulated"]["experiments"])
     assert ledger["driver_real"]["status"] == "WAITING_FOR_DATA"
