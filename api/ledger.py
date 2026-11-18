@@ -16,7 +16,7 @@ DRIVER_REAL_MIN_REPORTS = 3  # guide W1.3: real dated reports needed before a re
 
 SIMULATED_EXPERIMENTS = (  # (result file, label, key holding how many trips/worlds stand behind it)
     ("e3_reliability_planning_simulated.json", "E3 reliability-blind vs trust-aware planning", "trips_per_scenario"),
-    ("e4_dispatch_vs_fixed_simulated.json", "E4 dispatch vs fixed stops", None),
+    ("e4_dispatch_vs_fixed_simulated.json", "E4 dispatch vs fixed stops", "trips_per_scenario"),
     ("e5_trust_recovery_simulated.json", "E5 trust recovery", "worlds_per_scenario"),
     ("e5b_ring_overlap_simulated.json", "E5b ring detection without a time window", "worlds_per_scenario"),
     ("e6_operator_correlation_simulated.json", "E6 operator-correlated outages", "trips_per_scenario"),

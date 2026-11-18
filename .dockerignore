@@ -1,0 +1,33 @@
+# Nothing secret, nothing the API does not read, nothing large.
+.git
+.github
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+
+# Secrets: the host's environment supplies them
+.env
+.env.*
+!.env.example
+
+# The stray nested clone, the frontend (served separately), tests and tooling
+verity/
+web/
+logger/
+design/
+tests/
+scripts/
+experiments/
+index.html
+start.py
+
+# Data that is gitignored or private, and the large PDFs
+data/raw
+data/cache
+data/private
+data/sim/dev
+results/dev
+results/logs
+docs/*.pdf

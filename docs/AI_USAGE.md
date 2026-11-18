@@ -25,7 +25,8 @@ charger locations are real public data.
 ## Finish-track disclosure additions
 
 The rows below append to the historical record; they do not claim the old services were called on this machine.
-The two chat/frontend rows were supplied by the takeover instructions. Teammate tool names remain unconfirmed.
+The two chat/frontend rows were supplied by the takeover instructions. Teammate tool names remain unconfirmed
+(still open after the W build: the teammate must fill in the `[TEAMMATE: add tool names]` cell below before submission; it is not guessed here).
 A13's prior commit history records the work, but does not identify its assistant tool; confirm that attribution
 with the teammate rather than inventing a Claude Code run. A12 and BMW groundwork tool attribution already
 appears in the original rows above. Current finish-track work uses Codex CLI only, with no subagents.
@@ -62,3 +63,25 @@ artifacts by a reporting script. REAL source geography does not establish real o
 | 2026-11-13 | Claude Code (Opus 5.5, local CLI) | Finale F10: driver demo (api/service.py DRIVER_DEMO / DRIVER_PINS, GET /api/demo/driver), scripts/driver_demo.py, tests/test_driver_demo.py, contract docs. No network or paid calls (route bundle from F8). |
 | 2026-11-13 | Claude Code (Opus 5.5, local CLI) | Finale F11: scripts/run_real_data.py (one command: validate corpus, F3-F6, F9; results/real_data_summary.json), check_file moved into verity.corpus, tests/test_run_real_data.py; docs/SOURCES.md (URLs gathered by grep over code, corpus and docs), EVIDENCE_STATUS, RESULTS_FOR_DECK finale section, README, CLAUDE.md commands; full pytest and scripts/run_all.py. The real-data run made no new network requests (no verified rows; F9 uses cached routes) and no paid calls. No subagents. |
 | 2026-11-13 | Claude Code (Opus 5.5, local CLI) | Finale F12: wrap-up status (done, blocked with manual steps, corpus sizes, numbers to handle with care) in docs/PROGRESS_FINALE.md. No network or paid calls. |
+
+## Finale build W (2026-11-15 to 2026-11-18)
+
+The plan for these sessions is `docs/TASKS_W.md`, split from `docs/Verity — winning build guide for Opus 5.5 (hackFront India finale).md`
+(called the guide). Who or what wrote the guide is not recorded in this repository; Ansh to confirm and add a row. Every session below was
+Claude Code run locally by Ansh. The model is named in the commit trailers only from S6 (Claude Sonnet 5.5); the earlier
+session commits carry no trailer, so no model is claimed for S1-S5. Each session's full handoff note is in `docs/PROGRESS_W.md`.
+The `code-reviewer` subagent reviewed the diff in S3, S5, S6 and S7 (no external service; findings and fixes in `docs/DECISIONS.md`).
+
+| Date | Session (commits) | What it was used for, and what external services it called |
+|---|---|---|
+| 2026-11-16 | S1: W0.0, W0.1 | CLAUDE.md deadline line; Bingo Line and live update follow the plan's own policy (failing test first); Aura keep-alive script and Windows task. No paid calls. |
+| 2026-11-16 | S2: W0.2, W0.6 | `confidence_display` and the reason sentence; found the F8 seed cause. No paid calls. |
+| 2026-11-16 | S3: W0.4, W0.7 | Line endings, E1 fingerprint on normalised bytes (no held-out data opened), Windows CI, bounded caches, CORS and voice rate limit from settings. No external calls. |
+| 2026-11-16 | S4: W0.3, W0.5 | One snapshot for every number on screen, offline spoken answers. Sarvam: 6 paid TTS calls on sentences the engine wrote. |
+| 2026-11-16 | S5: W3.1, W3.2 | Sarvam client settings, spoken ride-check. Read docs.sarvam.ai (pages read and not read are in `docs/SARVAM_API_NOTES.md`). Sarvam: 4 TTS calls for the cache plus a 22-call latency bench on SYNTHETIC audio; no personal data. |
+| 2026-11-17 | S6: W2.1, W2.5, W2.6 | Sites, plans, channels, aliases and full-text names in the graph; graph endpoints. Live Neo4j Aura (charger directory, SIMULATED reports, plan edges; no personal data). |
+| 2026-11-17 | S7: W3.3, W1.2 | Spoken charger report into the graph; the `NOW` clock fix; Open Charge Map check-in fetch. Open Charge Map API (one failed connection, one fetch later: 78 points, 0 check-ins). No paid Sarvam calls. |
+| 2026-11-17 | S8: W2.2, W2.3, E6 | Graph-decided independence and Cypher chains; E6 on simulated trips. Live Aura queries. Docker Desktop was started once while Aura was unreachable and closed again; nothing was run in it. |
+| 2026-11-17 | S9: W2.4, E5b | Report rings by Jaccard agreement edges; E5b on 20 simulated worlds. Live Aura queries. |
+| 2026-11-17 | S10: W1.4, W1.5 | BMW i3 prior v2 frozen and committed, then the held-out split opened once (lock file); evidence ledger endpoint. Open Charge Map re-fetch. `run_real_data.py --no-paid`: no Sarvam calls. |
+| 2026-11-18 | S11: W5.1-W5.3 | New README with tables generated from saved results, `docs/DEPLOY.md`, `Dockerfile` (written, not built), this table. Web search for current free hosting tiers (results and caveats in `docs/DEPLOY.md`). No paid calls. |
