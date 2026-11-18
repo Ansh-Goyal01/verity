@@ -105,12 +105,12 @@ def main() -> None:
     mode.add_argument("--dev", action="store_true", help="training trips only, in-sample")
     mode.add_argument("--final", action="store_true", help="open the held-out split exactly once")
     args = parser.parse_args()
+    if args.final and FINAL_FILE.exists():  # first, before anything else: the lock holds on a machine without the raw data too (CI)
+        raise SystemExit(f"REFUSED: {FINAL_FILE.name} exists, so the held-out split was already opened once. "
+                         "It is never re-run or re-tuned against.")
     if not bmw_i3.available():
         raise SystemExit("data/raw/bmw_i3/ is missing: nothing to evaluate")
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    if args.final and FINAL_FILE.exists():
-        raise SystemExit(f"REFUSED: {FINAL_FILE.name} exists, so the held-out split was already opened once. "
-                         "It is never re-run or re-tuned against.")
     _, train_obs, train_meas = prepared("train", final=False)
     if args.dev:
         out = {**header(len(train_obs), sum(o.distance_km for o in train_obs),
