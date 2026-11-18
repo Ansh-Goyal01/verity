@@ -1,4 +1,4 @@
-# Verity
+# Verity engine notes
 
 Verity estimates whether an EV driver can reach their destination, reports model uncertainty,
 and plans charging around estimated charger reliability. Every trip gets a dispatch release:
@@ -8,7 +8,7 @@ driver must divert), the point of no return, and levers that raise confidence. B
 
 This repo holds the **engine** (Python) and the **HTTP API** the frontend pages call. The frontend
 (`logger/`, `web/`, `design/`) is plain HTML/CSS/JS built separately; the two sides meet only at
-[`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) (change proposals: `docs/API_CONTRACT_CHANGES.md`).
+[`docs/API_CONTRACT.md`](API_CONTRACT.md) (change log: the Changelog section at its end).
 
 ## Quick start (one command)
 
@@ -22,7 +22,7 @@ It starts the engine and the web pages, then opens Mission Control in your brows
 
 ## See it
 
-Open **`web/home.html`** (or the repository root `index.html`) in a browser. No install or build step is needed. This is the product site: the problem, how a release is made, the experiment results, how Verity compares with route planners and charger maps (sources in [`docs/COMPETITORS.md`](docs/COMPETITORS.md)), and the driver experience. Every number on it is read from the saved engine outputs and results. From there, **Open Mission Control** (`web/index.html`) for the six-tab dispatch app. Offline, both show the saved engine outputs for the simulated demo scenario. Add `?api=http://127.0.0.1:8000` to the Mission Control URL to use the live API. See [`web/README.md`](web/README.md).
+Open **`web/home.html`** (or the repository root `index.html`) in a browser. No install or build step is needed. This is the product site: the problem, how a release is made, the experiment results, how Verity compares with route planners and charger maps (sources in [`docs/COMPETITORS.md`](COMPETITORS.md)), and the driver experience. Every number on it is read from the saved engine outputs and results. From there, **Open Mission Control** (`web/index.html`) for the six-tab dispatch app. Offline, both show the saved engine outputs for the simulated demo scenario. Add `?api=http://127.0.0.1:8000` to the Mission Control URL to use the live API. See [`web/README.md`](../web/README.md).
 
 ## Setup
 
@@ -62,7 +62,7 @@ CORS allows exactly these origins: `null` (a page opened by double-clicking, `fi
 `https://ansh-goyal01.github.io` (GitHub Pages). Anything else is refused by the browser.
 
 Every endpoint in the contract is served and validated against it (`api/models.py`, `tests/test_api.py`).
-Real engine responses for the demo scenario are saved in [`docs/api_examples/`](docs/api_examples/)
+Real engine responses for the demo scenario are saved in [`docs/api_examples/`](api_examples/)
 (regenerate with `uv run python scripts/export_api_examples.py`), so the frontend can swap its mocks for them.
 
 Contract v2 adds `POST /api/ride-check` (can a cab driver take this ride, and where to charge after the drop, in
@@ -70,7 +70,7 @@ minutes and rupees) and `GET /api/demo/driver` (the evening airport-ride demo wh
 ride-check). `uv run python scripts/driver_demo.py` saves its answer to `results/driver_demo_simulated.json`.
 
 The demo runs 1500 Monte Carlo runs per forecast (`VERITY_N_RUNS` changes it).
-For measured dispatch timings and machine details, see [the final numbers pack](docs/RESULTS_FOR_DECK.md).
+For measured dispatch timings and machine details, see [EVIDENCE.md](EVIDENCE.md).
 Historical Aura timings in engine progress notes are not measurements on this machine.
 
 ## Tests and experiments
@@ -92,7 +92,7 @@ uv run python scripts/run_all.py --fast         # the same steps with tiny sizes
 Every chart title says "(simulated)".
 
 **REAL-data track (finale).** The teammate fills the CSVs in `data/corpus/` by hand from public sources
-([guide](docs/DATA_COLLECTION_GUIDE.md); every URL used is in [SOURCES.md](docs/SOURCES.md)). One command
+([guide](DATA.md); every URL used is in [EVIDENCE.md, Sources](EVIDENCE.md#sources)). One command
 re-validates them and re-runs every real-data pipeline; each reports its n honestly (NOT_RUN / PRELIMINARY / OK):
 
 ```powershell
@@ -132,7 +132,7 @@ Other scripts: `uv run python -m verity.sim` (simulated trips),
   `scripts/range_passport.py` validates the Range Passport on TRAINING-split trips (REAL, German driving); the
   held-out test trips have not been opened. Sarvam endpoints were verified live (F7). The committed charger
   directory already includes OCM; refreshing it needs a key. Neo4j credentials are optional; status in
-  [EVIDENCE_STATUS.md](docs/EVIDENCE_STATUS.md).
+  [EVIDENCE.md](EVIDENCE.md#status-and-limitations).
 
 ## Layout
 
@@ -160,13 +160,13 @@ this machine because the Aura instance is paused (credentials are present); fake
 
 ## Evidence status and limitations
 
-See [EVIDENCE_STATUS.md](docs/EVIDENCE_STATUS.md) for REAL / SIMULATED / NOT DONE provenance.
+See [EVIDENCE.md](EVIDENCE.md#status-and-limitations) for REAL / SIMULATED / NOT DONE provenance.
 There is **no real Indian validation data**. The three demo vehicles are constructed scenarios whose
 inputs were selected from a sweep to show three outcomes (DECISIONS A13); charger reports are simulated.
 Almost no directory charger has tagged power, so dispatch assumes 25 kW (approximate - verify).
 Chargers within 150 m form one Site with common-cause failures (beta 0.5, an assumption). BMW i3 data describes
 German driving with heater/AC load, not Indian conditions; on it the Range Passport's capacity is biased low by
-about 15 % and over-confident (see RESULTS_FOR_DECK). The voice loop has only heard our own TTS, not a real
+about 15 % and over-confident (see EVIDENCE.md). The voice loop has only heard our own TTS, not a real
 driver. The plan cache is unbounded and HTTP endpoints are not rate-limited; Neo4j queries have a 35 s
 client-side deadline with in-memory fallback.
 
@@ -185,7 +185,7 @@ Raw data is not in this repository. Open the DOI, log into IEEE DataPort if requ
 `data/raw/bmw_i3/` (a zip may create a `Measurement Data` subfolder; move its contents up).
 Run `uv run python -m verity.datasets.bmw_i3` and require `loader_ready`, `n_trips: 70`.
 Do not change/regenerate `data/splits/bmw_i3_split.json` or inspect held-out trips.
-Then follow R4b and [BMW_I3_NOTES.md](docs/BMW_I3_NOTES.md): fetch the authors' paper, decide exclusions
+Then follow R4b and [DATA.md](DATA.md): fetch the authors' paper, decide exclusions
 using training data only, apply that policy to both parts, and load the test part exactly once in the
 final evaluation with `final_evaluation=True`. Use the label
 "(REAL data: BMW i3, Germany, heater/AC load; not Indian conditions)" for eventual results.
@@ -194,3 +194,51 @@ Current real-data evaluation status: **NOT DONE (dataset not on this machine)**.
 E1 is evaluated once: use `--reuse-evaluation` to verify its frozen training/code/settings fingerprint
 and regenerate its public JSON/chart. A plain evaluation command refuses to overwrite the saved final
 evaluation. The full runner uses this verification step for E1 and executes E2-E5 at full sizes.
+
+---
+
+## Sarvam API notes (W3.1)
+
+What the vendor documentation said on **2026-11-16**, what was NOT read, and what the code does about it. Read by a
+fetch agent from the public pages below (page text only; nothing from this project was sent). Anything not listed
+under "read" is unverified: do not treat it as checked.
+
+### Pages read
+
+- https://docs.sarvam.ai/api/getting-started/models
+- https://docs.sarvam.ai/
+- https://docs.sarvam.ai/api/api-guides-tutorials/models/saaras (speech-to-text)
+- https://docs.sarvam.ai/api/api-guides-tutorials/models/bulbul (text-to-speech)
+- https://docs.sarvam.ai/api/token-factory/chat-completions (the first ~39,900 of 51,777 characters verbatim)
+- https://docs.sarvam.ai/api/api-guides-tutorials/text-processing/overview (translate)
+
+### Pages NOT read (so unknown here)
+
+The `/api-reference/...` endpoint pages (speech-to-text transcribe, text-to-speech convert, translate, chat
+completions v1) and the pricing / rate-limits page (`/api/getting-started/pricing#rate-limits`). **No rate limit or
+price figure is known from the docs.** The response shape of text-to-speech is not stated on the page read; the
+`audios` array this client parses was verified by live calls (F7, 2026-11-12, and the six cached clips of W0.5).
+
+### Facts, by model family
+
+| Family | The docs say | This project |
+| --- | --- | --- |
+| Speech-to-text | `saaras:v4` is the default and recommended model; `saaras:v3` is "previous, still available". `mode` (`transcribe` default, `translate`, `verbatim`, `translit`, `codemix`) works on v3 and v4 only. `language_code` omitted or `unknown` auto-detects. `keyterms` (up to 50, v4 only) biases recognition. Synchronous REST: clips up to 30 s, formats WAV/MP3/AAC/OGG/OPUS/FLAC/WebM and others auto-detected. Response: `transcript`, `language_code`, `language_probability`, `timestamps`, `diarized_transcript`. `mode=translate` "always produces English text" and the page documents no second, original-script field. | default `saaras:v4`, mode `transcribe`, chosen by the 2026-11-16 bench (v4 writes digits; v3 writes number words; `docs/DECISIONS.md` W3.1); `SARVAM_STT_MODEL`, `SARVAM_STT_MODE` |
+| Text-to-speech | `bulbul:v4-flash` is "latest, recommended for new integrations"; `bulbul:v3` is the stable API default when `model` is omitted; `bulbul:v2` legacy. Fields: `text`, `language_code`, `model`, `speaker`, `pace` (0.5-2.0), `speech_sample_rate` (default 22050 Hz). Max 2,500 characters per request. v3 default speaker `shubh` is NOT valid on v4-flash (which wants persona ids such as `simran_en_customer`). | default `bulbul:v3`, default speaker; `SARVAM_TTS_MODEL`, `SARVAM_TTS_SPEAKER` |
+| Chat | `sarvam-105b` (128K context, hybrid reasoning, `low` by default; `reasoning_effort` low / medium / high, and null switches thinking off); `sarvam-105b-conversations` (32K, no reasoning); `sarvam-30b` and `sarvam-m` deprecated. `POST /v1/chat/completions`; `response_format` `json_schema` (with `strict`) and `json_object`; auth `api-subscription-key` or `Authorization: Bearer`. | default `sarvam-105b`, reasoning `low`; `SARVAM_CHAT_MODEL`, `SARVAM_CHAT_REASONING` (`low`/`medium`/`high`/`none`=null/`omit`) |
+| Translate | `mayura:v1` (1,000 characters max input) and `sarvam-translate:v1` (2,000). `POST /translate`. | `mayura:v1` |
+
+### Discrepancies and notices in the docs
+
+- The models page says Sarvam-Translate covers 23 languages (22 Indian + English); the text-processing page says 22
+  scheduled Indian languages. Not resolved; we do not rely on either number.
+- The homepage says "Bulbul V3 reaches end of life on **Voice Agents** on November 10, 2026". That is a different
+  product from the text-to-speech API this project calls; no sunset for `bulbul:v3` or `saaras:v3` was found on the API pages.
+- The fetch result also contained text unrelated to Sarvam (instructions for other tools); it was ignored.
+
+### What the code does about it (engine/verity/voice.py)
+
+`VoiceModels` holds every id; `models_from_settings` reads `SARVAM_*` from the environment, then `.env`; a bad mode or
+reasoning value fails at startup naming the setting. The paid-call log (`SarvamClient.calls`) records the model each call
+actually used. Which defaults the demo runs on is decided by measurement, in `docs/DECISIONS.md` (W3.1) and
+`results/voice_ride_check_latency.json`, not by the vendor's "recommended" label.

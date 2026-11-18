@@ -1,6 +1,6 @@
 """W3.1: Sarvam model ids and the key are settings, not constants.
 
-Read from the vendor docs on 2026-11-16 (docs/SARVAM_API_NOTES.md): saaras:v4 and bulbul:v4-flash exist and the
+Read from the vendor docs on 2026-11-16 (docs/ENGINE_NOTES.md, Sarvam API notes): saaras:v4 and bulbul:v4-flash exist and the
 vendor recommends them; the models verified live here are saaras:v3 and bulbul:v3. So every id is configurable, the
 default is whatever was last MEASURED to work, and the paid-call log names the id each call actually used.
 Mock transport only: no test here is a paid call.

@@ -19,7 +19,7 @@ from .trips import haversine_m
 
 Array = np.ndarray
 
-SITE_RADIUS_M = 150.0  # chargers this close form one Site (TASKS_FINALE F8c "~150 m"; approximate - verify)
+SITE_RADIUS_M = 150.0  # chargers this close form one Site (finale task F8c "~150 m"; approximate - verify)
 BETA_SITE = 0.5  # share of a charger's failure probability that is Site-wide (assumption, approximate - verify)
 # Share that is OPERATOR-wide (back-end, payment gateway, firmware, maintenance contract). An assumption, deliberately
 # below the Site share: two chargers of one operator in different places fail together less than two on one plot.

@@ -73,7 +73,7 @@ def main() -> int:
         print("WARNING:", w)
     write_result("fetched", reports, dict(skipped), len(pois), warnings)
     print(f"{len(pois)} points fetched, {len(reports)} check-ins mapped to directory chargers; skipped: {dict(skipped)}")
-    print("Check the field names against", RAW_CACHE, "before trusting the mapping (docs/EVIDENCE_STATUS.md).")
+    print("Check the field names against", RAW_CACHE, "before trusting the mapping (docs/EVIDENCE.md).")
     return 0
 
 

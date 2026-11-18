@@ -1,5 +1,7 @@
 # AI tool use (hackathon disclosure)
 
+> Note (2026-11-19): the task and progress files named in this document (`TASKS_*`, `PROGRESS_*`, `FINAL_REPORT`, `MORNING_REPORT_ENGINE`, `PROMPTS`, `SOURCES`, `RESULTS_FOR_DECK`, `EVIDENCE_STATUS`, `BMW_I3_NOTES`, `DATA_COLLECTION_GUIDE`, `SARVAM_API_NOTES`, `API_CONTRACT_CHANGES`) were removed or folded into `EVIDENCE.md`, `DATA.md`, `ENGINE_NOTES.md` and `API_CONTRACT.md`. They remain in git history (`git log --diff-filter=D --name-only -- docs`). Entries below are left as written.
+
 | Date | Tool | What it was used for |
 |---|---|---|
 | 2026-10-27 | Claude Code (model: Claude Sonnet 5.5) | Overnight autonomous engine build driven by `docs/TASKS_ANSH.md`, milestones A0-A11: repo layout fix and scaffold; physics energy model and generic vehicle priors; truth simulator; Bayesian calibration and E1; Monte Carlo forecast and E2; trust engine (priors, Dawid-Skene, ring detection), graph interface with in-memory and Neo4j implementations, and E5; routing, real route fetch and OpenStreetMap charger import; dispatch (candidate chains, Bingo Line, levers, refusal), E3 and E4; FastAPI service exactly per `docs/API_CONTRACT.md`, voice client (mock-tested only), API examples export; test suite, `scripts/run_all.py`, README, this disclosure and the morning report. |

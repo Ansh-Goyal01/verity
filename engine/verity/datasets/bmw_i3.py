@@ -1,6 +1,6 @@
 """BMW i3 real-driving dataset (IEEE DataPort 10.21227/6jr9-5235, TU Munich): loader and fixed split.
 
-Read ``docs/BMW_I3_NOTES.md`` first: it documents the files and every data problem found in them.
+Read ``docs/DATA.md`` first: it documents the files and every data problem found in them.
 This is German driving data with a heater (winter) or A/C (summer) load, not Indian driving: say so whenever
 a result built on it is shown.
 
@@ -46,7 +46,7 @@ SIGNALS: Final[dict[str, tuple[str, float]]] = {
 }
 COMMON_COLUMNS: Final = tuple(SIGNALS)
 
-# Thresholds behind the flags. Every number is read off the 70 files (docs/BMW_I3_NOTES.md): approximate - verify.
+# Thresholds behind the flags. Every number is read off the 70 files (docs/DATA.md): approximate - verify.
 SOC_TAIL_ROWS: Final = 10  # more trailing NaN SoC rows than this -> "soc_missing_tail" (1-2 trailing NaN rows are routine)
 SOC_JUMP_PCT: Final = 2.0  # a larger SoC change between two 0.1 s samples -> "soc_jump" (TripB14 drops 34.6 -> 0.0)
 HEATER_PEAK_W: Final = 8000.0  # CAN heating power above this -> "heating_spike" (all trips <= 7.04 kW except TripB02)
@@ -157,7 +157,7 @@ def trip_ids(directory: Path | None = None) -> list[str]:
     """Sorted trip ids from the FILE NAMES only; nothing is opened, so this never inspects a trip."""
     folder = Path(directory) if directory is not None else BMW_DIR
     if not folder.is_dir():
-        raise FileNotFoundError(f"{folder} is missing: download the dataset into data/raw/bmw_i3/ (docs/BMW_I3_NOTES.md)")
+        raise FileNotFoundError(f"{folder} is missing: download the dataset into data/raw/bmw_i3/ (docs/DATA.md)")
     return sorted(p.stem for p in folder.glob("Trip*.csv") if _TRIP_ID.fullmatch(p.stem))
 
 

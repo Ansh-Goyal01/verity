@@ -7,9 +7,8 @@ dispatch release: GO / NO-GO, a plan with reachable alternate chargers, and a li
 problem statement T6.1 "Will I Make It". Team: Low Cortisol.
 
 - Full plan, research and judging criteria: `docs/PLAN.md` (read it when a task needs context).
-- Prompt playbook for building: `docs/PROMPTS.md`.
 - Interface between the engine and the frontend pages: `docs/API_CONTRACT.md` (never changed
-  silently; proposals go in `docs/API_CONTRACT_CHANGES.md`).
+  silently; proposals go in its Changelog section).
 - **Finale: 21 November 2026, 07:30 IST.**
 
 ## Golden rules (judges reward honesty; never break these)
@@ -31,7 +30,8 @@ problem statement T6.1 "Will I Make It". Team: Low Cortisol.
 
 ```
 CLAUDE.md  README.md  .env.example  .gitignore  pyproject.toml
-docs/        PLAN.md (+ PLAN.pdf), PROMPTS.md, API_CONTRACT.md, AI_USAGE.md, DECISIONS.md
+docs/        PLAN.md (+ PLAN.pdf), API_CONTRACT.md (+ changelog), ENGINE_NOTES.md, EVIDENCE.md, DATA.md, DEPLOY.md,
+             COMPETITORS.md, AI_USAGE.md, DECISIONS.md
 engine/verity/
   physics.py      energy model (pure functions, SI units)
   vehicles.py     vehicle-model priors (mass, battery, CdA, Crr, efficiency)
@@ -156,7 +156,7 @@ LEG is stored per battery band, never as one fixed probability.
   `uv run python scripts/run_real_data.py` (`--no-paid` = no Sarvam calls; `--only validate,F4`)
 - Range Passport: `uv run python scripts/range_passport.py`; driver demo (ride check):
   `uv run python scripts/driver_demo.py`; ride-check latency: `uv run python scripts/bench_ride_check.py`
-- Corpus check (hand-collected CSVs in data/corpus/, guide in docs/DATA_COLLECTION_GUIDE.md):
+- Corpus check (hand-collected CSVs in data/corpus/, guide in docs/DATA.md):
   `uv run python scripts/validate_corpus.py` (`--errors` for errors only); enrichment of verified trips:
   `uv run python scripts/enrich_trips.py` (`--include-unverified` = plumbing check to results/dev/)
 - Data: `uv run python -m verity.sim`, `-m verity.splits` (written once), `-m verity.routing`,

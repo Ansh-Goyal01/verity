@@ -1,5 +1,7 @@
 # Decisions
 
+> Note (2026-11-19): the task and progress files named in this document (`TASKS_*`, `PROGRESS_*`, `FINAL_REPORT`, `MORNING_REPORT_ENGINE`, `PROMPTS`, `SOURCES`, `RESULTS_FOR_DECK`, `EVIDENCE_STATUS`, `BMW_I3_NOTES`, `DATA_COLLECTION_GUIDE`, `SARVAM_API_NOTES`, `API_CONTRACT_CHANGES`) were removed or folded into `EVIDENCE.md`, `DATA.md`, `ENGINE_NOTES.md` and `API_CONTRACT.md`. They remain in git history (`git log --diff-filter=D --name-only -- docs`). Entries below are left as written.
+
 One line per decision (library, assumption, threshold). Newest at the bottom.
 
 - 2026-10-27 (A0): Repo layout fixed to match CLAUDE.md. Files had been unpacked into

@@ -3,7 +3,7 @@
 Responses forbid extra fields, so FastAPI's ``response_model`` check fails loudly if the engine ever drifts
 from the contract. Requests ignore unknown fields so the frontend can send harmless extras (e.g. a place
 name). The two places where the engine needs a looser shape than the contract's example are recorded in
-docs/API_CONTRACT_CHANGES.md (``days_since_last`` may be null; ``connectors`` may be empty).
+the Changelog in docs/API_CONTRACT.md (``days_since_last`` may be null; ``connectors`` may be empty).
 """
 
 from __future__ import annotations

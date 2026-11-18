@@ -4,7 +4,7 @@ A POI from ``GET /v3/poi?includecomments=true`` carries ``UserComments``; a chec
 ``CheckinStatusType`` whose ``IsPositive`` says whether charging worked. UNVERIFIED: these field names are from
 memory of the public API, not read from its documentation (the official docs page was not readable when this was
 written, and reference data returned HTTP 403); ``tests/test_ocm.py`` uses a SYNTHETIC POI of this shape, and the first
-real fetch must be checked against the saved raw response (docs/EVIDENCE_STATUS.md).
+real fetch must be checked against the saved raw response (docs/EVIDENCE.md).
 
 Golden rule 1: a check-in with no clear positive/negative status, or no date, is skipped and counted, never guessed.
 A negative check-in becomes ``broken`` (OCM does not say why: no_power / blocked are not inferred).

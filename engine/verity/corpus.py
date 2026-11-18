@@ -1,7 +1,7 @@
 """Hand-collected public corpus (data/corpus/): column specs and row validation.
 
 This module is the single source of truth for the CSV layouts a human collects by hand from public
-desk sources (see docs/DATA_COLLECTION_GUIDE.md). Later pipelines (enrichment, E1-India, charger evidence,
+desk sources (see docs/DATA.md). Later pipelines (enrichment, E1-India, charger evidence,
 app-review classification) read the same specs, so a template header can never drift from the code.
 
 Validation is pure: ``validate_table(spec, header, rows)`` returns a list of ``Issue``. Rows still marked

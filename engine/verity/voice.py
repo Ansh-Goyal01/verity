@@ -1,7 +1,7 @@
 """Voice: Sarvam speech-to-text / text-to-speech / translate / chat client, battery-% parsing, multipart parser.
 
 STATUS (F7, 2026-11-12): endpoint paths, the auth header, request fields and model ids below were checked against
-the current docs at docs.sarvam.ai and exercised with a handful of logged live calls (docs/PROGRESS_FINALE.md).
+the current docs at docs.sarvam.ai and exercised with a handful of logged live calls (docs/ENGINE_NOTES.md, Sarvam API notes).
 STT: POST /speech-to-text, multipart (file, model, mode, language_code; 'unknown' = auto-detect), response
 ``transcript`` + ``language_code``; the synchronous endpoint is for clips under 30 s. TTS: POST /text-to-speech,
 JSON (text, language_code, model, speaker), response ``audios`` (base64 WAV), max 2500 characters on bulbul:v3.
@@ -53,7 +53,7 @@ CHAT_REASONING = ("low", "medium", "high", "none", "omit")  # "none" sends null 
 @dataclass(frozen=True)
 class VoiceModels:
     """Which Sarvam models a client uses (W3.1). The defaults are the ids verified live here (F7, 2026-11-12); the vendor
-    docs read on 2026-11-16 (docs/SARVAM_API_NOTES.md) recommend newer ones (saaras:v4, bulbul:v4-flash), so each id is a
+    docs read on 2026-11-16 (docs/ENGINE_NOTES.md, Sarvam API notes) recommend newer ones (saaras:v4, bulbul:v4-flash), so each id is a
     setting and the paid-call log names the id every call actually used."""
 
     stt_model: str = STT_MODEL

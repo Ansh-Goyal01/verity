@@ -2,7 +2,7 @@
 
 All network access in the engine lives here; physics and forecast code receive plain arrays.
 
-Rules (docs/TASKS_ANSH.md hard limits): every response is cached on disk and replayed afterwards; a
+Rules (the original engine-build hard limits): every response is cached on disk and replayed afterwards; a
 persisted request counter refuses to go past ``MAX_REQUESTS`` in total; transient failures back off
 exponentially; and if the network is unavailable the caller can fall back to a clearly labelled
 SYNTHETIC route (``synthetic_route``). Secrets are never written into cache records.
