@@ -27,12 +27,23 @@ async function render(change=()=>{}, supplied=null){
   const marker=()=>({bindTooltip(){return this},addTo(){return this}});
   const context={document:{querySelector:element,querySelectorAll:()=>[],createElement:()=>element(Symbol()),documentElement:{dataset:{theme:'dark'}}},
     window:{addEventListener(){}},ResizeObserver:class{observe(){}},setTimeout:()=>0,clearTimeout(){},requestAnimationFrame:fn=>fn(),
-    VerityAPI:{getScenario:async()=>scenario,getDispatch:async req=>plans[req.vehicle_id],getChargers:async()=>({chargers:[]})},
+    VerityAPI:{getScenario:async()=>scenario,
+      getDispatch:async req=>{if(supplied?.failedVehicle===req.vehicle_id)throw Error('Vehicle unavailable');return plans[req.vehicle_id]},
+      getChargers:async()=>{if(supplied?.directoryUnavailable)throw Error('Directory unavailable');return {chargers:[]}}},
     L:{map:()=>map,tileLayer:()=>base,polyline:marker,circleMarker:marker,layerGroup:marker,latLngBounds:x=>x}};
   context.window.L=context.L;
   await vm.runInNewContext(source,context);
   return {html:element('#waterfall').innerHTML,elements,base,handlers,mapHandlers,layers,credits};
 }
+
+test('a missing preferred vehicle and charger directory leave other releases usable',async()=>{
+  const {elements,html}=await render(()=>{},{failedVehicle:'V12',directoryUnavailable:true});
+  assert.match(elements.get('#vehicles').innerHTML,/disabled/);
+  assert.match(elements.get('#vehicles').innerHTML,/data-id="V07" aria-pressed="true"/);
+  assert.match(elements.get('#release').innerHTML,/NO-GO/);
+  assert.match(elements.get('#status').textContent,/charger directory could not load/);
+  assert.match(html,/<svg/);
+});
 
 test('contract data renders start, all terms and arrival without NaN or clipped rotated labels',async()=>{
   const result=await render(),html=result.html;

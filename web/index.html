@@ -5,27 +5,26 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Verity · Mission Control</title>
 <meta name="description" content="Verity tells an EV driver, with an honest and tested confidence level, whether they will reach their destination, and plans charging around chargers that actually work.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2315181D'/%3E%3Cpath d='M6 21a10 10 0 0 1 20 0' fill='none' stroke='%23F2EFE8' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M16 21l5-7' stroke='%23F5A524' stroke-width='2.6' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='21' r='2.4' fill='%23F5A524'/%3E%3C/svg%3E">
+<link rel="icon" href="drive/assets/verity.png">
 <link rel="stylesheet" href="../design/tokens.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="vendor/leaflet-1.9.4/leaflet.css">
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/operations.css">
+<script defer src="js/navigation.js"></script>
 </head>
-<body>
+<body class="ops-mission">
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="top" id="top">
-  <a class="logo" href="#/mission" aria-label="Verity home">
-    <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 22a11 11 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path class="logo-needle" d="M16 22l6-8" stroke="var(--amber)" stroke-width="2.6" stroke-linecap="round"/><circle cx="16" cy="22" r="2.6" fill="var(--amber)"/></svg>
-    <span class="logo-word">VERITY</span>
-    <span class="logo-sub">DISPATCH RELEASE SYSTEM</span>
-  </a>
+  <a class="wordmark" data-app-link href="home.html" aria-label="Verity overview"><span class="mark" aria-hidden="true"></span>verity<span class="brand-period">.</span></a>
+  <span class="tool-name">Mission Control</span>
   <nav class="tabs" role="tablist" aria-label="Sections">
-    <button role="tab" class="tab" data-tab="mission" id="tab-mission" aria-controls="view-mission"><i>01</i>Mission</button>
-    <button role="tab" class="tab" data-tab="dispatch" id="tab-dispatch" aria-controls="view-dispatch"><i>02</i>Dispatch</button>
-    <button role="tab" class="tab" data-tab="trip" id="tab-trip" aria-controls="view-trip"><i>03</i>Live trip</button>
-    <button role="tab" class="tab" data-tab="trust" id="tab-trust" aria-controls="view-trust"><i>04</i>Charger trust</button>
-    <button role="tab" class="tab" data-tab="evidence" id="tab-evidence" aria-controls="view-evidence"><i>05</i>Evidence</button>
-    <button role="tab" class="tab" data-tab="engine" id="tab-engine" aria-controls="view-engine"><i>06</i>Engine</button>
+    <button role="tab" class="tab" data-tab="mission" id="tab-mission" aria-controls="view-mission">Mission</button>
+    <button role="tab" class="tab" data-tab="dispatch" id="tab-dispatch" aria-controls="view-dispatch">Dispatch</button>
+    <button role="tab" class="tab" data-tab="trip" id="tab-trip" aria-controls="view-trip">Trip replay</button>
+    <button role="tab" class="tab" data-tab="trust" id="tab-trust" aria-controls="view-trust">Charger trust</button>
+    <button role="tab" class="tab" data-tab="evidence" id="tab-evidence" aria-controls="view-evidence">Evidence</button>
+    <button role="tab" class="tab" data-tab="engine" id="tab-engine" aria-controls="view-engine">Engine</button>
     <span class="tab-ink" aria-hidden="true"></span>
   </nav>
   <div class="top-actions">
@@ -48,12 +47,12 @@
 <section class="view" id="view-mission" role="tabpanel" aria-labelledby="tab-mission" hidden>
   <div class="hero">
     <div class="hero-copy">
-      <p class="eyebrow">hackFront India 2026 · T6.1 “Will I Make It” · Team Low Cortisol</p>
-      <h1 class="display">Will I make it?<br><span class="display-sub">An honest answer, before you leave.</span></h1>
-      <p class="lede">Verity treats every EV trip like an airline treats a flight. It issues a <b>dispatch release</b>: GO or NO-GO with a tested confidence level, a charging plan built around chargers that actually work, backup chargers within reach, and a live <b>Bingo Line</b> — the battery level below which the driver must divert.</p>
+      <p class="eyebrow">Fleet operations</p>
+      <h1 class="display">Dispatch board</h1>
+      <p class="lede">Compare vehicles on the Noida–Agra corridor. Inspect the arrival range, planned stops and backup behind each release.</p>
       <div class="hero-cta">
-        <a class="btn primary" href="#/dispatch">Open dispatch console <span aria-hidden="true">→</span></a>
-        <a class="btn" href="#/trip">Play a live trip</a>
+        <a class="btn primary" href="#/dispatch">Inspect dispatch</a>
+        <a class="btn" data-app-link href="home.html#/trip">Check a new trip</a>
       </div>
       <dl class="hero-facts" id="hero-facts"></dl>
     </div>
@@ -61,17 +60,17 @@
   </div>
 
   <div class="block">
-    <div class="block-head"><span class="num">A</span><h2>One booking. Three vehicles. Three different answers.</h2><p>Click a vehicle to open its full release.</p></div>
+    <div class="block-head"><h2>Vehicle releases</h2><p>Select a vehicle to inspect its plan.</p></div>
     <div class="strips" id="mission-strips"></div>
   </div>
 
   <div class="block">
-    <div class="block-head"><span class="num">B</span><h2>Tested, not promised.</h2><p>Headline numbers from the saved experiment runs. All are from simulated worlds; none are real-road validation.</p></div>
+    <div class="block-head"><h2>Experiment results</h2><p>Compare dispatch policies across the saved simulation runs.</p></div>
     <div class="kpis" id="mission-kpis"></div>
   </div>
 
   <div class="block">
-    <div class="block-head"><span class="num">C</span><h2>How a release is made</h2><p>Physics first, uncertainty honest, chargers distrusted until proven.</p></div>
+    <div class="block-head"><h2>How a release is made</h2><p>Follow the route forecast, battery estimate and charger reports into the decision.</p></div>
     <ol class="flow" id="mission-flow">
       <li><span class="flow-n">01</span><h3>Learn the car</h3><p>Bayesian calibration turns each vehicle's logged trips into its real usable capacity and drag, pooled across the fleet.</p></li>
       <li><span class="flow-n">02</span><h3>Simulate the trip</h3><p>2,000 Monte Carlo runs with shared trip-level factors (driver, AC, wind, payload), so long trips are not falsely confident.</p></li>
@@ -138,7 +137,7 @@
   <div class="trip-head">
     <div>
       <p class="eyebrow">Recorded engine replay</p>
-      <h2 class="h2">The plan keeps working after departure.</h2>
+      <h2 class="h2">Trip replay</h2>
       <p class="lede small">Battery readings arrive, a planned charger gets reported broken, and the engine reacts. Every event below is from the saved replay for the selected vehicle.</p>
     </div>
     <div class="trip-controls" role="group" aria-label="Replay controls">
@@ -160,7 +159,7 @@
         <div class="phone-notch" aria-hidden="true"></div>
         <div class="phone-screen" id="phone-screen"></div>
       </div>
-      <p class="phone-cap">Driver view · <a href="driver.html">open full screen</a></p>
+      <p class="phone-cap">Driver view · <a data-app-link href="driver.html">open full screen</a></p>
     </div>
     <section class="panel trip-log">
       <header class="panel-head"><h2 class="label">Event log</h2><span class="hint" id="t-count"></span></header>
@@ -250,7 +249,7 @@ open web/index.html?api=http://127.0.0.1:8000</code></pre></div>
 <footer class="foot">
   <span>Verity · Team Low Cortisol · hackFront India 2026</span>
   <span>Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors</span>
-  <span><a href="home.html">Verity home</a> · <a href="console.html">Classic console</a> · <a href="driver.html">Driver view</a> · <a href="../logger/index.html">Trip logger</a></span>
+  <span><a data-app-link href="home.html">Verity home</a> · <a data-app-link href="console.html">Fleet map</a> · <a data-app-link href="driver.html">Driver view</a> · <a data-app-link href="../logger/index.html">Trip logger</a></span>
 </footer>
 
 <div class="palette" id="palette" hidden>
@@ -262,7 +261,7 @@ open web/index.html?api=http://127.0.0.1:8000</code></pre></div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="vendor/leaflet-1.9.4/leaflet.js"></script>
 <script src="js/snapshot.js"></script>
 <script src="js/mock-data.js"></script>
 <script src="js/api.js"></script>

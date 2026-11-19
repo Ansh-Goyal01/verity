@@ -1,0 +1,106 @@
+/* Product chrome for the fleet and field tools. Route and status colors come from the shared theme. */
+.ops-bar, .ops-mission .top {
+  padding-inline: clamp(16px, 3.6vw, 58px);
+  background: var(--surface);
+  color: var(--text);
+  border-bottom: var(--rule);
+}
+.ops-bar {
+  min-height: 68px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+  padding-block: 10px;
+}
+.ops-identity { display: flex; align-items: center; gap: 18px; }
+.ops-bar .wordmark, .ops-mission .wordmark { color: var(--text); text-decoration: none; }
+.tool-name { padding-inline-start: 15px; border-inline-start: var(--rule); color: var(--muted); font: 500 .8125rem var(--mono); white-space: nowrap; }
+.product-nav, .ops-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.product-nav a, .ops-footer a, .logger-evidence { color: var(--muted); text-decoration: none; font: 500 .875rem var(--body); }
+.product-nav a { padding: 11px 13px; border-radius: 6px; }
+.product-nav a:hover, .product-nav a[aria-current] { color: var(--text); background: var(--surface-2); }
+.ops-bar button { width: auto; min-height: 40px; border: var(--rule); border-radius: 6px; background: var(--surface); padding: 7px 13px; color: var(--text); font: 500 .8125rem var(--mono); }
+.ops-skip { position: fixed; z-index: 5000; top: 8px; left: 14px; transform: translateY(-180%); background: var(--text); color: var(--bg); padding: 9px 14px; }
+.ops-skip:focus { transform: none; }
+.ops-eyebrow { color: var(--muted); font: 500 .8125rem/1.4 var(--mono); margin: 0 0 6px; }
+.ops-heading, .driver-heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; }
+.ops-heading h1, .driver-heading h1, .ops-mission h1.display {
+  margin: 0; font: 700 clamp(2.75rem,5.6vw,5.5rem)/.96 var(--headline); letter-spacing: -.028em;
+}
+.ops-footer { border-top: var(--rule); gap: 22px; padding: 18px clamp(16px, 4vw, 64px); }
+.ops-footer a, .logger-evidence { text-decoration: underline; text-underline-offset: .23em; }
+.ops-mission { background-image: none; }
+.ops-mission .top { gap: 13px; }
+.ops-mission .hero { align-items: center; }
+.ops-mission .hero-copy { padding: clamp(18px, 3.5vw, 52px); border: 1px solid #5b719061; border-radius: 12px; color: #eef4ff;
+  background: linear-gradient(100deg,#0c1726fa 5%,#101e31e8 52%,#11233c98), url(../drive/assets/on-road.webp) center 59%/cover; }
+.ops-mission .hero-copy .eyebrow, .ops-mission .hero-copy .lede, .ops-mission .hero-copy .hero-facts dt { color: #c5d3eb; }
+.ops-mission .hero-copy .hero-facts dd { color: #f2f5fb; }
+.ops-mission .hero-copy h1 { color: #f2f5fb; }
+.ops-mission .hero-cta .btn { border-color: #8299bf; color: #e6edfd; background: #1c2b41d9; }
+.ops-mission .hero-cta .primary { color: #111e35; background: #c4d5ff; border-color: #c4d5ff; }
+.ops-mission .source, .ops-mission .panel-head .label { font-size: .75rem; }
+.ops-mission .source .dot { animation: none; }
+.ops-mission .source.live .dot { background: var(--go); }
+.ops-mission .block-head h2,.ops-map .section-header,.ops-driver .section-header {
+  font: 650 clamp(1.15rem,2vw,1.55rem)/1.2 var(--display); text-transform: none; letter-spacing: -.035em; color: var(--text); }
+.ops-mission .tab { min-height: 44px; }
+.ops-mission .tabs { margin-inline: auto; }
+.ops-mission .label, .ops-mission .eyebrow { letter-spacing: .075em; }
+.ops-mission .stack-grid > div { min-width: 0; }
+.ops-heading { width: min(100% - 32px, 1410px); margin: clamp(24px, 4vw, 56px) auto 12px; padding: 0 10px; }
+.ops-heading .booking { margin: 0 0 6px; color: var(--text); font: 500 .95rem var(--body); }
+.ops-heading .sim-badge { float: right; }
+.ops-map .layout { width: min(100% - 32px, 1410px); padding: 14px 10px 40px; margin: auto; }
+.ops-map .vehicle { border-radius: 9px; }
+.ops-map .vehicle.selected { border-color: var(--accent); box-shadow: inset 3px 0 var(--accent); }
+.ops-map .vehiclehead strong { font-family: var(--display); }
+.ops-map .ghost, .ops-driver .controls button, .ops-driver .entryrow button { font: 500 .875rem var(--mono); min-height: 44px; }
+.ops-map .release, .ops-map .card, .ops-driver .card { border-radius: 10px; }
+.ops-map .mapkey { font-size: .8125rem; }
+.ops-map .state, .ops-driver .state { font-size: .9375rem; }
+.ops-driver main { max-width: 850px; padding: clamp(20px,3.5vw,45px) clamp(15px,3vw,30px) 20px; }
+.driver-heading { margin: 0 0 24px; }
+.ops-driver .metrics > div { padding: clamp(10px,2vw,21px); border-radius: 9px; }
+.ops-driver .metrics small { font-size: .78rem; text-transform: none; letter-spacing: 0; }
+.ops-driver .metrics strong { font: 700 clamp(1.7rem,5vw,3.65rem)/1 var(--headline); letter-spacing: -.03em; }
+.ops-driver .routecard { background: var(--surface-2); }
+.ops-driver .routeheading { font: 600 1.05rem var(--display); color: var(--text); }
+.ops-driver .controls label, .ops-driver .controls select, .ops-driver .entry input { font-size: 1rem; }
+.ops-driver .entryrow input, .ops-driver .entryrow button { min-height: 46px; }
+.ops-driver .entryrow button { color: var(--accent-ink); }
+.ops-driver .keypad button { font: 500 1.1rem var(--mono); min-height: 48px; }
+.ops-driver .alert h2 { color: #ffaba0; font: 700 clamp(2.8rem,10vw,5rem)/1 var(--headline); margin: 18px 0 12px; }
+.ops-driver .safety { font-size: .875rem; }
+.ops-logger .ops-bar .wordmark { font-family: var(--display); }
+.ops-logger #logger-main { max-width: 760px; }
+.ops-logger .driver-heading h1 { font-size: clamp(2.75rem,5.6vw,4.4rem); }
+.ops-logger main .card { border-radius: 10px; }
+.ops-logger label { line-height: 1.4; }
+.ops-logger .safety { font-size: .875rem; }
+@media (max-width:1000px) {
+  .ops-mission .tool-name { display: none; }
+  .ops-mission .top { padding-inline: 15px; }
+}
+@media (max-width:650px) {
+  .ops-bar { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 10px; padding: 9px 15px 5px; }
+  .ops-bar .product-nav { grid-column: 1/-1; grid-row: 2; }
+  .ops-bar > button { grid-column: 2; grid-row: 1; }
+  .product-nav a { padding: 7px 10px; min-height: 36px; }
+  .ops-bar .wordmark,.ops-mission .wordmark { font-size: 1.75rem; }
+  .ops-heading { align-items: flex-start; flex-direction: column; padding: 0; }
+  .ops-heading .sim-badge { float: none; }
+  .ops-map .layout { padding-inline: 0; }
+  .ops-map .vehicles { grid-template-columns: 1fr; }
+  .ops-map .card { padding: 14px; }
+  .ops-mission .hero-copy { padding: 20px; }
+  .driver-heading { align-items: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ops-mission .tab-ink, .ops-mission .view, .ops-driver .alert, .ops-map .vehicle { animation: none !important; transition: none !important; }
+}

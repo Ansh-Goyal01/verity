@@ -8,7 +8,32 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const C=require(path.join(root,'web/js/verity-core.js'));
 const read=name=>JSON.parse(fs.readFileSync(path.join(root,'docs/api_examples',name+'.json'),'utf8'));
-function snapshot(){const ctx={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'web/js/snapshot.js'),'utf8'),ctx);return JSON.parse(JSON.stringify(ctx.window.VERITY_SNAPSHOT));}
+function snapshot(){const ctx={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'web/js/snapshot.js'),'utf8'),ctx);return structuredClone(ctx.window.VERITY_SNAPSHOT);}
+
+test('tool links keep the selected engine across subpath and local-file deployments', () => {
+  const navigation = fs.readFileSync(path.join(root, 'web/js/navigation.js'), 'utf8');
+  for (const page of ['https://example.org/verity/web/home.html', 'file:///verity/web/home.html']) {
+    const location = new URL(page + '?source=snapshot&api=http://localhost:8000&unused=1');
+    const fleet = {href: new URL('console.html#/map', location).href};
+    const external = {href: 'https://example.net/charger'};
+    const listeners = {};
+    const document = {
+      querySelectorAll: () => [fleet, external],
+      addEventListener: (name, handler) => { listeners[name] = handler; }
+    };
+    vm.runInNewContext(navigation, {location, document, URL, URLSearchParams});
+    const target = new URL(fleet.href);
+    assert.equal(target.searchParams.get('api'), 'http://localhost:8000');
+    assert.equal(target.searchParams.get('source'), 'snapshot');
+    assert.equal(target.searchParams.has('unused'), false);
+    assert.equal(target.hash, '#/map');
+    assert.equal(external.href, 'https://example.net/charger');
+    const logger = {href: new URL('../logger/index.html?source=mock', location).href};
+    listeners.click({target:{closest: () => logger}});
+    assert.equal(new URL(logger.href).searchParams.get('source'), 'mock');
+    assert.equal(new URL(logger.href).searchParams.get('api'), 'http://localhost:8000');
+  }
+});
 
 test('snapshot bundles the saved engine outputs unchanged',()=>{
   const s=snapshot();

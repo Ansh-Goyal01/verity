@@ -1,0 +1,48 @@
+@font-face{font-family:Instrument Sans;src:url(assets/instrument-sans.woff2) format("woff2");font-weight:400 700;font-display:swap}
+@font-face{font-family:Inter Tight;src:url(assets/inter-tight.woff2) format("woff2");font-weight:400 800;font-display:swap}
+@font-face{font-family:IBM Plex Mono;src:url(assets/ibm-plex-mono.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:IBM Plex Mono;src:url(assets/ibm-plex-mono-medium.woff2) format("woff2");font-weight:500;font-display:swap}
+
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url(assets/barlow-condensed.woff2) format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Serif";
+  src: url(assets/instrument-serif.woff2) format("woff2");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  --night: #0e1118;
+  --night-deep: #090b11;
+  --surface: #151a25;
+  --panel: #171e2e;
+  --line: #333d51;
+  --ink: #f2f5fb;
+  --muted: #a9b5cb;
+  --electric: #99b5ff;
+  --cobalt: #315de7;
+  --display: "Inter Tight", "Helvetica Neue", system-ui, sans-serif;
+  --go: #a6caff;
+  --warn: #f7cb81;
+  --stop: #ffaba0;
+  --cream: #edf1f7;
+  --dark-ink: #171e2e;
+  --radius: 18px;
+  --gutter: clamp(20px, 5.25vw, 86px);
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --body: "Instrument Sans", system-ui, sans-serif;
+  --headline: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --editorial: "Instrument Serif", Georgia, serif;
+  color-scheme: dark;
+}
+
+.wordmark { font-family: var(--display); display: inline-flex; align-items: center; width: fit-content; font-size: 32px; font-weight: 650; letter-spacing: -.093em; line-height: 1; }
+.mark { display: inline-block; width: 25px; height: 22px; flex: none; background: var(--electric); margin-right: 8px; clip-path: polygon(0 13%, 25% 13%, 50% 45%, 75% 13%, 100% 13%, 50% 97%); }
+.brand-period { color: var(--electric); }

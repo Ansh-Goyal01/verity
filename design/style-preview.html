@@ -10,11 +10,11 @@
     body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); }
     main { width: min(100% - 2rem, 70rem); margin: auto; padding: 2rem 0 4rem; }
     .top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; align-items: center; border-bottom: var(--rule); padding-bottom: 1.5rem; }
-    .eyebrow { color: var(--amber); font: 600 .75rem var(--font-mono); letter-spacing: .1em; }
-    h1 { margin: .4rem 0; font-size: clamp(1.8rem, 5vw, 3rem); }
+    .eyebrow { color: var(--accent); font: 600 .75rem var(--font-mono); letter-spacing: .1em; }
+    h1 { margin: .4rem 0; font: 700 clamp(2.8rem, 6vw, 5rem)/1 var(--headline); }
     p { line-height: 1.55; }
     .sub { color: var(--muted); margin: 0; }
-    button { min-height: 48px; padding: .75rem 1rem; border: 1px solid var(--amber); border-radius: var(--radius-sm); background: transparent; color: var(--amber); font: 600 .85rem var(--font-mono); cursor: pointer; }
+    button { min-height: 48px; padding: .75rem 1rem; border: 1px solid var(--accent); border-radius: var(--radius-sm); background: transparent; color: var(--accent); font: 600 .85rem var(--font-mono); cursor: pointer; }
     button:focus-visible { outline: 3px solid var(--unknown); outline-offset: 3px; }
     section { margin-top: 2.5rem; }
     .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; }
@@ -37,28 +37,34 @@
     <button id="theme-toggle" type="button" aria-pressed="false">Switch to light theme</button>
   </header>
   <section aria-labelledby="palette-heading">
-    <h2 class="section-header" id="palette-heading">Section 1 · Colour palette</h2>
+    <h2 class="section-header" id="palette-heading">Colour palette</h2>
     <div class="swatches" id="swatches">
       <div class="swatch" style="--swatch:var(--bg)"><div class="colour"></div><p>Background<br><code data-token="--bg"></code></p></div>
       <div class="swatch" style="--swatch:var(--surface)"><div class="colour"></div><p>Surface<br><code data-token="--surface"></code></p></div>
       <div class="swatch" style="--swatch:var(--text)"><div class="colour"></div><p>Text<br><code data-token="--text"></code></p></div>
       <div class="swatch" style="--swatch:var(--muted)"><div class="colour"></div><p>Muted<br><code data-token="--muted"></code></p></div>
-      <div class="swatch" style="--swatch:var(--amber)"><div class="colour"></div><p>Amber<br><code data-token="--amber"></code></p></div>
+      <div class="swatch" style="--swatch:var(--accent)"><div class="colour"></div><p>Cobalt accent<br><code data-token="--accent"></code></p></div>
       <div class="swatch" style="--swatch:var(--go)"><div class="colour"></div><p>GO<br><code data-token="--go"></code></p></div>
       <div class="swatch" style="--swatch:var(--nogo)"><div class="colour"></div><p>NO-GO<br><code data-token="--nogo"></code></p></div>
       <div class="swatch" style="--swatch:var(--unknown)"><div class="colour"></div><p>Unknown<br><code data-token="--unknown"></code></p></div>
     </div>
   </section>
-  <section aria-labelledby="type-heading"><h2 class="section-header" id="type-heading">Section 2 · Typography and rules</h2>
-    <div class="examples"><div class="card"><strong>IBM Plex Sans</strong><p>Clear, practical text for instructions and explanations.</p></div><div class="card"><strong class="mono">IBM Plex Mono</strong><p class="mono">0123456789 · DATA / LABELS</p></div></div>
+  <section aria-labelledby="type-heading"><h2 class="section-header" id="type-heading">Typography</h2>
+    <div class="examples">
+      <div class="card"><strong style="font:700 2.5rem/1 var(--headline)">Barlow Condensed</strong><p>Route headlines and instrument readings.</p></div>
+      <div class="card"><em style="font:italic 2.5rem/1 var(--editorial)">Instrument Serif</em><p>The editorial line in the landing title.</p></div>
+      <div class="card"><strong style="font:650 1.65rem var(--display)">Inter Tight</strong><p>Workspace headings and vehicle names.</p></div>
+      <div class="card"><strong>Instrument Sans</strong><p>Directions, decisions and explanations.</p></div>
+      <div class="card"><strong class="mono">IBM Plex Mono</strong><p class="mono">V12 · 106.6 km · 41%</p></div>
+    </div>
     <hr class="rule-demo"><p class="note">Thin rule line above. Numbers and operational labels use monospace.</p>
   </section>
-  <section aria-labelledby="components-heading"><h2 class="section-header" id="components-heading">Section 3 · Components</h2>
-    <div class="card"><h3 class="section-header">Section 4 · Reserve policy</h3><p>This card groups related information in a clear, bordered surface.</p><span class="badge-simulated" role="img" aria-label="Simulated data"></span></div>
+  <section aria-labelledby="components-heading"><h2 class="section-header" id="components-heading">Components</h2>
+    <div class="card"><h3 class="section-header">Reserve policy</h3><p>This card groups related information in a clear, bordered surface.</p><span class="badge-simulated" role="img" aria-label="Simulated data"></span></div>
   </section>
-  <section aria-labelledby="stamps-heading"><h2 class="section-header" id="stamps-heading">Section 4 · Decision stamps</h2>
+  <section aria-labelledby="stamps-heading"><h2 class="section-header" id="stamps-heading">Decision stamps</h2>
     <div class="card"><div class="stamp-row"><span class="stamp-go" role="img" aria-label="GO"></span><span class="stamp-nogo" role="img" aria-label="NO-GO"></span><span class="stamp-unknown" role="img" aria-label="INSUFFICIENT EVIDENCE"></span></div></div>
-    <p class="note">These are visual examples, not trip decisions.</p>
+    <p class="note">The trip checker fills each decision from engine output.</p>
   </section>
 </main>
 <script>

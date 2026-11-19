@@ -10,6 +10,9 @@
     }
   };
   let language='en', scenario, plan, replay, current={km:0,soc:0};
+  Object.assign(templates.en, { consoleTitle: 'Driver console', driverMode: 'Driver mode', navTrip: 'Trip Check', navWorkspace: 'Workspace', navDriver: 'Driver', cabLink: 'Check a cab ride', loggerLink: 'Trip logger', checking: 'Updating the forecast…', forecastError: 'The forecast could not be updated. {error}', forecastAction: '{action}. {message}', continuePlan: 'Continue on plan', slowDown: 'Slow down', divertPlan: 'Divert to {name}', offlineReading: 'Battery updated to {soc}%. This replay shows the local margin only.' });
+  Object.assign(templates.hi, { consoleTitle: 'ड्राइवर कंसोल', driverMode: 'ड्राइवर मोड', navTrip: 'यात्रा जाँचें', navWorkspace: 'कार्यक्षेत्र', navDriver: 'ड्राइवर', cabLink: 'कैब राइड जाँचें', loggerLink: 'यात्रा लॉगर', checking: 'नया अनुमान निकाला जा रहा है…', forecastError: 'अनुमान नहीं मिला। {error}', forecastAction: '{action}। {message}', continuePlan: 'योजना के अनुसार चलें', slowDown: 'गति कम करें', divertPlan: '{name} की ओर जाएँ', offlineReading: 'बैटरी {soc}% है। इस रीप्ले में स्थानीय बैटरी अंतर दिखाया गया है।' });
+  let readingRequest = 0;
   let entryMessage=null, currentAlert=null, recorder=null, stream=null;
   let eventIndex=0, running=false, timer=null, elapsed=0, lastWall=0, speed=1, phase='ready';
   const message=(key,args={}) => (templates[language][key]||key).replace(/\{(\w+)\}/g,(_,k)=>String(args[k]??''));
@@ -41,10 +44,27 @@
     if(threshold===null){$('#margin').textContent='—';}else{const margin=Math.round(current.soc-threshold);$('#margin').textContent=`${Math.abs(margin)}%`;$('#marginLabel').textContent=message(margin<0?'below':'above');$('#margin').style.color=margin<0?'var(--nogo)':'';}
     const p=Math.min(100,Math.max(0,current.km/plan.route.distance_km*100));$('#progress').style.width=p+'%';$('#driverDot').style.left=p+'%';$('#bingoDot').style.left=(plan.point_of_no_return_km/plan.route.distance_km*100)+'%';
   }
-  function renderAlert(){$('#alertTitle').textContent=message('divert');$('#alertText').textContent=message('divertMessage',{name:currentAlert.divert_to.name});}
+  function renderAlert(){
+    if(currentAlert.manual){$('#alertTitle').textContent=message('divert');$('#alertText').textContent=message('divertPlan',{name:currentAlert.divert_to.name});return;}$('#alertTitle').textContent=message('divert');$('#alertText').textContent=message('divertMessage',{name:currentAlert.divert_to.name});}
+  let alertTrigger;
+  function showAlert(event) {
+    if ($('#alert').hidden) alertTrigger = document.activeElement;
+    currentAlert = event;
+    renderAlert();
+    $('#alert').hidden = false;
+    $('#dismiss').focus();
+  }
+  function closeAlert() {
+    const visible = !$('#alert').hidden;
+    $('#alert').hidden = true;
+    currentAlert = null;
+    if (visible && alertTrigger?.isConnected) alertTrigger.focus();
+    alertTrigger = null;
+  }
   function handleEvent(event){
+    readingRequest++;
     if(event.type==='soc_reading'){current={km:event.km,soc:event.soc_pct};renderMetrics();}
-    if(event.type==='forecast'&&event.action==='DIVERT'&&event.divert_to){currentAlert=event;renderAlert();$('#alert').hidden=false;VerityAPI.speak(message('divertMessage',{name:event.divert_to.name}),language==='hi'?'hi-IN':'en-IN').catch(()=>entry('speechFailed'));}
+    if(event.type==='forecast'&&event.action==='DIVERT'&&event.divert_to){showAlert(event);VerityAPI.speak(message('divertMessage',{name:event.divert_to.name}),language==='hi'?'hi-IN':'en-IN').catch(()=>entry('speechFailed'));}
   }
   function accrue(){if(running){const now=performance.now();elapsed+=(now-lastWall)/1000*speed;lastWall=now;}}
   function clearTimer(){if(timer!==null){clearTimeout(timer);timer=null;}}
@@ -58,10 +78,30 @@
   $('#play').onclick=()=>{if(!replay||running)return;if(phase==='complete'){eventIndex=0;elapsed=0;current={km:0,soc:scenario.vehicles.find(v=>v.vehicle_id===plan.vehicle_id).soc_pct};currentAlert=null;$('#alert').hidden=true;renderMetrics();}running=true;lastWall=performance.now();tick();};
   $('#pause').onclick=()=>{if(!running)return;accrue();running=false;clearTimer();phase='paused';renderStatus();};
   $('#speed').onchange=()=>{accrue();speed=Number($('#speed').value);if(running){lastWall=performance.now();clearTimer();timer=setTimeout(tick,Math.max(10,Math.min(1000,(replay.events[eventIndex].t_offset_s-elapsed)*1000/speed)));}};
-  $('#dismiss').onclick=()=>{$('#alert').hidden=true;currentAlert=null;};
+  $('#dismiss').onclick=closeAlert;
   $('#language').onclick=()=>{language=language==='en'?'hi':'en';renderLanguage();};
   $('#theme').onclick=()=>{const el=document.documentElement;el.dataset.theme=el.dataset.theme==='light'?'dark':'light';renderLanguage();};
-  function submit(){const raw=$('#manual').value.trim();if(!/^\d{1,3}$/.test(raw)||Number(raw)>100){entry('invalid');return;}current.soc=Number(raw);renderMetrics();entry('updated',{soc:current.soc});}
+  async function submit() {
+    const raw = $('#manual').value.trim();
+    if (!/^\d{1,3}$/.test(raw) || Number(raw) > 100) { entry('invalid'); return; }
+    const token = ++readingRequest;
+    if (running) $('#pause').click();
+    current.soc = Number(raw);
+    renderMetrics();
+    if (!VerityAPI.isApiConnected()) { entry('offlineReading', {soc: current.soc}); return; }
+    const points = plan.route.polyline;
+    const [lat, lon] = VerityCore.pointAtKm(points, VerityCore.cumulativeKm(points), plan.route.distance_km, current.km);
+    entry('checking');
+    try {
+      const update = await VerityAPI.updateForecast({plan_id: plan.plan_id, t: new Date().toISOString(), lat, lon, soc_pct: current.soc});
+      if (token !== readingRequest) return;
+      const key = {CONTINUE:'continuePlan', SLOW_DOWN:'slowDown', DIVERT:'divertPlan'}[update.action];
+      entry('forecastAction', {action: message(key, {name:update.divert_to?.name}), message:update.message});
+      if (update.action === 'DIVERT' && update.divert_to) {
+        showAlert({...update, manual:true});
+      } else { closeAlert(); }
+    } catch (error) { if (token === readingRequest) entry('forecastError', {error: error.message}); }
+  }
   $('#submit').onclick=submit;$('#manual').addEventListener('keydown',e=>{if(e.key==='Enter')submit();});
   document.querySelectorAll('.keypad button').forEach(button=>button.onclick=()=>{const key=button.dataset.key;if(key==='OK')submit();else if(key==='DEL')$('#manual').value=$('#manual').value.slice(0,-1);else if($('#manual').value.length<3)$('#manual').value+=key;});
   $('#mic').onclick=async()=>{
@@ -75,7 +115,11 @@
       active.start();entry('listening');
     }catch{entry('voiceFailed');}
   };
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'){$('#alert').hidden=true;currentAlert=null;}});
+  document.addEventListener('keydown', event => {
+    if ($('#alert').hidden) return;
+    if (event.key === 'Escape') closeAlert();
+    if (event.key === 'Tab') { event.preventDefault(); $('#dismiss').focus(); }
+  });
   renderLanguage();
   try{
     scenario=await VerityAPI.getScenario();const vehicle=scenario.vehicles.find(v=>v.vehicle_id==='V12');if(!vehicle)throw new Error('V12 is unavailable.');const b=scenario.booking;

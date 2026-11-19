@@ -8,11 +8,11 @@
   const esc = C.escapeHtml, pct = C.pct, isNum = C.isNum;
   const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const TABS = ['mission', 'dispatch', 'trip', 'trust', 'evidence', 'engine'];
-  const TAB_NAMES = { mission: 'Mission', dispatch: 'Dispatch', trip: 'Live trip', trust: 'Charger trust', evidence: 'Evidence', engine: 'Engine' };
+  const TAB_NAMES = { mission: 'Mission', dispatch: 'Dispatch', trip: 'Trip replay', trust: 'Charger trust', evidence: 'Evidence', engine: 'Engine' };
   const state = { scenario: null, plans: {}, chargers: [], replays: {}, results: null, selected: 'V12', active: null, rendered: {} };
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } } };
   const tok = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  const trustColor = t => tok({ high: '--go', medium: '--amber', low: '--nogo' }[t] || '--unknown');
+  const trustColor = t => tok({ high: '--go', medium: '--unknown', low: '--nogo' }[t] || '--faint');
   const vehicle = id => state.scenario?.vehicles.find(v => v.vehicle_id === id);
   const plan = id => state.plans[id];
   const round1 = v => isNum(v) ? Math.round(v * 10) / 10 : '—';
@@ -87,7 +87,7 @@
   function getMap(id) {
     if (maps[id]) return maps[id];
     const el = $('#' + id);
-    if (!window.L) { el.innerHTML = '<p class="state" style="padding:16px">The map library could not load. Check your internet connection and reload. All plan values are still shown beside the map.</p>'; return null; }
+    if (!window.L) { el.innerHTML = '<p class="state" style="padding:16px">The map library could not load. Reload the page or reopen the complete project folder. All plan values are still shown beside the map.</p>'; return null; }
     const map = L.map(el, { scrollWheelZoom: false, zoomSnap: 0.25 });
     const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: OSM }).addTo(map);
     map.attributionControl.setPrefix(false);
@@ -103,8 +103,8 @@
   function fitMap(m) { if (m && m.bounds && m.el.offsetParent) { m.map.invalidateSize(); m.map.fitBounds(m.bounds, { padding: [28, 28], maxZoom: 13, animate: false }); m.userMoved = false; } }
   function routePoints(p) { return (p?.route?.polyline || []).map(x => [Number(x[0]), Number(x[1])]).filter(x => x.every(Number.isFinite)); }
   function drawRoute(m, pts) {
-    L.polyline(pts, { color: tok('--amber'), weight: 12, opacity: .16, interactive: false }).addTo(m.layer);
-    L.polyline(pts, { color: tok('--amber'), weight: 4, opacity: 1, interactive: false }).addTo(m.layer);
+    L.polyline(pts, { color: tok('--accent'), weight: 12, opacity: .16, interactive: false }).addTo(m.layer);
+    L.polyline(pts, { color: tok('--accent'), weight: 4, opacity: 1, interactive: false }).addTo(m.layer);
   }
   function endpointMarkers(m, b) {
     const s = tok('--text'), bg = tok('--bg');
@@ -146,7 +146,7 @@
       <div class="doc-route"><span>${esc(b.origin.name)}</span><span class="arrow"></span><span>${esc(b.destination.name)}</span></div>
       <div class="doc-stamp">${stamp(p.decision, 'big' + (animate && !REDUCED ? ' slam' : ''))}</div>
       <div class="doc-grid">
-        <div><small>Confidence</small><b>${pct(p.confidence)}</b></div>
+        <div><small>Confidence</small><b>${esc(p.confidence_display || pct(p.confidence))}</b></div>
         <div><small>Target</small><b>${pct(b.target_confidence)}</b></div>
         <div><small>Arrival p50</small><b>${isNum(p.arrival_soc?.p50) ? p.arrival_soc.p50 + '%' : '—'}</b></div>
         <div><small>Charging stops</small><b>${p.stops?.length ?? '—'}</b></div>
@@ -182,7 +182,7 @@
       return `<button class="strip ${cls}" data-go="${esc(id)}">
         <div class="strip-head"><div><div class="strip-id">${esc(id)}</div><div class="strip-label">${esc(v.label)} · ${esc(String(v.model_class || '').replace(/_/g, ' '))}</div></div>${stamp(p.decision)}</div>
         <div class="strip-rows">
-          <div><small>Confidence</small><b>${pct(p.confidence)}</b></div>
+          <div><small>Confidence</small><b>${esc(p.confidence_display || pct(p.confidence))}</b></div>
           <div><small>Arrival p10–p90</small><b>${isNum(p.arrival_soc?.p10) ? `${p.arrival_soc.p10}–${p.arrival_soc.p90}%` : '—'}</b></div>
           <div><small>Start battery</small><b>${isNum(v.soc_pct) ? v.soc_pct + '%' : '—'}</b></div>
           <div><small>Trips calibrated</small><b>${v.trips_calibrated ?? '—'}</b></div>
@@ -196,9 +196,10 @@
     renderKpis();
     const r = ids.map(plan).find(p => p.decision === 'INSUFFICIENT_EVIDENCE');
     const box = $('#mission-refuse');
+    box.hidden = !r;
     if (r) {
-      box.innerHTML = `<div>${stamp(r.decision, 'big')}</div><div><h3>Refuse rather than guess.</h3><p>Most range tools always give an answer. Verity will not release ${esc(r.vehicle_id)}, even though its point forecast looks fine, because the plan leans on chargers nobody has reported on recently.</p><blockquote>${esc(r.refusal_reason)}</blockquote><p style="margin-top:14px"><a class="btn" href="#/dispatch/${esc(r.vehicle_id)}">See what would fix it →</a></p></div>`;
-    } else box.hidden = true;
+      box.innerHTML = `<div>${stamp(r.decision, 'big')}</div><div><h3>Why the release was withheld.</h3><p>Verity withheld the release for ${esc(r.vehicle_id)}, even though its point forecast looks fine, because the plan leans on chargers nobody has reported on recently.</p><blockquote>${esc(r.refusal_reason)}</blockquote><p style="margin-top:14px"><a class="btn" href="#/dispatch/${esc(r.vehicle_id)}">See what would fix it →</a></p></div>`;
+    }
   }
   function renderKpis() {
     const R = state.results, out = [];
@@ -206,7 +207,7 @@
     const e4 = R.e4?.scenarios?.['40% chargers down'];
     if (e4) out.push({ big: `<span class="bad">${pctInt(e4.stranding_rate_fixed)}</span><em>→</em><span class="good">${pctInt(e4.stranding_rate_dispatch)}</span>`, text: `Trips stranded when 40% of chargers are down: fixed shortest-path plan vs Verity dispatch (${e4.trips} trips).`, src: 'results/e4_dispatch_vs_fixed_simulated.json', tag: 'E4 · Dispatch vs fixed' });
     const sh = R.e2?.methods?.shared, ind = R.e2?.methods?.independent;
-    if (sh && ind) out.push({ big: `<span class="bad">${pctInt(ind.coverage_90_arrival_band)}</span><em>→</em><span class="good">${pctInt(sh.coverage_90_arrival_band)}</span>`, text: `How often the real arrival battery landed inside the 90% band: naive independent noise vs shared trip factors (${R.e2.trips} trips).`, src: 'results/e2_calibration_simulated.json', tag: 'E2 · Calibration' });
+    if (sh && ind) out.push({ big: `<span class="bad">${pctInt(ind.coverage_90_arrival_band)}</span><em>→</em><span class="good">${pctInt(sh.coverage_90_arrival_band)}</span>`, text: `How often the simulated arrival battery landed inside the 90% band: naive independent noise vs shared trip factors (${R.e2.trips} trips).`, src: 'results/e2_calibration_simulated.json', tag: 'E2 · Calibration' });
     const r12 = R.e5?.scenarios?.['ring of 12']?.mae_on_attacked_chargers;
     if (r12) out.push({ big: `<span class="bad">${r12.avg_rating.toFixed(2)}</span><em>→</em><span class="good">${r12.full.toFixed(2)}</span>`, text: 'Error in “does this charger work?” on chargers attacked by a ring of 12 fake reporters: plain average rating vs Verity trust engine.', src: 'results/e5_trust_recovery_simulated.json', tag: 'E5 · Fake-report rings' });
     const tests = R.run_all?.steps?.find(s => s.step === 'tests');
@@ -222,7 +223,7 @@
       const p = plan(id);
       return `<button class="rcard ${C.decisionClass(p.decision)}" data-id="${esc(id)}" aria-pressed="${id === state.selected}">
         <div class="rcard-head"><span class="rcard-id">${esc(id)}</span>${stamp(p.decision)}</div>
-        <div class="rcard-meta"><span>Conf. <b>${pct(p.confidence)}</b></span><span>Arr. <b>${isNum(p.arrival_soc?.p50) ? p.arrival_soc.p50 + '%' : '—'}</b></span><span>SoC <b>${vehicle(id).soc_pct}%</b></span></div>
+        <div class="rcard-meta"><span>Conf. <b>${esc(p.confidence_display || pct(p.confidence))}</b></span><span>Arr. <b>${isNum(p.arrival_soc?.p50) ? p.arrival_soc.p50 + '%' : '—'}</b></span><span>SoC <b>${vehicle(id).soc_pct}%</b></span></div>
       </button>`;
     }).join('');
     $$('#rail .rcard').forEach(b => b.onclick = () => go('dispatch', b.dataset.id));
@@ -234,11 +235,11 @@
     $('#release').className = 'release ' + cls;
     $('#release').innerHTML = `
       <div class="rel-top">
-        <div class="gauge" style="--c:var(--${cls})" role="img" aria-label="Confidence ${pct(p.confidence)}, target ${pct(b.target_confidence)}">
+        <div class="gauge" style="--c:var(--${cls})" role="img" aria-label="Confidence ${esc(p.confidence_display || pct(p.confidence))}, target ${pct(b.target_confidence)}">
           <svg viewBox="0 0 120 120"><circle class="g-bg" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
           <circle class="g-val" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-dasharray="${circ}" stroke-dashoffset="${REDUCED ? circ * (1 - conf) : circ}" data-off="${circ * (1 - conf)}"/>
           <circle class="g-tgt" cx="60" cy="60" r="52" fill="none" stroke-width="14" stroke-dasharray="2 ${circ}" stroke-dashoffset="${-circ * b.target_confidence + 1}"/></svg>
-          <div class="gauge-txt"><b>${pct(p.confidence)}</b><small>CONFIDENCE</small></div>
+          <div class="gauge-txt"><b>${esc(p.confidence_display || pct(p.confidence))}</b><small>CONFIDENCE</small></div>
         </div>
         <div class="rel-title"><small>DISPATCH RELEASE · ${esc(p.plan_id)}</small><h2>${esc(id)} · ${esc(v.label)} — ${esc(b.origin.name)} to ${esc(b.destination.name)}</h2><p>${esc(v.health_note)} · ${v.trips_calibrated} calibrated trips · usable ${isNum(v.usable_kwh_estimate?.p50) ? v.usable_kwh_estimate.p50 + ' kWh (p10 ' + v.usable_kwh_estimate.p10 + ', p90 ' + v.usable_kwh_estimate.p90 + ')' : '—'}</p></div>
         ${stamp(p.decision, 'big' + (REDUCED ? '' : ' slam'))}
@@ -282,9 +283,9 @@
       if (at) L.circleMarker(at, { radius: 7, color: tok('--nogo'), weight: 3, fillColor: tok('--bg'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Point of no return</span><br><b>km ${round1(p.point_of_no_return_km)}</b><br>Past here, turning back is no longer the safe option.`).addTo(m.layer);
     }
     (p.alternates || []).forEach(a => L.circleMarker([a.lat, a.lon], { radius: 9, color: tok('--unknown'), weight: 3, fillColor: tok('--bg'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Alternate · ${esc(a.charger_id)}</span><br><b>${esc(a.name)}</b><br>${pct(a.p_reach)} chance to reach · ${pct(a.p_works)} chance it works`).addTo(m.layer));
-    (p.stops || []).forEach((s, i) => L.circleMarker([s.lat, s.lon], { radius: 11, color: tok('--bg'), weight: 3, fillColor: tok('--amber'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Planned stop ${i + 1} · km ${round1(s.km_along_route)}</span><br><b>${esc(s.name)}</b><br>${pct(s.p_works)} chance it works · charge ${s.charge_minutes} min<br>${s.evidence?.n_reports ?? '—'} reports · trust ${esc(s.evidence?.trust_level || 'unknown')}`).addTo(m.layer));
+    (p.stops || []).forEach((s, i) => L.circleMarker([s.lat, s.lon], { radius: 11, color: tok('--bg'), weight: 3, fillColor: tok('--accent'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Planned stop ${i + 1} · km ${round1(s.km_along_route)}</span><br><b>${esc(s.name)}</b><br>${pct(s.p_works)} chance it works · charge ${s.charge_minutes} min<br>${s.evidence?.n_reports ?? '—'} reports · trust ${esc(s.evidence?.trust_level || 'unknown')}`).addTo(m.layer));
     endpointMarkers(m, state.scenario.booking);
-    $('#d-legend').innerHTML = `<span><i style="background:var(--amber)"></i>Planned stop</span><span><i class="ring" style="border-color:var(--unknown)"></i>Alternate</span><span><i class="ring" style="border-color:var(--nogo)"></i>Point of no return</span>` + ['high', 'medium', 'low', 'unknown'].map(t => `<span><i style="background:${trustColor(t)};opacity:.7"></i>${t} trust</span>`).join('');
+    $('#d-legend').innerHTML = `<span><i style="background:var(--accent)"></i>Planned stop</span><span><i class="ring" style="border-color:var(--unknown)"></i>Alternate</span><span><i class="ring" style="border-color:var(--nogo)"></i>Point of no return</span>` + ['high', 'medium', 'low', 'unknown'].map(t => `<span><i style="background:${trustColor(t)};opacity:.7"></i>${t} trust</span>`).join('');
     requestAnimationFrame(() => fitMap(m));
   }
 
@@ -309,20 +310,20 @@
     const step = dist > 150 ? 50 : 25, ticks = []; for (let k = 0; k < dist - step * .4; k += step) ticks.push(k); ticks.push(dist);
     const grid = [0, 20, 40, 60, 80, 100].map(v => `<path d="M${L} ${y(v)}H${W - R}" stroke="var(--line)"/><text x="${L - 7}" y="${y(v) + 3}" text-anchor="end" font-size="10" fill="var(--faint)">${v}</text>`).join('');
     const xt = ticks.map(k => `<text x="${x(k)}" y="${H - 16}" text-anchor="middle" font-size="10" fill="var(--faint)">${round1(k)}</text>`).join('');
-    const stops = (p.stops || []).map(s => `<g><path d="M${x(s.km_along_route)} ${T}V${H - B}" stroke="var(--amber)" stroke-dasharray="2 4" opacity=".6"/><rect x="${x(s.km_along_route) - 14}" y="${H - B - 16}" width="28" height="14" rx="3" fill="var(--amber)"/><text x="${x(s.km_along_route)}" y="${H - B - 6}" text-anchor="middle" font-size="9" font-weight="700" fill="var(--amber-ink)">CHG</text></g>`).join('');
+    const stops = (p.stops || []).map(s => `<g><path d="M${x(s.km_along_route)} ${T}V${H - B}" stroke="var(--accent)" stroke-dasharray="2 4" opacity=".6"/><rect x="${x(s.km_along_route) - 14}" y="${H - B - 16}" width="28" height="14" rx="3" fill="var(--accent)"/><text x="${x(s.km_along_route)}" y="${H - B - 6}" text-anchor="middle" font-size="9" font-weight="700" fill="var(--accent-ink)">CHG</text></g>`).join('');
     const ponr = isNum(p.point_of_no_return_km) ? `<path d="M${x(p.point_of_no_return_km)} ${T}V${H - B}" stroke="var(--nogo)" stroke-dasharray="5 4"/><text x="${x(p.point_of_no_return_km) + 5}" y="${T + 11}" font-size="10" fill="var(--nogo)">NO RETURN ${round1(p.point_of_no_return_km)} km</text>` : '';
     el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Expected battery band, expected battery and Bingo Line along the route${p.is_simulated ? ' (simulated)' : ''}">
       <title>Bingo Line${p.is_simulated ? ' (simulated)' : ''}</title>${grid}
-      <path d="${area}" fill="var(--amber)" fill-opacity=".18" class="fade"/>
-      <polyline points="${line('expected_soc_pct')}" fill="none" stroke="var(--amber)" stroke-width="2.5" pathLength="1" class="${REDUCED ? '' : 'draw'}" style="--len:1"/>
+      <path d="${area}" fill="var(--accent)" fill-opacity=".18" class="fade"/>
+      <polyline points="${line('expected_soc_pct')}" fill="none" stroke="var(--accent)" stroke-width="2.5" pathLength="1" class="${REDUCED ? '' : 'draw'}" style="--len:1"/>
       <polyline points="${line('bingo_soc_pct')}" fill="none" stroke="var(--nogo)" stroke-width="2.5" pathLength="1" class="${REDUCED ? '' : 'draw'}" style="--len:1"/>
       ${ponr}${stops}${xt}
       <text x="${(W + L) / 2}" y="${H - 2}" text-anchor="middle" font-size="10" fill="var(--faint)">KM ALONG ROUTE</text>
       <text x="${L + 4}" y="${T + 10}" font-size="10" fill="var(--faint)">BATTERY %</text>
-      <g class="xh" visibility="hidden"><path class="xh-l" d="M0 ${T}V${H - B}" stroke="var(--text)" stroke-width="1" opacity=".5"/><circle class="xh-e" r="5" fill="var(--amber)" stroke="var(--bg)" stroke-width="2"/><circle class="xh-b" r="5" fill="var(--nogo)" stroke="var(--bg)" stroke-width="2"/></g>
+      <g class="xh" visibility="hidden"><path class="xh-l" d="M0 ${T}V${H - B}" stroke="var(--text)" stroke-width="1" opacity=".5"/><circle class="xh-e" r="5" fill="var(--accent)" stroke="var(--bg)" stroke-width="2"/><circle class="xh-b" r="5" fill="var(--nogo)" stroke="var(--bg)" stroke-width="2"/></g>
       <rect class="hit" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" style="cursor:crosshair"/>
     </svg>
-    <div class="legend"><span><i class="sq" style="background:var(--amber);opacity:.35"></i>Expected range p10–p90</span><span><i class="sq" style="background:var(--amber)"></i>Expected battery</span><span><i class="sq" style="background:var(--nogo)"></i>Bingo Line: divert below this</span></div>
+    <div class="legend"><span><i class="sq" style="background:var(--accent);opacity:.35"></i>Expected range p10–p90</span><span><i class="sq" style="background:var(--accent)"></i>Expected battery</span><span><i class="sq" style="background:var(--nogo)"></i>Bingo Line: divert below this</span></div>
     <div class="readout" aria-live="polite"></div>`;
     const svg = el.querySelector('svg'), xh = svg.querySelector('.xh'), ro = el.querySelector('.readout');
     const read = q => {
@@ -353,7 +354,7 @@
     for (let v = Math.ceil(wf.low / 20) * 20; v <= wf.high; v += 20) html += `<path d="M${L} ${y(v)}H${W - R}" stroke="${v === 0 ? 'var(--line-strong)' : 'var(--line)'}"/><text x="${L - 6}" y="${y(v) + 3}" text-anchor="end" font-size="10" fill="var(--faint)">${v}</text>`;
     wf.rows.forEach((r, i) => {
       const cx = L + gap * i + gap / 2, x0 = cx - bw / 2, top = y(Math.max(r.from, r.to)), bot = y(Math.min(r.from, r.to));
-      const color = r.absolute ? (r.term === 'start' ? 'var(--amber)' : 'var(--text)') : r.value >= 0 ? 'var(--go)' : 'var(--nogo)';
+      const color = r.absolute ? (r.term === 'start' ? 'var(--accent)' : 'var(--text)') : r.value >= 0 ? 'var(--go)' : 'var(--nogo)';
       const label = r.absolute ? `${r.value}%` : `${r.value > 0 ? '+' : ''}${r.value}`;
       html += `<g><title>${esc(r.label)}: ${esc(label)}${r.absolute ? '' : ' points'}</title>`;
       html += r.from === r.to ? `<path d="M${x0} ${top}h${bw}" stroke="${color}" stroke-width="2.5"/>` : `<rect x="${x0}" y="${top}" width="${bw}" height="${Math.max(0, bot - top)}" rx="3" fill="${color}" class="${REDUCED ? '' : 'grow'}" style="animation-delay:${i * 70}ms"/>`;
@@ -372,7 +373,7 @@
     const el = $('#d-levers'), lv = p.levers || [];
     if (!lv.length) { el.innerHTML = '<p class="state">The engine returned no levers for this plan.</p>'; return; }
     el.innerHTML = lv.map((l, i) => `<button class="lever" data-i="${i}" aria-pressed="false"><span class="lever-label">${esc(l.label)}</span><span class="lever-cost">${isNum(l.time_cost_min) ? (l.time_cost_min > 0 ? '+' : '') + l.time_cost_min + ' min' : '—'}</span>
-      <span class="lever-bar"><span>${pct(p.confidence)}</span><span class="lever-track"><span class="new" style="width:${(l.new_confidence || 0) * 100}%"></span><span class="now" style="width:${(p.confidence || 0) * 100}%"></span></span><span style="color:var(--go)">${pct(l.new_confidence)}</span></span></button>`).join('')
+      <span class="lever-bar"><span>${esc(p.confidence_display || pct(p.confidence))}</span><span class="lever-track"><span class="new" style="width:${(l.new_confidence || 0) * 100}%"></span><span class="now" style="width:${(p.confidence || 0) * 100}%"></span></span><span style="color:var(--go)">${pct(l.new_confidence)}</span></span></button>`).join('')
       + '<p class="note">Tap a lever to compare the confidence the engine computed for it with the current plan.</p>';
     $$('.lever', el).forEach(b => b.onclick = () => { const on = b.getAttribute('aria-pressed') !== 'true'; $$('.lever', el).forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', String(on)); });
   }
@@ -424,7 +425,7 @@
         if (t.pts.length > 1) {
           m.bounds = L.latLngBounds(t.pts); drawRoute(m, t.pts);
           (p.alternates || []).forEach(a => L.circleMarker([a.lat, a.lon], { radius: 8, color: tok('--unknown'), weight: 3, fillColor: tok('--bg'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Alternate</span><br><b>${esc(a.name)}</b><br>${pct(a.p_works)} works`).addTo(m.layer));
-          (p.stops || []).forEach(s => L.circleMarker([s.lat, s.lon], { radius: 10, color: tok('--bg'), weight: 3, fillColor: tok('--amber'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Planned stop · km ${round1(s.km_along_route)}</span><br><b>${esc(s.name)}</b>`).addTo(m.layer));
+          (p.stops || []).forEach(s => L.circleMarker([s.lat, s.lon], { radius: 10, color: tok('--bg'), weight: 3, fillColor: tok('--accent'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Planned stop · km ${round1(s.km_along_route)}</span><br><b>${esc(s.name)}</b>`).addTo(m.layer));
           endpointMarkers(m, state.scenario.booking);
           t.car = L.marker(t.pts[0], { icon: L.divIcon({ className: '', html: '<div class="car-icon"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }), zIndexOffset: 1000, keyboard: false }).bindTooltip('Vehicle position at the last reported km').addTo(m.layer);
           t.divertLine = null;
@@ -495,9 +496,9 @@
         <div class="ps-bar"><span>${C.fmtClock(t.elapsed)}</span><span>${p.is_simulated ? 'SIM' : ''} ▮▮▮</span></div>
         <div class="ps-head"><b>${tr('brand')}</b><button class="ps-lang" type="button" data-lang>${t.lang === 'en' ? 'हिन्दी' : 'English'}</button></div>
         <div class="ps-body">
-          <div class="ps-batt"><div><small>${tr('battery')}</small><strong style="color:${margin !== null && margin < 0 ? '#B42318' : '#8A5A00'}">${isNum(t.soc) ? t.soc : '—'}<span style="font-size:.45em">%</span></strong></div>
-            <div class="ps-cell" aria-hidden="true"><span style="height:${Math.max(2, t.soc || 0)}%;background:${margin !== null && margin < 0 ? '#B42318' : '#11743F'}"></span>${isNum(bingo) ? `<i style="bottom:${Math.min(100, Math.max(0, bingo))}%"></i>` : ''}</div></div>
-          <div class="ps-ms"><div class="ps-m"><small>${tr('toGo')}</small><strong>${round1(Math.max(0, dist - t.km))}</strong></div><div class="ps-m"><small>${margin !== null && margin < 0 ? tr('below') : tr('above')}</small><strong style="color:${margin !== null && margin < 0 ? '#B42318' : '#11743F'}">${margin === null ? '—' : Math.abs(margin) + '%'}</strong></div></div>
+          <div class="ps-batt"><div><small>${tr('battery')}</small><strong style="color:${margin !== null && margin < 0 ? '#a33529' : '#3358ab'}">${isNum(t.soc) ? t.soc : '—'}<span style="font-size:.45em">%</span></strong></div>
+            <div class="ps-cell" aria-hidden="true"><span style="height:${Math.max(2, t.soc || 0)}%;background:${margin !== null && margin < 0 ? '#a33529' : '#244c9c'}"></span>${isNum(bingo) ? `<i style="bottom:${Math.min(100, Math.max(0, bingo))}%"></i>` : ''}</div></div>
+          <div class="ps-ms"><div class="ps-m"><small>${tr('toGo')}</small><strong>${round1(Math.max(0, dist - t.km))}</strong></div><div class="ps-m"><small>${margin !== null && margin < 0 ? tr('below') : tr('above')}</small><strong style="color:${margin !== null && margin < 0 ? '#a33529' : '#244c9c'}">${margin === null ? '—' : Math.abs(margin) + '%'}</strong></div></div>
           <div class="ps-route"><div class="rh"><span>${esc(state.scenario.booking.origin.name)}</span><span>${esc(state.scenario.booking.destination.name)}</span></div>
             <div class="ps-track"><div class="ps-prog" style="width:${prog}%"></div>${(p.stops || []).map(s => `<span class="ps-dot stop" style="left:${s.km_along_route / dist * 100}%" title="${esc(s.name)}"></span>`).join('')}${isNum(p.point_of_no_return_km) ? `<span class="ps-dot ponr" style="left:${p.point_of_no_return_km / dist * 100}%" title="${tr('ponr')}"></span>` : ''}<span class="ps-dot me" style="left:${prog}%"></span></div></div>
           <div class="ps-msg"><small>${tr('next')}</small>${esc(msg)}</div>
@@ -508,7 +509,7 @@
       sc.querySelector('[data-lang]').onclick = () => { t.lang = t.lang === 'en' ? 'hi' : 'en'; paint(); };
       const d = sc.querySelector('[data-dismiss]'); if (d) d.onclick = () => { t.alert = null; paint(); };
     }
-    return { render, pause, play: () => { if (state.active !== 'trip') go('trip'); setTimeout(play, 300); } };
+    return { render, pause, play: () => { if (state.active !== 'trip') go('trip'); requestAnimationFrame(() => { if (state.active === 'trip' && t.id && !t.running) play(); }); } };
   })();
 
   /* ================================================================== 04 TRUST */
@@ -530,14 +531,14 @@
       if (!m) return;
       m.layer.clearLayers(); markers.clear();
       const lead = plan('V12') || Object.values(state.plans)[0], pts = routePoints(lead);
-      if (pts.length > 1) L.polyline(pts, { color: tok('--amber'), weight: 3, opacity: .45, interactive: false }).addTo(m.layer);
+      if (pts.length > 1) L.polyline(pts, { color: tok('--accent'), weight: 3, opacity: .45, interactive: false }).addTo(m.layer);
       const shown = list.filter(c => filter === 'all' || c.trust_level === filter);
       shown.forEach(c => { const mk = L.circleMarker([c.lat, c.lon], { radius: c.trust_level === 'unknown' ? 4.5 : 8, weight: c.trust_level === 'unknown' ? 1 : 3, color: trustColor(c.trust_level), fillColor: trustColor(c.trust_level), fillOpacity: c.trust_level === 'unknown' ? .45 : .9 }).bindTooltip(chargerTip(c)).addTo(m.layer); markers.set(c.charger_id, mk); });
       const all = shown.map(c => [c.lat, c.lon]).concat(pts);
       m.bounds = all.length ? L.latLngBounds(all) : null;
       requestAnimationFrame(() => fitMap(m));
     }
-    $('#c-legend').innerHTML = ['high', 'medium', 'low', 'unknown'].map(t => `<span><i style="background:${trustColor(t)}"></i>${t} trust</span>`).join('') + '<span><i class="sq" style="background:var(--amber);opacity:.5"></i>Demo route</span>';
+    $('#c-legend').innerHTML = ['high', 'medium', 'low', 'unknown'].map(t => `<span><i style="background:${trustColor(t)}"></i>${t} trust</span>`).join('') + '<span><i class="sq" style="background:var(--accent);opacity:.5"></i>Demo route</span>';
     function drawTable() {
       const rows = list.filter(c => (filter === 'all' || c.trust_level === filter) && (!query || `${c.name} ${c.operator} ${c.charger_id}`.toLowerCase().includes(query)));
       const val = (c, k) => c[k] === null || c[k] === undefined || c[k] === '' ? null : c[k];
@@ -590,12 +591,12 @@
     const R = state.results, el = $('#evidence');
     if (!R) { el.innerHTML = '<p class="state">Saved experiment results are not bundled on this page. Run <code>python scripts/export_web_snapshot.py</code>.</p>'; return; }
     const out = [];
-    const GO = tok('--go'), NO = tok('--nogo'), AM = tok('--amber'), UN = tok('--unknown'), MU = tok('--faint');
+    const GO = tok('--go'), NO = tok('--nogo'), AM = tok('--accent'), UN = tok('--unknown'), MU = tok('--faint');
 
     // E4
     if (R.e4) {
       const sc = Object.entries(R.e4.scenarios), last = sc[sc.length - 1][1];
-      out.push(card({ id: 'E4', wide: true, title: 'A fixed plan strands people. A dispatch plan with backups does not.',
+      out.push(card({ id: 'E4', wide: true, title: 'How often did each plan strand a simulated trip?',
         claim: `With ${sc[sc.length - 1][0]}, the shortest-path plan strands <b>${pctInt(last.stranding_rate_fixed)}</b> of trips; Verity's dispatch policy strands <b>${pctInt(last.stranding_rate_dispatch)}</b>, at a cost of ${round1(last.mean_minutes_dispatch_not_stranded - last.mean_minutes_fixed_not_stranded)} minutes per completed trip.`,
         body: bars({ groups: sc.map(([k, v]) => ({ label: k, values: [v.stranding_rate_fixed, v.stranding_rate_dispatch], ci: [v.ci95_fixed, v.ci95_dispatch] })), series: [{ name: 'Fixed shortest-path plan', color: NO }, { name: 'Verity dispatch (backups + Bingo Line)', color: GO }], max: .5, width: 1280, height: 320 }),
         foot: `${R.e4.trips_per_scenario} trips per scenario, ${R.e4.total_simulated_trips} total · whiskers are Wilson 95% intervals · ${esc(R.e4.notes?.[0] || '')}<br>results/e4_dispatch_vs_fixed_simulated.json` }));
@@ -611,10 +612,10 @@
       series.forEach(([m, c]) => { const pts = m.bins.filter(b => b.n > 0); s += `<polyline points="${pts.map(b => `${x(b.mean_pred)},${y(b.observed)}`).join(' ')}" fill="none" stroke="${c}" stroke-width="2.2" pathLength="1" class="${REDUCED ? '' : 'draw'}" style="--len:1"/>`; s += pts.map(b => `<circle cx="${x(b.mean_pred)}" cy="${y(b.observed)}" r="${3 + Math.sqrt(b.n) / 2.2}" fill="${c}" fill-opacity=".85" stroke="var(--surface)" stroke-width="1.5"><title>Predicted ${pctInt(b.mean_pred)}, observed ${pctInt(b.observed)} (n=${b.n})</title></circle>`).join(''); });
       s += `<text x="${(W + L) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--faint)">PREDICTED CHANCE OF ARRIVING</text></svg>`;
       s += `<div class="legend">${series.map(([, c, n]) => `<span><i style="background:${c}"></i>${n}</span>`).join('')}<span>dot size ∝ trips in bin</span></div>`;
-      s += `<table class="ev-table"><thead><tr><th>Method</th><th>ECE</th><th>Brier</th><th>90% band coverage</th><th>Band width</th></tr></thead><tbody>
+      s += `<div class="scroll-x" role="region" tabindex="0" aria-label="Arrival band calibration by method"><table class="ev-table"><thead><tr><th>Method</th><th>ECE</th><th>Brier</th><th>90% band coverage</th><th>Band width</th></tr></thead><tbody>
         <tr><td>Independent noise</td><td>${ind.ece}</td><td>${ind.brier}</td><td class="fail">${pctInt(ind.coverage_90_arrival_band)}</td><td>${round1(ind.mean_90_band_width_pp)} pp</td></tr>
-        <tr><td>Shared factors</td><td>${sh.ece}</td><td>${sh.brier}</td><td class="pass">${pctInt(sh.coverage_90_arrival_band)}</td><td>${round1(sh.mean_90_band_width_pp)} pp</td></tr></tbody></table>`;
-      out.push(card({ id: 'E2', title: 'When Verity says 90%, it means about 90%.', claim: `Sampling uncertainty independently per road segment makes long trips look falsely certain: its 90% band caught the real arrival battery only <b>${pctInt(ind.coverage_90_arrival_band)}</b> of the time. Shared trip-level factors bring that to <b>${pctInt(sh.coverage_90_arrival_band)}</b>.`, body: s, foot: `${R.e2.trips} held-out simulated trips · ${R.e2.n_runs} Monte Carlo runs each · ECE = expected calibration error (lower is better)<br>results/e2_calibration_simulated.json` }));
+        <tr><td>Shared factors</td><td>${sh.ece}</td><td>${sh.brier}</td><td class="pass">${pctInt(sh.coverage_90_arrival_band)}</td><td>${round1(sh.mean_90_band_width_pp)} pp</td></tr></tbody></table></div>`;
+      out.push(card({ id: 'E2', title: 'How often did the arrival band cover the simulated outcome?', claim: `Sampling uncertainty independently per road segment makes long trips look falsely certain: its 90% band caught the simulated arrival battery only <b>${pctInt(ind.coverage_90_arrival_band)}</b> of the time. Shared trip-level factors bring that to <b>${pctInt(sh.coverage_90_arrival_band)}</b>.`, body: s, foot: `${R.e2.trips} held-out simulated trips · ${R.e2.n_runs} Monte Carlo runs each · ECE = expected calibration error (lower is better)<br>results/e2_calibration_simulated.json` }));
     }
     // E3
     if (R.e3) {
@@ -684,10 +685,10 @@
   function commands() {
     const cmds = TABS.map((t, i) => ({ label: `Go to ${TAB_NAMES[t]}`, hint: String(i + 1), run: () => go(t) }));
     state.scenario.vehicles.forEach(v => cmds.push({ label: `Open ${v.vehicle_id} release`, hint: C.decisionLabel(plan(v.vehicle_id).decision), run: () => go('dispatch', v.vehicle_id) }));
-    cmds.push({ label: 'Play live trip', hint: 'replay', run: () => trip.play() });
+    cmds.push({ label: 'Play trip replay', hint: 'replay', run: () => trip.play() });
     cmds.push({ label: 'Toggle light / dark theme', hint: 'theme', run: toggleTheme });
-    cmds.push({ label: 'Open Verity home page', hint: 'home.html', run: () => { location.href = 'home.html'; } });
-    cmds.push({ label: 'Open classic console', hint: 'console.html', run: () => { location.href = 'console.html' + location.search; } });
+    cmds.push({ label: 'Open Verity home page', hint: 'home.html', run: () => { location.href = 'home.html' + location.search; } });
+    cmds.push({ label: 'Open fleet map', hint: 'console.html', run: () => { location.href = 'console.html' + location.search; } });
     cmds.push({ label: 'Open driver view', hint: 'driver.html', run: () => { location.href = 'driver.html' + location.search; } });
     return cmds;
   }
@@ -728,9 +729,14 @@
     state.scenario = scenario; state.plans = Object.fromEntries(entries);
     const all = entries.flatMap(([, p]) => routePoints(p)).concat([[b.origin.lat, b.origin.lon], [b.destination.lat, b.destination.lon]]);
     const lat = all.map(p => p[0]), lon = all.map(p => p[1]);
-    try { state.chargers = (await API.getChargers({ min_lat: Math.min(...lat) - .25, min_lon: Math.min(...lon) - .25, max_lat: Math.max(...lat) + .25, max_lon: Math.max(...lon) + .25 })).chargers || []; }
-    catch (e) { state.chargers = []; toast('Charger directory could not load: ' + e.message); }
-    await Promise.all(entries.map(async ([id, p]) => { try { state.replays[id] = await API.getReplay(p.plan_id); } catch { /* no replay for this plan */ } }));
+    const bounds = {min_lat: Math.min(...lat) - .25, min_lon: Math.min(...lon) - .25, max_lat: Math.max(...lat) + .25, max_lon: Math.max(...lon) + .25};
+    await Promise.all([
+      API.getChargers(bounds).then(result => { state.chargers = result.chargers || []; })
+        .catch(error => toast('Charger directory could not load: ' + error.message)),
+      ...entries.map(async ([id, p]) => {
+        try { state.replays[id] = await API.getReplay(p.plan_id); } catch { /* Some plans have no replay. */ }
+      })
+    ]);
     state.results = window.VERITY_SNAPSHOT?.results || null;
     if (!state.plans[state.selected]) state.selected = scenario.vehicles[0].vehicle_id;
   }
