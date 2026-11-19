@@ -2,10 +2,10 @@
  "experiment": "F5 real charger evidence + E3-real",
  "is_simulated": false,
  "label": "REAL: hand-collected public charger evidence (verified=yes rows only)",
- "generated_at": "2026-11-17T17:05:18+00:00",
+ "generated_at": "2026-11-19T17:59:26+00:00",
  "inputs": {
   "evidence_rows_usable": 0,
-  "snapshot_rows_usable": 0,
+  "snapshot_rows_usable": 69,
   "match_overrides": 0,
   "directory_chargers": 207
  },
@@ -16,11 +16,11 @@
    "by_method": {}
   },
   "snapshots": {
-   "n_rows": 0,
+   "n_rows": 69,
    "n_matched": 0,
    "by_method": {}
   },
-  "n_review": 0,
+  "n_review": 69,
   "review_file": "data/processed/charger_evidence_review.csv"
  },
  "n_reports": 0,
@@ -44,7 +44,7 @@
   {
    "channel": "operator_app",
    "source_id": "public:operator_app",
-   "n_rows": 0,
+   "n_rows": 69,
    "n_reports": 0,
    "sensitivity": null,
    "specificity": null

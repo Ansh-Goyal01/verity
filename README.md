@@ -88,7 +88,7 @@ stale). A count of 0 means nothing has been collected yet. The live version is `
 | Real evidence | Count |
 |---|---|
 | Indian trips, hand-collected from public sources | 0 usable of 6 rows |
-| Charger reports (corpus + app snapshots) | 0 + 0 |
+| Charger reports (corpus + app snapshots) | 0 + 69 |
 | Open Charge Map check-ins | 0 (fetched) |
 | App reviews, classified | 0 usable of 0 |
 | Voice notes from real speakers | 0 (not run) |

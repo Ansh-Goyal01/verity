@@ -7478,7 +7478,7 @@
      }
     ],
     "refusal_reason": null,
-    "compute_ms": 9565,
+    "compute_ms": 10609,
     "n_runs": 1500,
     "is_simulated": true
    },
@@ -14842,7 +14842,7 @@
      }
     ],
     "refusal_reason": null,
-    "compute_ms": 8969,
+    "compute_ms": 8132,
     "n_runs": 1500,
     "is_simulated": true
    },
@@ -22244,7 +22244,7 @@
      }
     ],
     "refusal_reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
-    "compute_ms": 8364,
+    "compute_ms": 7741,
     "n_runs": 1500,
     "is_simulated": true
    }
@@ -25727,7 +25727,7 @@
    ],
    "levers": [],
    "earning_rs_per_hour": 60.0,
-   "compute_ms": 1578,
+   "compute_ms": 1665,
    "n_runs": 1500,
    "speech": {
     "en-IN": "Take the ride. The chance of completing it and reaching a working charger is 95 percent or more. After the drop, charge at Radisson Blu Plaza Delhi Airport: about 79 minutes, roughly 80 rupees at an example earning rate.",
@@ -28267,7 +28267,7 @@
    ]
   },
   "real_data": {
-   "generated_at": "2026-11-17T17:06:40+00:00",
+   "generated_at": "2026-11-19T18:00:11+00:00",
    "is_simulated": false,
    "note": "Corpus sizes and step statuses for the REAL-data track; the numbers live in each step's result file.",
    "corpus": {
@@ -28282,8 +28282,8 @@
      "errors": 0
     },
     "app_status_snapshots.csv": {
-     "rows": 0,
-     "usable": 0,
+     "rows": 69,
+     "usable": 69,
      "errors": 0
     },
     "app_reviews.csv": {
@@ -28310,7 +28310,7 @@
      "step": "validate",
      "ok": true,
      "returncode": 0,
-     "seconds": 0.4,
+     "seconds": 0.3,
      "missing_outputs": [],
      "last_line": "All files pass (no errors).",
      "headline": null
@@ -28319,7 +28319,7 @@
      "step": "F3",
      "ok": true,
      "returncode": 0,
-     "seconds": 2.1,
+     "seconds": 2.0,
      "missing_outputs": [],
      "last_line": "}",
      "headline": {
@@ -28340,7 +28340,7 @@
      "step": "F4",
      "ok": true,
      "returncode": 0,
-     "seconds": 3.2,
+     "seconds": 2.4,
      "missing_outputs": [],
      "last_line": "}",
      "headline": {
@@ -28364,13 +28364,13 @@
      "step": "F5",
      "ok": true,
      "returncode": 0,
-     "seconds": 7.7,
+     "seconds": 2.5,
      "missing_outputs": [],
      "last_line": " -> D:\\hackfront-verity\\results\\e3_real_evidence.json",
      "headline": {
       "inputs": {
        "evidence_rows_usable": 0,
-       "snapshot_rows_usable": 0,
+       "snapshot_rows_usable": 69,
        "match_overrides": 0,
        "directory_chargers": 207
       },
@@ -28385,7 +28385,7 @@
      "step": "F6",
      "ok": true,
      "returncode": 0,
-     "seconds": 2.2,
+     "seconds": 1.6,
      "missing_outputs": [],
      "last_line": "REAL: hand-collected public app-store reviews (text kept private): NOT_RUN | rows 0, with text 0, classified 0, paid calls 0 -> D:\\hackfront-verity\\results\\voc_app_reviews.json",
      "headline": {
@@ -28401,9 +28401,9 @@
      "step": "F9",
      "ok": true,
      "returncode": 0,
-     "seconds": 78.1,
+     "seconds": 43.2,
      "missing_outputs": [],
-     "last_line": "demo V07: Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False.  (67.7 s)",
+     "last_line": "demo V07: Estimate 37.08 kWh vs simulator truth 32.87 kWh (+12.8 %); truth inside the 80 % interval: False.  (39.9 s)",
      "headline": {
       "bmw_i3_trips_usable": 40,
       "bmw_i3_label": "REAL: BMW i3 60 Ah, Germany (TU Munich, DOI 10.21227/6jr9-5235), TRAINING-split trips only; not Indian conditions",
