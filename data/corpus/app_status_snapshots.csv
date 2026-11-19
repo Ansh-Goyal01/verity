@@ -1,1 +1,70 @@
 snapshot_id,app,charger_name,charger_ref_in_app,datetime_ist,status_shown,connectors_available,rated_kw,collected_by
+S0001,tata_ez_charge,"Hyphen Business Hotel, Sec 62",,2026-11-15 23:46,available,3,,AS
+S0002,tata_ez_charge,Tata Power x Tata.ev Yamuna Expressway RHS 16 KM Charging Station,,2026-11-15 23:47,unknown,,,AS
+S0003,tata_ez_charge,"Hyphen Business Hotel, Sec 62",,2026-11-16 00:09,available,3,,AS
+S0004,tata_ez_charge,Tata Power x Tata.ev Yamuna Expressway RHS 16 KM Charging Station,,2026-11-16 00:09,available,1,120,AS
+S0005,statiq,Statiq MLCP Noida Sec-18 Charging Hub Station,MLCP Zone1 DC Charger 13,2026-11-16 00:11,unknown,,60,AS
+S0006,statiq,Statiq ITC Mughal Station,ITC Mughal DC Charger,2026-11-16 00:12,unknown,,120,AS
+S0007,jiobp_pulse,"Jiobp Reliance Mall, Sector 13, Dwarka",,2026-11-16 00:14,available,,,AS
+S0008,chargezone,UP | Agra | Courtyard By Marriott,UP0176,2026-11-16 00:16,available,1,60,AS
+S0009,chargezone,UP | Agra | Courtyard By Marriott,UP0176,2026-11-16 00:27,available,1,60,AS
+S0010,chargezone,UP | Agra | Apollo Clinic,UP0220,2026-11-15 23:43,available,,30,AS
+S0011,statiq,Statiq MLCP Noida Sec-18 Charging Hub Station,MLCP Zone1 DC Charger 13,2026-11-16 01:18,unknown,,60,AS
+S0012,statiq,Statiq Jaypee Hotel Station,Jaypee Hotel DC Charger,2026-11-16 01:20,available,,60,AS
+S0013,chargezone,UP | Agra | Apollo Clinic,UP0220,2026-11-16 01:20,available,,30,AS
+S0014,statiq,Statiq Padam High Street Station,Padam High Street DC Charger,2026-11-16 01:23,available,1,60,AS
+S0015,statiq,TataPowerEZ - Trident Agra,Tata Power DC 1,2026-11-16 01:24,unknown,,15,AS
+S0016,tata_ez_charge,"Hyphen Business Hotel, Sec 62",,2026-11-16 20:23,available,3,,AS
+S0017,tata_ez_charge,Tata Power x Tata.ev Yamuna Expressway RHS 16 KM Charging Station,,2026-11-16 20:24,available,4,,AS
+S0018,statiq,Statiq MLCP Noida Sec-18 Charging Hub Station,MLCP Zone1 DC Charger 13,2026-11-16 20:25,unknown,,60,AS
+S0019,statiq,Statiq Padam High Street Station,Padam High Street DC Charger,2026-11-16 20:25,busy,0,60,AS
+S0020,statiq,Statiq Jaypee Hotel Station,Jaypee Hotel DC Charger,2026-11-16 20:26,available,,60,AS
+S0021,statiq,Statiq ITC Mughal Station,ITC Mughal DC Charger,2026-11-16 20:26,unknown,,120,AS
+S0022,chargezone,UP | Agra | Courtyard By Marriott,,2026-11-16 20:28,available,,60,AS
+S0023,statiq,TataPowerEZ - Trident Agra,Tata Power DC 1,2026-11-16 20:25,unknown,,15,AS
+S0024,chargezone,UP | Agra | Apollo Clinic,UP0220,2026-11-16 23:06,available,,30,AS
+S0025,jiobp_pulse,"Jiobp Reliance Mall, Sector 13, Dwarka",,2026-11-16 20:28,available,,,AS
+S0026,chargezone,UP | Agra | Apollo Clinic,,2026-11-16 20:28,available,,,AS
+S0027,jiobp_pulse,"Jiobp Reliance Mall, Sector 13, Dwarka",,2026-11-16 22:52,available,,,AS
+S0028,chargezone,UP | Agra | Courtyard By Marriott,UP0176,2026-11-16 22:52,available,1,60,AS
+S0029,statiq,Statiq MLCP Noida Sec-18 Charging Hub Station,MLCP Zone1 DC Charger 13,2026-11-16 22:53,available,,60,AS
+S0030,tata_ez_charge,"Hyphen Business Hotel, Sec 62",,2026-11-16 22:54,available,2,,AS
+S0031,tata_ez_charge,Tata Power x Tata.ev Yamuna Expressway RHS 16 KM Charging Station,,2026-11-16 22:54,available,4,,AS
+S0032,statiq,Statiq Jaypee Hotel Station,Jaypee Hotel DC Charger,2026-11-16 22:53,available,,60,AS
+S0033,statiq,Statiq Padam High Street Station,Padam High Street DC Charger,2026-11-16 22:53,unknown,,60,AS
+S0034,statiq,TataPowerEZ - Trident Agra,Tata Power DC 1,2026-11-16 22:53,unknown,,15,AS
+S0035,statiq,Statiq MLCP Noida Sec-18 Charging Hub Station,MLCP Zone1 DC Charger 13,2026-11-17 11:35,unknown,,60,AS
+S0036,statiq,Statiq ITC Mughal Station,ITC Mughal DC Charger,2026-11-17 11:37,unknown,,120,AS
+S0037,jiobp_pulse,"Jiobp Reliance Mall, Sector 13, Dwarka",,2026-11-17 11:41,available,,,AS
+S0038,chargezone,UP | Agra | Courtyard By Marriott,UP0176,2026-11-17 11:43,available,2,60,AS
+S0039,chargezone,UP | Agra | Apollo Clinic,UP0220,2026-11-17 11:43,busy,,30,AS
+S0040,tata_ez_charge,"Hyphen Business Hotel, Sec 62",,2026-11-17 11:44,busy,,,AS
+S0041,tata_ez_charge,Tata Power x Tata.ev Yamuna Expressway RHS 16 KM Charging Station,,2026-11-17 11:44,available,,,AS
+S0042,statiq,Statiq ITC Mughal Station,ITC Mughal DC Charger,2026-11-17 11:46,unknown,,120,AS
+S0043,statiq,Statiq Padam High Street Station,Padam High Street DC Charger,2026-11-17 22:11,available,2,60,AS
+S0044,statiq,Statiq Jaypee Hotel Station,Jaypee Hotel DC Charger,2026-11-17 22:12,available,1,60,AS
+S0045,jiobp_pulse,"Jiobp Reliance Mall, Sector 13, Dwarka",,2026-11-17 22:13,available,,,AS
+S0046,chargezone,UP | Agra | Apollo Clinic,UP0220,2026-11-17 22:14,available,,30,AS
+S0047,chargezone,UP | Agra | Courtyard By Marriott,UP0176,2026-11-17 22:14,available,1,60,AS
+S0048,tata_ez_charge,"Hyphen Business Hotel, Sec 62",,2026-11-17 22:15,available,1,,AS
+S0049,tata_ez_charge,Tata Power x Tata.ev Yamuna Expressway RHS 16 KM Charging Station,,2026-11-17 22:15,available,4,,AS
+S0050,jiobp_pulse,"Jiobp Reliance Mall, Sector 13, Dwarka",,2026-11-18 13:10,available,,,AS
+S0051,chargezone,UP | Agra | Courtyard By Marriott,UP0176,2026-11-18 13:11,available,2,60,AS
+S0052,chargezone,UP | Agra | Apollo Clinic,UP0220,2026-11-18 13:11,available,,30,AS
+S0053,tata_ez_charge,"Hyphen Business Hotel, Sec 62",,2026-11-18 13:12,available,1,,AS
+S0054,tata_ez_charge,Tata Power x Tata.ev Yamuna Expressway RHS 16 KM Charging Station,,2026-11-18 13:12,available,4,,AS
+S0055,tata_ez_charge,"Hyphen Business Hotel, Sec 62",,2026-11-18 17:33,available,3,,AS
+S0056,tata_ez_charge,Tata Power x Tata.ev Yamuna Expressway RHS 16 KM Charging Station,,2026-11-18 17:34,available,3,,AS
+S0057,statiq,Statiq Jaypee Hotel Station,Jaypee Hotel DC Charger,2026-11-18 17:34,available,1,60,AS
+S0058,jiobp_pulse,"Jiobp Reliance Mall, Sector 13, Dwarka",,2026-11-18 17:36,available,,,AS
+S0059,chargezone,UP | Agra | Apollo Clinic,UP0220,2026-11-18 17:36,available,,30,AS
+S0060,chargezone,UP | Agra | Courtyard By Marriott,UP0176,2026-11-18 17:36,busy,0,60,AS
+S0061,tata_ez_charge,"Hyphen Business Hotel, Sec 62",,2026-11-19 22:28,busy,0,,AS
+S0062,tata_ez_charge,Tata Power x Tata.ev Yamuna Expressway RHS 16 KM Charging Station,,2026-11-19 22:28,unknown,,,AS
+S0063,statiq,Statiq Jaypee Hotel Station,Jaypee Hotel DC Charger,2026-11-19 22:29,busy,0,60,AS
+S0064,statiq,Statiq ITC Mughal Station,ITC Mughal DC Charger,2026-11-19 22:29,available,2,120,AS
+S0065,statiq,Statiq Padam High Street Station,Padam High Street DC Charger,2026-11-19 22:29,available,2,60,AS
+S0066,statiq,Statiq MLCP Noida Sec-18 Charging Hub Station,MLCP Zone1 DC Charger 13,2026-11-19 22:29,available,,60,AS
+S0067,jiobp_pulse,"Jiobp Reliance Mall, Sector 13, Dwarka",,2026-11-19 22:30,available,,,AS
+S0068,chargezone,UP | Agra | Apollo Clinic,UP0220,2026-11-19 22:30,available,,30,AS
+S0069,chargezone,UP | Agra | Courtyard By Marriott,UP0176,2026-11-19 22:30,available,2,60,AS

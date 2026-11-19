@@ -156,6 +156,28 @@ E0007,CH-0042,your-initials,same map pin and same operator name
    The row number is the row in your sheet. `ERROR` rows are left out of results until fixed; `WARN`
    lines are a to-do list for drafts.
 
+### App snapshots collected (15–19 November 2026)
+
+`app_status_snapshots.csv` holds 69 rows (S0001–S0069) by collector AS: 10 chargers across Tata Power EZ
+Charge, Statiq, Jio-bp pulse and ChargeZone, seen 3–9 times each. They are transcribed exactly from
+`docs/app_status_snapshots.pdf`, the collector's table plus 34 provenance footnotes. These notes travel with
+the rows because the CSV has no notes column:
+
+- **S0001–S0060:** on 19 November the collector confirmed that every date and time had been checked. Some
+  times started as a screenshot-filename or batch estimate, or the date came from the collector's grouping.
+  This confirms the date and time only. It does not confirm the other fields, or that the charger physically
+  worked.
+- **S0026:** the time (20:28) comes from the collector saying yes when asked whether Apollo Clinic was checked
+  then, not from a screenshot. The screenshot supports 23:06 only and is S0024. A row recheck is pending.
+- **S0065:** the time is an ESTIMATE (22:29), taken from the same evening's Statiq batch because the phone
+  clock is unreadable. Leave it out of any exact-minute analysis. It is within minutes of its batch, so
+  hour-scale windows are unaffected. A row recheck is pending.
+- **S0061–S0069** were added after the 19 November confirmation, which does not cover them.
+- `status_shown` is only what the app displayed. "available" is the operator's claim, not evidence that the
+  charger worked. A Tata EZ count goes in `connectors_available`; ChargeZone and Statiq rows give `rated_kw`.
+- Snapshots carry no location, so none of them is tied to a directory charger yet. Matching goes through
+  `charger_match_overrides.csv` (by hand, only when sure) or an evidence row with the same `charger_name`.
+
 > Availability on the takeover machine: raw BMW files are absent; real E1 is NOT DONE (dataset not on this machine). The profiling below is historical work completed before the fixed split; no test trips were opened in this takeover.
 
 ## BMW i3 dataset: what is in the files (read this before using the loader)
