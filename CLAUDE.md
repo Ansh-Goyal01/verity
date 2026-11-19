@@ -143,8 +143,9 @@ LEG is stored per battery band, never as one fixed probability.
 
 ## Commands (keep this section updated as commands are created)
 
-- Setup: `uv sync`
-- Tests: `uv run pytest`
+- Setup: `uv sync`. Run everything (API :8000 + web pages :5500, opens the site): `uv run start.py`
+- Tests: `uv run pytest`; frontend: `node --test tests/frontend_app.test.cjs tests/frontend_console.test.cjs tests/frontend_trip.test.cjs`
+  (add `VERITY_TEST_API=http://127.0.0.1:8000` with the API running for the live contract test)
 - API: `uv run uvicorn api.main:app --reload` (check: http://localhost:8000/api/health; `neo4j` says `connected`
   only when Neo4j is the graph in use; `VERITY_GRAPH=memory` forces in-memory)
 - Everything from a clean state: `uv run python scripts/run_all.py` (add `--fast` for a plumbing check)

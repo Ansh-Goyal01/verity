@@ -8,13 +8,15 @@ These pages use plain HTML, CSS and JavaScript. No install or build step is need
 2. Open the extracted folder. Keep `design`, `web` and `logger` next to each other.
 3. Double-click `web/console.html` or `web/driver.html` to open it in Chrome.
 4. The address must show the extracted folder. Do not open the HTML inside the ZIP or from a temporary ZIP folder.
-5. Keep internet connected for Google Fonts, Leaflet and OpenStreetMap tiles.
+5. Fonts and Leaflet are bundled (`web/drive/assets/`, `web/vendor/leaflet-1.9.4/`). Only OpenStreetMap map tiles need internet.
+
+Easiest way, with the live engine: from the repository root run `uv run start.py` (API on :8000, these pages on :5500).
 
 Without `?api=` the pages run offline on the saved engine snapshot (`js/snapshot.js`), or on illustrative mocks if the snapshot is missing. Every offline response is simulated and the pages show a visible badge.
 
 ## Product site (start here)
 
-Open `web/home.html`; the repository root `index.html` redirects to it. It is a single animated page. The hero shows a live Bingo Line instrument for the demo trip. The page then covers the problem, a scroll-driven "how a release is made" story, an animated pipeline, a proof bento with E1–E5 results, a competitor comparison, a driver phone that plays the saved replay, and the V19 refusal. Every value is read from `js/snapshot.js`. Animation uses Motion (`vendor/motion-12.43.0.js`, MIT, vendored so the page works offline). With reduced motion, or without that file, the page shows its final state. Competitor claims are sourced in `docs/COMPETITORS.md`.
+Open `web/home.html`; the repository root `index.html` redirects to it. Its code lives in `web/drive/` (`app.js`, `trip.js`, `trip-service.js`, `cases.js`, `instruments.js`, `ride-voice.js`, `evidence.js` and their styles). It reads saved values from `js/snapshot.js`, and the live engine when opened with `?api=`. Mission Control (`web/index.html`) still uses Motion (`vendor/motion-12.43.0.js`, MIT, vendored). Competitor claims are sourced in `docs/COMPETITORS.md`.
 
 ## Mission Control
 
@@ -27,7 +29,7 @@ Open `web/index.html` (or the repository root `index.html`, which redirects to i
 5. **Evidence**: E1–E5 charts drawn from the saved `results/*.json`, with sample sizes and confidence intervals, plus the last `run_all` status.
 6. **Engine**: the pipeline, the physics equations, why shared uncertainty matters, and the project's honesty rules.
 
-Data: with no `?api=` the pages load `js/snapshot.js`, which holds the **saved real engine outputs** from `docs/api_examples` and the experiment results. All of it comes from the simulated demo scenario, and the header says so. Regenerate it after new engine runs with `uv run python scripts/export_web_snapshot.py`. `?source=mock` uses the hand-written illustrative mocks instead. `?api=http://127.0.0.1:8000` uses the live engine. Tests: `node --test tests/frontend_app.test.cjs tests/frontend_console.test.cjs`.
+Data: with no `?api=` the pages load `js/snapshot.js`, which holds the **saved real engine outputs** from `docs/api_examples` and the experiment results. All of it comes from the simulated demo scenario, and the header says so. Regenerate it after new engine runs with `uv run python scripts/export_web_snapshot.py`. `?source=mock` uses the hand-written illustrative mocks instead. `?api=http://127.0.0.1:8000` uses the live engine. Tests: `node --test tests/frontend_app.test.cjs tests/frontend_console.test.cjs tests/frontend_trip.test.cjs` (set `VERITY_TEST_API=http://127.0.0.1:8000` with the API running to include the live contract test).
 
 ## Fleet console
 

@@ -28,3 +28,5 @@ jobs:
           enable-cache: true
       - run: uv sync --locked
       - run: uv run pytest -q
+      # Frontend checks (plain JS, no install): Node is preinstalled on the runner.
+      - run: node --test tests/frontend_app.test.cjs tests/frontend_console.test.cjs tests/frontend_trip.test.cjs
