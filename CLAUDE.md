@@ -155,7 +155,7 @@ LEG is stored per battery band, never as one fixed probability.
   Sarvam voice check (5 paid calls): `uv run python scripts/voice_check.py`
 - REAL-data track in one command (validate corpus, F3-F6, F9; summary in results/real_data_summary.json):
   `uv run python scripts/run_real_data.py` (`--no-paid` = no Sarvam calls; `--only validate,F4`)
-- Any-route planning (WP1): `POST /api/dispatch` with any Indian origin/destination (<= `VERITY_MAX_TRIP_KM`, 700); place search
+- Any route + any Indian EV (WP1-2): `GET /api/vehicles` (45 real cars + demo fleet); `POST /api/dispatch` any Indian origin/destination (<= `VERITY_MAX_TRIP_KM`, 700); place search
   `GET /api/geocode?q=jaipur` (Photon, own budget `VERITY_GEOCODE_MAX_REQUESTS`); routing lifetime budget `VERITY_MAX_REQUESTS` (300), new routes/hour `VERITY_NEW_ROUTES_PER_HOUR` (20)
 - Range Passport: `uv run python scripts/range_passport.py`; driver demo (ride check):
   `uv run python scripts/driver_demo.py`; ride-check latency: `uv run python scripts/bench_ride_check.py`

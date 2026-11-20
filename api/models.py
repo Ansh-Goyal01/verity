@@ -189,6 +189,42 @@ class DataSources(Resp):
     charger_reports: DataSource
 
 
+class ReleaseVehicle(Resp):
+    id: str
+    name: str
+    battery_kwh: float
+    trips_calibrated: int
+    calibration_basis: str  # "public trips" | "class prior" | "simulated trips"
+    source_count: int
+    is_simulated: bool
+
+
+class Calibration(Resp):
+    trips: int
+    basis: str
+    label: str  # e.g. "First trip in this car: prior only"
+
+
+class CatalogVehicle(Resp):
+    vehicle_id: str
+    make: str
+    model: str
+    variant: str
+    battery_kwh: float
+    claimed_range_km: float | None
+    range_test_cycle: str | None
+    source_quality: str  # "official" | "secondary" | "simulated"
+    verify_note: str | None
+    trips_calibrated: int
+    calibration_basis: str
+    curb_mass_basis: str  # "spec sheet" | "class typical"
+    is_simulated: bool
+
+
+class VehiclesResponse(Resp):
+    vehicles: list[CatalogVehicle]
+
+
 class DispatchResponse(Resp):
     plan_id: str
     vehicle_id: str
@@ -210,6 +246,8 @@ class DispatchResponse(Resp):
     compute_ms: int
     n_runs: int = Field(ge=1)  # Monte Carlo runs behind every probability here (W0.3): never hardcode it
     data_sources: DataSources  # WP1: where each input came from; is_simulated is derived from it
+    vehicle: ReleaseVehicle  # WP2
+    calibration: Calibration  # WP2
     is_simulated: bool
 
 

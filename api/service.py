@@ -33,6 +33,7 @@ from verity.chargers import RouteCharger, chargers_near_route, load_chargers, so
 from verity.dispatch import ALT_AHEAD_KM, PlanState, VehicleContext, dispatch, live_update_plan
 from verity.forecast import ForecastConfig, confidence_display, round_prob
 from verity.paths import SIM_DIR
+from verity.catalog import load_catalog, vehicle_context
 from verity.geocode import geocode, geocode_client, normalise_query
 from verity.routing import CachedClient, NetworkUnavailable, RequestBudgetExceeded, load_planned_route
 from verity.schemas import ChargerRecord, Report
@@ -211,6 +212,17 @@ class FleetVehicle:
     note: str
 
 
+@dataclass(frozen=True)
+class PickedVehicle:
+    """The vehicle a dispatch plans with, and how the release describes it (WP2)."""
+
+    ctx: VehicleContext
+    others: list
+    vehicle: dict
+    calibration: dict
+    source: str
+
+
 @dataclass
 class StoredPlan:
     state: PlanState
@@ -309,6 +321,7 @@ class EngineService(GraphEndpoints):
         self.graph.populate(lambda g: populate_road_network(g, self.near, self.trust, float(self.poly_km[-1]),
                                                             ALT_AHEAD_KM))
         self.fleet = self._build_fleet()
+        self.catalog = load_catalog()  # the real Indian cars (WP2): vehicles_india.csv, calibrated on training trips only
         self.plans: LruCache[str, StoredPlan] = LruCache(PLAN_CACHE_SIZE)
         self.ride_bundles = load_bundles()  # committed ride routes (no network); others are fetched and cached
         self._ride_cache: LruCache[tuple, dict] = LruCache(RIDE_CACHE_SIZE)
@@ -431,6 +444,46 @@ class EngineService(GraphEndpoints):
             raise ApiError(503, "geocoder_unavailable", "Place search is unavailable right now; try again shortly.") from exc
         return {"results": [p.as_dict() for p in places], "source": "Photon (komoot), OpenStreetMap data"}
 
+    def _vehicle_for(self, req: dict) -> PickedVehicle:
+        """The demo fleet's simulated vehicle, or a real car from vehicles_india.csv (WP2); 404 lists every id."""
+        vid, pax, ac = req["vehicle_id"], req["passengers"], req["ac_on"]
+        fv = self.fleet.get(vid)
+        if fv is not None:
+            n = fv.ctx.trips_calibrated
+            others = [(replace(o.ctx, passengers=pax, ac_on=ac), float(o.soc_pct))
+                      for other, o in self.fleet.items() if other != vid]
+            return PickedVehicle(
+                replace(fv.ctx, passengers=pax, ac_on=ac), others,
+                {"id": vid, "name": fv.label, "battery_kwh": round(float(fv.ctx.post.nominal_kwh), 1),
+                 "trips_calibrated": n, "calibration_basis": "simulated trips", "source_count": 0, "is_simulated": True},
+                {"trips": n, "basis": "simulated trips", "label": f"Calibrated on {n} simulated trips"},
+                DEMO_FLEET_LABEL)
+        car = self.catalog.get(vid)
+        if car is None:
+            raise ApiError(404, "unknown_vehicle", f"Unknown vehicle {vid!r}; known: {sorted(self.fleet) + list(self.catalog)}")
+        return PickedVehicle(
+            vehicle_context(car, pax, ac), [],  # a single real car has no fleet to offer as "another vehicle"
+            {"id": vid, "name": car.name, "battery_kwh": car.battery_kwh, "trips_calibrated": car.trips_calibrated,
+             "calibration_basis": car.calibration_basis, "source_count": car.source_count, "is_simulated": False},
+            {"trips": car.trips_calibrated, "basis": car.calibration_basis, "label": car.calibration_label},
+            f"vehicles_india.csv spec row ({car.source_count} cited sources, {car.source_quality}"
+            f"{', approximate - verify' if car.approximate else ''}; kerb mass: {car.curb_mass_basis})")
+
+    def vehicles(self) -> dict:
+        """GET /api/vehicles (WP2): every real car, then the simulated demo fleet."""
+        real = [{"vehicle_id": c.vehicle_id, "make": c.make, "model": c.model, "variant": c.variant,
+                 "battery_kwh": c.battery_kwh, "claimed_range_km": c.claimed_range_km,
+                 "range_test_cycle": c.range_test_cycle, "source_quality": c.source_quality,
+                 "verify_note": "approximate - verify" if c.approximate else None,
+                 "trips_calibrated": c.trips_calibrated, "calibration_basis": c.calibration_basis,
+                 "curb_mass_basis": c.curb_mass_basis, "is_simulated": False} for c in self.catalog.values()]
+        demo = [{"vehicle_id": vid, "make": "Demo fleet", "model": fv.label, "variant": fv.ctx.class_key,
+                 "battery_kwh": round(float(fv.ctx.post.nominal_kwh), 1), "claimed_range_km": None,
+                 "range_test_cycle": None, "source_quality": "simulated", "verify_note": None,
+                 "trips_calibrated": fv.ctx.trips_calibrated, "calibration_basis": "simulated trips",
+                 "curb_mass_basis": "class typical", "is_simulated": True} for vid, fv in self.fleet.items()]
+        return {"vehicles": real + demo}
+
     def _resolve_route(self, req: dict) -> ResolvedRoute:
         try:
             return self.resolver.resolve(req["origin"], req["destination"], req["departure_time"])
@@ -470,18 +523,14 @@ class EngineService(GraphEndpoints):
         """The plan for a request. ``refresh`` recomputes against the graph as it is now and replaces the cached plan only
         when the new one is ready (the old one keeps being served until then)."""
         req = canonical_request(DispatchRequest, req)
-        fv = self.fleet.get(req["vehicle_id"])
-        if fv is None:
-            raise ApiError(404, "unknown_vehicle", f"Unknown vehicle {req['vehicle_id']!r}; known: {sorted(self.fleet)}")
+        picked = self._vehicle_for(req)
         resolved = self._resolve_route(req)
         key = plan_key(req)
         plan_id = self._plan_id_for(key, req)
         stored = self.plans.get(plan_id)  # one atomic read: the plan may be evicted between a check and a second read
         if stored is not None and not refresh:
             return stored.response
-        ctx = replace(fv.ctx, passengers=req["passengers"], ac_on=req["ac_on"])
-        others = [(replace(o.ctx, passengers=req["passengers"], ac_on=req["ac_on"]), float(o.soc_pct))
-                  for vid, o in self.fleet.items() if vid != req["vehicle_id"]]
+        ctx, others = picked.ctx, picked.others
         t0, (q0, s0) = time.perf_counter(), self._graph_queries()
 
         def plan_on(g: ChargerGraph) -> tuple[GraphView, tuple, object]:
@@ -503,7 +552,10 @@ class EngineService(GraphEndpoints):
         destination = self._speech_destination(req, resolved)
         n_sim = sum(r.is_simulated for r in near_reports)
         sources = build_data_sources(resolved.snap, parse_departure(req["departure_time"]) or datetime.min,
-                                     vehicle_simulated=True, vehicle_source=DEMO_FLEET_LABEL,
+                                     vehicle_simulated=picked.vehicle["is_simulated"], vehicle_source=picked.source,
+                                     vehicle_note=("Spec sheet only: this car's real range is not measured yet "
+                                                   "(class prior, no trip history)."
+                                                   if picked.vehicle["calibration_basis"] == "class prior" else None),
                                      n_real_reports=len(near_reports) - n_sim, n_simulated_reports=n_sim)
         response = {
             "plan_id": plan_id, "vehicle_id": result.vehicle_id, "decision": result.decision,
@@ -521,6 +573,7 @@ class EngineService(GraphEndpoints):
             "point_of_no_return_km": result.point_of_no_return_km, "breakdown": result.breakdown,
             "levers": result.levers, "risk_sources": result.risk_sources, "refusal_reason": result.refusal_reason,
             "compute_ms": result.compute_ms, "n_runs": self.cfg.n_runs, "data_sources": sources,
+            "vehicle": picked.vehicle, "calibration": picked.calibration,
             "is_simulated": any_simulated(sources),
         }
         self.plans[plan_id] = StoredPlan(result.state, response, dict(req), resolved.poly, resolved.poly_km)

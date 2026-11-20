@@ -31,6 +31,7 @@ from .ledger import build_ledger
 from .limits import RateLimiter, client_ip, parse_origins, positive_int, rate_key
 from .models import (
     GeocodeResponse,
+    VehiclesResponse,
     ChargerGraphResponse,
     ChargersResponse,
     DemoScenario,
@@ -239,6 +240,12 @@ def demo_scenario(svc: EngineService = Depends(get_service)) -> dict:
 @app.post("/api/dispatch", response_model=DispatchResponse)
 def post_dispatch(req: DispatchRequest, svc: EngineService = Depends(get_service)) -> dict:
     return svc.dispatch(req.model_dump())
+
+
+@app.get("/api/vehicles", response_model=VehiclesResponse)
+def get_vehicles(svc: EngineService = Depends(get_service)) -> dict:
+    """WP2: every real Indian car (vehicles_india.csv, cited, approximate) plus the simulated demo fleet."""
+    return svc.vehicles()
 
 
 @app.get("/api/geocode", response_model=GeocodeResponse, dependencies=[Depends(limit_geocode)])

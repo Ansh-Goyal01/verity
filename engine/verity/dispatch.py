@@ -68,6 +68,7 @@ CRUISE_LEVER_MPS = 80.0 / 3.6
 EXTRA_CHARGE_MIN = 10.0
 BINGO_SUBSAMPLE = 1000
 MIN_CALIBRATED_TRIPS = 1
+PRIOR_ONLY_MARGIN = 0.10  # WP2 option B: a prior-only car's shown confidence must clear the target by this much
 MIN_STOP_MINUTES = 4.0  # a stop that adds less charging than this is not worth its 6-minute overhead
 DETOUR_SPEED_KMH = 25.0  # speed on the access road between the route and an off-route charger (approximate - verify)
 # Minutes lost when stranded: waiting for a tow or mobile charger plus the rest of the shift. Assumption
@@ -121,6 +122,8 @@ class VehicleContext:
     ac_on: bool
     trips_calibrated: int
     cargo_kg: float = 0.0
+    curb_mass_kg: float | None = None  # the car's own kerb mass (WP2); None = the class prior's
+    prior_only: bool = False  # a real car with no calibrated trips, planned from its class prior (WP2 option B)
 
 
 @dataclass(frozen=True, eq=False)
@@ -475,6 +478,19 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
 # --- Bingo Line, point of no return -----------------------------------------------------------------------
 
 
+def vehicle_mass_kg(vehicle: VehicleContext) -> float:
+    """Total mass for one vehicle: its own kerb mass when known (WP2), else its class prior's, plus people and cargo.
+    The one place this is computed, so dispatch and the ride check can never disagree."""
+    curb = vehicle.curb_mass_kg if vehicle.curb_mass_kg is not None else get_prior(vehicle.class_key).base.curb_mass_kg
+    return total_mass_kg(curb, vehicle.passengers, vehicle.cargo_kg)
+
+
+def prior_only_too_close(shown: float, target: float, margin: float = PRIOR_ONLY_MARGIN) -> bool:
+    """WP2 option B (Ansh, 2026-11-20): a car planned from its class prior alone answers GO or NO_GO only when the
+    shown confidence is at least ``margin`` away from the target; closer than that is too close to call."""
+    return abs(shown - target) < margin - 1e-9
+
+
 def meets_target(p: float | Array, target: float) -> bool | Array:
     """The one "meets the target" test (W0.1), shared by the GO decision, the Bingo Line and the live update:
     the DISPLAYED confidence (nearest 5 %, golden rule 5) against the target, so the three never disagree."""
@@ -582,8 +598,7 @@ def _stale(node: Node) -> bool:
 
 def _build_ctx(vehicle: VehicleContext, route: PlannedRoute, start_soc: float, target: float, rng: np.random.Generator,
                cfg: ForecastConfig, highway_speed_mps: float | None = None) -> Ctx:
-    prior = get_prior(vehicle.class_key)
-    mass = total_mass_kg(prior.base.curb_mass_kg, vehicle.passengers, vehicle.cargo_kg)
+    mass = vehicle_mass_kg(vehicle)
     runs = simulate_runs(vehicle.post, route, mass_kg=mass, ac_on=vehicle.ac_on, rng=rng, cfg=cfg,
                          highway_speed_mps=highway_speed_mps)
     usable = float(vehicle.post.nominal_kwh * vehicle.post.summary(n=1000)["usable_frac"][0])
@@ -662,7 +677,7 @@ def dispatch(
     stale = [s.node for s in stops if _stale(s.node)] + [a for s in stops for a in s.alts if _stale(a)]
     pess = {n.id: n.p_lo for n in stale}
     conf_pess = evaluate_plan(ctx, stops, np.random.default_rng(seed + 1), p_override=pess).confidence if pess else conf
-    thin_vehicle = vehicle.trips_calibrated < MIN_CALIBRATED_TRIPS
+    thin_vehicle = vehicle.trips_calibrated < MIN_CALIBRATED_TRIPS and not vehicle.prior_only
     # The decision follows the DISPLAYED confidence (nearest 5 %, golden rule 5), so the UI never shows
     # "90 % / NO_GO" for a 90 % target; 2.5 points is below the Monte Carlo's own resolution anyway.
     shown, shown_pess = round_prob(conf), round_prob(conf_pess)
@@ -671,6 +686,15 @@ def dispatch(
         decision = "INSUFFICIENT_EVIDENCE"
         refusal = ("This vehicle has no calibrated trips yet, so its real range is unknown. Log one or two short "
                    "trips with the logger before planning an outstation booking.")
+    elif vehicle.prior_only and prior_only_too_close(shown, target_confidence):
+        decision = "INSUFFICIENT_EVIDENCE"
+        unreachable = target_confidence + PRIOR_ONLY_MARGIN > 1.0 + 1e-9  # no shown value can clear it (DECISIONS WP2)
+        refusal = (f"Too close to call without this car's trip history: planned from its class only, confidence is "
+                   f"{confidence_display(conf)} against a {target_confidence:.0%} target. "
+                   + ("At a target above 90 % a car with no trip history cannot be cleared: log a trip in this car "
+                      "or lower the target." if unreachable else
+                      "Log a trip in this car, or change the plan (charge longer, drive slower) until the answer is "
+                      "clear."))
     elif decision == "GO" and shown_pess < target_confidence - 1e-9 and trust_aware:
         weak = ", ".join(sorted({n.charger.name if n.charger else n.id for n in stale}))
         decision = "INSUFFICIENT_EVIDENCE"

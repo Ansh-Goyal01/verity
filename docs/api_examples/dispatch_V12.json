@@ -7358,7 +7358,7 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 7286,
+ "compute_ms": 8710,
  "n_runs": 1500,
  "data_sources": {
   "route": {
@@ -7391,6 +7391,20 @@
    "n": 14,
    "note": "0 real, 14 simulated"
   }
+ },
+ "vehicle": {
+  "id": "V12",
+  "name": "Vehicle 12",
+  "battery_kwh": 45.0,
+  "trips_calibrated": 8,
+  "calibration_basis": "simulated trips",
+  "source_count": 0,
+  "is_simulated": true
+ },
+ "calibration": {
+  "trips": 8,
+  "basis": "simulated trips",
+  "label": "Calibrated on 8 simulated trips"
  },
  "is_simulated": true
 }

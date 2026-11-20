@@ -7400,7 +7400,7 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 7796,
+ "compute_ms": 6683,
  "n_runs": 1500,
  "data_sources": {
   "route": {
@@ -7433,6 +7433,20 @@
    "n": 14,
    "note": "0 real, 14 simulated"
   }
+ },
+ "vehicle": {
+  "id": "V07",
+  "name": "Vehicle 7",
+  "battery_kwh": 45.0,
+  "trips_calibrated": 6,
+  "calibration_basis": "simulated trips",
+  "source_count": 0,
+  "is_simulated": true
+ },
+ "calibration": {
+  "trips": 6,
+  "basis": "simulated trips",
+  "label": "Calibrated on 6 simulated trips"
  },
  "is_simulated": true
 }

@@ -1,4 +1,4 @@
 {
  "error": "unknown_vehicle",
- "message": "Unknown vehicle 'V99'; known: ['V07', 'V12', 'V19']"
+ "message": "Unknown vehicle 'V99'; known: ['V07', 'V12', 'V19', 'tata-nexon-ev-30.2', 'tata-nexon-ev-max-40.5', 'tata-nexon-ev-45', 'tata-tiago-ev-19.2', 'tata-tiago-ev-24', 'tata-curvv-ev-45', 'tata-curvv-ev-55', 'mahindra-xev-9e-59', 'mahindra-xev-9e-79', 'mahindra-be-6-59', 'mahindra-be-6-79', 'mg-zs-ev-50.3', 'mg-comet-ev-17.4', 'tata-punch-ev-35', 'tata-punch-ev-40', 'tata-harrier-ev-75', 'tata-sierra-ev-75', 'tata-tigor-ev-26', 'mahindra-xev-9s-79', 'mahindra-xuv400-39.4', 'mg-windsor-ev-38', 'mg-windsor-ev-52.9', 'mg-hector-tomahawk-ev-69.2', 'hyundai-creta-electric-51.4', 'hyundai-ioniq-5-84', 'hyundai-ioniq-5-72.6', 'kia-carens-clavis-ev-51.4', 'kia-ev6-84', 'kia-ev6-77.4', 'kia-syros-ev-51.4', 'maruti-suzuki-e-vitara-61', 'toyota-urban-cruiser-ebella-61', 'citroen-ec3-29.2', 'bmw-i5-lwb-81.6', 'bmw-i7-101.7', 'bmw-ix-76.6', 'bmw-ix-111.5', 'bmw-ix1-lwb-66.4', 'byd-sealion-7-82.56', 'mercedes-benz-cla-85', 'mercedes-benz-eqs-suv-122', 'tesla-model-y-64', 'tesla-model-y-78.1', 'vinfast-vf7-70.8', 'bmw-ix1-66.4']"
 }

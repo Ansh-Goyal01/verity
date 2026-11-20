@@ -7478,7 +7478,7 @@
      }
     ],
     "refusal_reason": null,
-    "compute_ms": 7796,
+    "compute_ms": 6683,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -7511,6 +7511,20 @@
       "n": 14,
       "note": "0 real, 14 simulated"
      }
+    },
+    "vehicle": {
+     "id": "V07",
+     "name": "Vehicle 7",
+     "battery_kwh": 45.0,
+     "trips_calibrated": 6,
+     "calibration_basis": "simulated trips",
+     "source_count": 0,
+     "is_simulated": true
+    },
+    "calibration": {
+     "trips": 6,
+     "basis": "simulated trips",
+     "label": "Calibrated on 6 simulated trips"
     },
     "is_simulated": true
    },
@@ -14874,7 +14888,7 @@
      }
     ],
     "refusal_reason": null,
-    "compute_ms": 7286,
+    "compute_ms": 8710,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -14907,6 +14921,20 @@
       "n": 14,
       "note": "0 real, 14 simulated"
      }
+    },
+    "vehicle": {
+     "id": "V12",
+     "name": "Vehicle 12",
+     "battery_kwh": 45.0,
+     "trips_calibrated": 8,
+     "calibration_basis": "simulated trips",
+     "source_count": 0,
+     "is_simulated": true
+    },
+    "calibration": {
+     "trips": 8,
+     "basis": "simulated trips",
+     "label": "Calibrated on 8 simulated trips"
     },
     "is_simulated": true
    },
@@ -22308,7 +22336,7 @@
      }
     ],
     "refusal_reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
-    "compute_ms": 6767,
+    "compute_ms": 8008,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -22341,6 +22369,20 @@
       "n": 14,
       "note": "0 real, 14 simulated"
      }
+    },
+    "vehicle": {
+     "id": "V19",
+     "name": "Vehicle 19",
+     "battery_kwh": 45.0,
+     "trips_calibrated": 4,
+     "calibration_basis": "simulated trips",
+     "source_count": 0,
+     "is_simulated": true
+    },
+    "calibration": {
+     "trips": 4,
+     "basis": "simulated trips",
+     "label": "Calibrated on 4 simulated trips"
     },
     "is_simulated": true
    }
@@ -25823,7 +25865,7 @@
    ],
    "levers": [],
    "earning_rs_per_hour": 60.0,
-   "compute_ms": 1474,
+   "compute_ms": 1346,
    "n_runs": 1500,
    "speech": {
     "en-IN": "Take the ride. The chance of completing it and reaching a working charger is 95 percent or more. After the drop, charge at Radisson Blu Plaza Delhi Airport: about 79 minutes, roughly 80 rupees at an example earning rate.",

@@ -38,12 +38,11 @@ from .dispatch import (
     _evidence,
     _stale,
     drive_cum_minutes,
+    vehicle_mass_kg,
 )
 from .forecast import ForecastConfig, PlannedRoute, confidence_display, round_prob, simulate_runs
-from .physics import total_mass_kg
 from .sites import WorksSampler, p_all_fail
 from .trips import haversine_m
-from .vehicles import get_prior
 
 Array = np.ndarray
 
@@ -119,8 +118,7 @@ def build_ctx(inp: RideInput, rng: np.random.Generator, cfg: ForecastConfig) -> 
     longest_pair = max((pair_km(a.node, b.node) for a in opts for b in opts), default=0.0)
     tail = max((o.leg_km for o in opts), default=0.0) + MAX_BACKUPS * longest_pair + TAIL_MARGIN_KM
     route = composite_route(inp.ride, tail)
-    prior = get_prior(inp.vehicle.class_key)
-    mass = total_mass_kg(prior.base.curb_mass_kg, inp.vehicle.passengers, inp.vehicle.cargo_kg)
+    mass = vehicle_mass_kg(inp.vehicle)  # the vehicle's own kerb mass when it has one (shared with dispatch)
     runs = simulate_runs(inp.vehicle.post, route, mass_kg=mass, ac_on=inp.vehicle.ac_on, rng=rng, cfg=cfg)
     usable = float(inp.vehicle.post.nominal_kwh * inp.vehicle.post.summary(n=1000)["usable_frac"][0])
     return Ctx(runs, route, inp.vehicle, float(inp.start_soc), float(inp.target), usable, drive_cum_minutes(route))

@@ -28,7 +28,7 @@ def weather_hour_matched(snap: dict, departure: datetime) -> bool:
 
 
 def build_data_sources(snap: dict, departure: datetime, *, vehicle_simulated: bool, vehicle_source: str,
-                       n_real_reports: int, n_simulated_reports: int) -> dict:
+                       n_real_reports: int, n_simulated_reports: int, vehicle_note: str | None = None) -> dict:
     """One entry per input the plan used. ``n_*_reports`` count reports on the chargers near this route."""
     geo_sim = bool(snap.get("is_simulated"))
     matched = weather_hour_matched(snap, departure)
@@ -38,7 +38,7 @@ def build_data_sources(snap: dict, departure: datetime, *, vehicle_simulated: bo
         "route": _entry(geo_sim, ROUTER_LABEL.get(snap.get("source", ""), str(snap.get("source", "unknown")))),
         "elevation": _entry(geo_sim, str(snap.get("elevation_source", "unknown"))),
         "weather": _entry(geo_sim, "Open-Meteo forecast", note=weather_note),
-        "vehicle": _entry(vehicle_simulated, vehicle_source),
+        "vehicle": _entry(vehicle_simulated, vehicle_source, note=vehicle_note),
         "charger_reports": _entry(n_simulated_reports > 0, "Driver and source reports in the trust graph",
                                   n=n_reports,
                                   note=f"{n_real_reports} real, {n_simulated_reports} simulated" if n_reports else
