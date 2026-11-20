@@ -99,6 +99,9 @@ class ForecastConfig:
     sigma_capacity: float = 0.02  # day-to-day usable-capacity error beyond the calibration posterior
     sigma_traffic: float = 0.12
     sigma_segment: float = 0.04  # the small independent per-segment noise
+    # WP5: the split-conformal inflation of the battery outcomes around their median (1 = the model's own spread).
+    # Set from data/processed/conformal.json for real cars only; never below 1 (conformal.applied_scale).
+    band_scale: float = 1.0
 
 
 @dataclass(frozen=True, eq=False)
@@ -190,6 +193,11 @@ def simulate_runs(
     soc_terms = {name: 100.0 * t * noise / usable_j for name, t in terms.items()}
     cum = np.cumsum(sum(soc_terms.values()), axis=1)
     energy_kwh = sum((t * noise).sum(axis=1) for t in terms.values()) / J_PER_KWH
+    if cfg.band_scale != 1.0:  # widen every run's battery use around the per-segment median (WP5 conformal)
+        med = np.median(cum, axis=0)
+        cum = med + cfg.band_scale * (cum - med)
+        e_med = np.median(energy_kwh)
+        energy_kwh = e_med + cfg.band_scale * (energy_kwh - e_med)
     return ForecastRuns(route.km_end, cum, {name: t.sum(axis=1) for name, t in soc_terms.items()}, shared,
                         energy_kwh)
 

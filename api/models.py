@@ -36,12 +36,22 @@ class GraphInfo(Resp):
     relationships: int = Field(ge=0)
 
 
+class HealthBands(Resp):
+    """WP5: the band calibration releases of real cars use (conformal k and the real n behind it)."""
+    method: Literal["split conformal", "model only"]
+    n: int | None
+    k: float | None
+    k_applied: float
+    calibrated_at: str | None
+
+
 class Health(Resp):
     status: Literal["ok"]
     version: str
     neo4j: Literal["connected", "in_memory"]
     is_simulated: bool
     graph: GraphInfo  # contract v3, additive (W0.7)
+    bands: HealthBands  # WP5
     sarvam_key_present: bool  # whether voice can work; never the key itself
 
 
@@ -245,6 +255,16 @@ class VehiclesResponse(Resp):
     vehicles: list[CatalogVehicle]
 
 
+class BandMethod(Resp):
+    """WP5: what a release's bands are built from. Coverage holds on average over trips like the calibration set."""
+    name: Literal["split conformal", "model only"]
+    n: int | None  # real calibration trips behind k
+    k: float | None  # the conformal quantile of the normalised residuals
+    k_applied: float = Field(ge=1.0)  # the widening used (never below 1: bands are never narrowed)
+    sources: list[str]
+    note: str
+
+
 class DispatchResponse(Resp):
     plan_id: str
     vehicle_id: str
@@ -269,6 +289,7 @@ class DispatchResponse(Resp):
     data_sources: DataSources  # WP1: where each input came from; is_simulated is derived from it
     vehicle: ReleaseVehicle  # WP2
     calibration: Calibration  # WP2
+    band_method: BandMethod  # WP5
     is_simulated: bool
 
 

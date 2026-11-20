@@ -49,6 +49,8 @@ def test_health_matches_the_contract(client: TestClient) -> None:
     body = r.json()
     graph = body.pop("graph")  # contract v3 (W0.7): which graph is in use and what it holds
     assert isinstance(body.pop("sarvam_key_present"), bool)  # whether voice can work; tests/test_api_hardening.py
+    bands = body.pop("bands")  # WP5: the conformal calibration real-car releases use
+    assert set(bands) == {"method", "n", "k", "k_applied", "calibrated_at"} and bands["k_applied"] >= 1.0
     assert r.status_code == 200 and body == {"status": "ok", "version": "0.1.0", "neo4j": "in_memory", "is_simulated": True}
     assert set(graph) == {"backend", "nodes", "relationships"} and graph["backend"] == "memory"
 

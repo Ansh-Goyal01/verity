@@ -150,7 +150,7 @@ LEG is stored per battery band, never as one fixed probability.
   only when Neo4j is the graph in use; `VERITY_GRAPH=memory` forces in-memory)
 - Everything from a clean state: `uv run python scripts/run_all.py` (add `--fast` for a plumbing check)
 - Experiments: `uv run python experiments/e1_learning_curve.py` ... `e5_trust_recovery.py` -> `results/`;
-  real Indian reports: `uv run python experiments/e1_india_real.py`; real charger evidence:
+  real Indian reports: `uv run python experiments/e1_india_real.py`, honest bands (WP5, writes `data/processed/conformal.json`) `experiments/e7_honest_bands.py`; real charger evidence:
   `uv run python experiments/e3_real_evidence.py`; app reviews: `uv run python experiments/voc_app_reviews.py`;
   Sarvam voice check (5 paid calls): `uv run python scripts/voice_check.py`
 - REAL-data track in one command (validate corpus, F3-F6, F9; summary in results/real_data_summary.json):

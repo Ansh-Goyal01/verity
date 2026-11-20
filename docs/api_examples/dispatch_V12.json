@@ -7391,7 +7391,7 @@
  ],
  "refusal_reason": null,
  "verify_chargers": [],
- "compute_ms": 3121,
+ "compute_ms": 4118,
  "n_runs": 1500,
  "data_sources": {
   "route": {
@@ -7438,6 +7438,14 @@
   "trips": 8,
   "basis": "simulated trips",
   "label": "Calibrated on 8 simulated trips"
+ },
+ "band_method": {
+  "name": "model only",
+  "n": null,
+  "k": null,
+  "k_applied": 1.0,
+  "sources": [],
+  "note": "Simulated demo vehicle: its bands come from the simulator and are not calibrated on real trips."
  },
  "is_simulated": true
 }

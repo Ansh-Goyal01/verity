@@ -1,0 +1,1478 @@
+{
+ "schema": "verity.conformal.v1",
+ "is_simulated": false,
+ "method": "split conformal",
+ "level": 0.9,
+ "created_at": "2026-11-20T20:45:32+00:00",
+ "score": "|observed - median| / half-width of the model's own central 90 % band (out-of-sample prediction)",
+ "n": 71,
+ "k": 0.9505269265893495,
+ "k_applied": 1.0,
+ "k_iqr": 1.1804275648310336,
+ "sources": [
+  "data/corpus/trips_india.csv: verified TRAINING-split rows (71 trips, 40 source pages)"
+ ],
+ "excluded": [
+  "India held-out split (data/splits/india_trips_split.json)",
+  "BMW i3 trips (training and held-out)",
+  "VED (dropped, docs/DECISIONS.md WP5)"
+ ],
+ "by_record_type": {
+  "consumption": 57,
+  "range_test": 11,
+  "soc_trip": 3
+ },
+ "guarantee_note": "Conformal coverage holds on average over trips like the calibration set (public, self-reported Indian trips); it is not a guarantee for any single trip.",
+ "n_runs": 2000,
+ "seed": 20261121,
+ "rows": [
+  {
+   "record_id": "T0007",
+   "group": "autocarindia.com/auto-features/tata-curvv-ev-real-world-range-tested-explained-434081",
+   "record_type": "consumption",
+   "observed": 148.1,
+   "median": 139.4408,
+   "h90": 89.7543,
+   "score": 0.096477,
+   "score_iqr": 0.171235
+  },
+  {
+   "record_id": "T0008",
+   "group": "autocarindia.com/auto-features/tata-curvv-ev-real-world-range-tested-explained-434081",
+   "record_type": "consumption",
+   "observed": 153.4,
+   "median": 164.1815,
+   "h90": 105.7597,
+   "score": 0.101943,
+   "score_iqr": 0.165536
+  },
+  {
+   "record_id": "T0009",
+   "group": "autocarindia.com/auto-features/mahindra-xev-9e-real-world-range-tested-explained-436045",
+   "record_type": "consumption",
+   "observed": 185.9,
+   "median": 159.4757,
+   "h90": 50.9709,
+   "score": 0.51842,
+   "score_iqr": 0.646549
+  },
+  {
+   "record_id": "T0010",
+   "group": "autocarindia.com/auto-features/mahindra-xev-9e-real-world-range-tested-explained-436045",
+   "record_type": "consumption",
+   "observed": 161.8,
+   "median": 171.0545,
+   "h90": 62.4294,
+   "score": 0.148239,
+   "score_iqr": 0.179472
+  },
+  {
+   "record_id": "T0011",
+   "group": "autocarindia.com/car-news/mg-zs-ev-real-world-range-tested-explained-424521",
+   "record_type": "consumption",
+   "observed": 149.3,
+   "median": 116.6249,
+   "h90": 35.7621,
+   "score": 0.913677,
+   "score_iqr": 1.12754
+  },
+  {
+   "record_id": "T0013",
+   "group": "autocarindia.com/auto-features/tata-tiago-ev-vs-citroen-ec3-real-world-range-comparison-431733",
+   "record_type": "consumption",
+   "observed": 128.7,
+   "median": 85.1152,
+   "h90": 31.2454,
+   "score": 1.394919,
+   "score_iqr": 1.699439
+  },
+  {
+   "record_id": "T0014",
+   "group": "carwale.com/news/tata-nexon-ev-45-real-world-driving-range-tested",
+   "record_type": "range_test",
+   "observed": 329.7,
+   "median": 343.3666,
+   "h90": 115.183,
+   "score": 0.118652,
+   "score_iqr": 0.142859
+  },
+  {
+   "record_id": "T0015",
+   "group": "zigwheels.com/news-features/ev-news/heres-a-look-at-all-the-tata-evs-and-their-real-world-range/54737",
+   "record_type": "range_test",
+   "observed": 381.3,
+   "median": 395.5936,
+   "h90": 136.0406,
+   "score": 0.105069,
+   "score_iqr": 0.106937
+  },
+  {
+   "record_id": "T0020",
+   "group": "autocarindia.com/car-reviews/mg-comet-review-road-test-428752/range-and-charging",
+   "record_type": "consumption",
+   "observed": 89.5,
+   "median": 86.3314,
+   "h90": 29.4572,
+   "score": 0.107567,
+   "score_iqr": 0.134602
+  },
+  {
+   "record_id": "T0021",
+   "group": "carwale.com/news/mg-comet-claims-a-230km-driving-range-what-do-you-think-we-got",
+   "record_type": "range_test",
+   "observed": 191.0,
+   "median": 171.1465,
+   "h90": 51.2349,
+   "score": 0.387499,
+   "score_iqr": 0.47875
+  },
+  {
+   "record_id": "T0022",
+   "group": "cardekho.com/india-car-news/this-is-how-far-the-mg-comet-ev-can-go-in-a-single-charge-31157.htm",
+   "record_type": "range_test",
+   "observed": 182.0,
+   "median": 145.0924,
+   "h90": 51.5374,
+   "score": 0.716133,
+   "score_iqr": 0.874917
+  },
+  {
+   "record_id": "T0023",
+   "group": "carwale.com/news/mg-zs-ev-claimed-range-vs-carwale-tested-range",
+   "record_type": "range_test",
+   "observed": 340.0,
+   "median": 369.5939,
+   "h90": 124.3655,
+   "score": 0.237959,
+   "score_iqr": 0.283968
+  },
+  {
+   "record_id": "T0024",
+   "group": "91wheels.com/expert-review/does-the-tata-curvv-ev-cover-450km-in-one-charge",
+   "record_type": "soc_trip",
+   "observed": 70.0,
+   "median": 97.1986,
+   "h90": 43.7018,
+   "score": 0.622369,
+   "score_iqr": 0.922322
+  },
+  {
+   "record_id": "T0025",
+   "group": "91wheels.com/expert-review/tata-curvv-ev-55-kwh-range-test-empowered-a-top-model",
+   "record_type": "range_test",
+   "observed": 401.3,
+   "median": 374.3906,
+   "h90": 129.2071,
+   "score": 0.208265,
+   "score_iqr": 0.237135
+  },
+  {
+   "record_id": "T0026",
+   "group": "cars24.com/news/reviews/tata-curvv-ev-range-test-how-close-is-it-to-the-claimed-range",
+   "record_type": "soc_trip",
+   "observed": 39.0,
+   "median": 29.4707,
+   "h90": 18.1857,
+   "score": 0.523997,
+   "score_iqr": 0.864789
+  },
+  {
+   "record_id": "T0029",
+   "group": "autocarindia.com/advice-amp/mahindra-be-6-real-world-range-tested-explained-435815",
+   "record_type": "consumption",
+   "observed": 180.2,
+   "median": 160.0617,
+   "h90": 59.3765,
+   "score": 0.339163,
+   "score_iqr": 0.434219
+  },
+  {
+   "record_id": "T0030",
+   "group": "autocarindia.com/advice-amp/mahindra-be-6-real-world-range-tested-explained-435815",
+   "record_type": "consumption",
+   "observed": 172.1,
+   "median": 162.3037,
+   "h90": 58.4397,
+   "score": 0.16763,
+   "score_iqr": 0.194779
+  },
+  {
+   "record_id": "T0032",
+   "group": "carwale.com/news/tata-tiago-ev-claimed-range-vs-carwale-tested-range",
+   "record_type": "range_test",
+   "observed": 213.9,
+   "median": 243.398,
+   "h90": 76.1833,
+   "score": 0.387198,
+   "score_iqr": 0.451377
+  },
+  {
+   "record_id": "T0033",
+   "group": "cardekho.com/road-test/tata-nexon-ev-battery-draining-first-drive-review-654.htm",
+   "record_type": "soc_trip",
+   "observed": 87.0,
+   "median": 55.8882,
+   "h90": 17.5689,
+   "score": 1.770845,
+   "score_iqr": 2.193539
+  },
+  {
+   "record_id": "T0034",
+   "group": "autocarindia.com/auto-features/2026-tata-punch-ev-real-world-range-tested-explained-440983",
+   "record_type": "consumption",
+   "observed": 126.3,
+   "median": 117.9313,
+   "h90": 41.89,
+   "score": 0.199778,
+   "score_iqr": 0.242179
+  },
+  {
+   "record_id": "T0035",
+   "group": "autocarindia.com/auto-features/2026-tata-punch-ev-real-world-range-tested-explained-440983",
+   "record_type": "consumption",
+   "observed": 137.2,
+   "median": 144.3938,
+   "h90": 52.813,
+   "score": 0.136213,
+   "score_iqr": 0.16267
+  },
+  {
+   "record_id": "T0038",
+   "group": "autocarindia.com/auto-features/toyota-urban-cruiser-ebella-real-world-range-tested-explained-440994",
+   "record_type": "consumption",
+   "observed": 157.0,
+   "median": 153.5069,
+   "h90": 52.2411,
+   "score": 0.066865,
+   "score_iqr": 0.083847
+  },
+  {
+   "record_id": "T0039",
+   "group": "autocarindia.com/auto-features/toyota-urban-cruiser-ebella-real-world-range-tested-explained-440994",
+   "record_type": "consumption",
+   "observed": 147.1,
+   "median": 155.5267,
+   "h90": 61.9388,
+   "score": 0.136049,
+   "score_iqr": 0.173835
+  },
+  {
+   "record_id": "T0040",
+   "group": "autocarindia.com/auto-features/kia-carens-clavis-ev-real-world-range-tested-explained-439975",
+   "record_type": "consumption",
+   "observed": 134.2,
+   "median": 141.4766,
+   "h90": 49.7123,
+   "score": 0.146373,
+   "score_iqr": 0.177545
+  },
+  {
+   "record_id": "T0041",
+   "group": "autocarindia.com/auto-features/kia-carens-clavis-ev-real-world-range-tested-explained-439975",
+   "record_type": "consumption",
+   "observed": 149.0,
+   "median": 151.1019,
+   "h90": 63.3687,
+   "score": 0.033169,
+   "score_iqr": 0.041464
+  },
+  {
+   "record_id": "T0042",
+   "group": "autocarindia.com/auto-features/mahindra-xev-9s-real-world-range-tested-explained-440015",
+   "record_type": "consumption",
+   "observed": 165.3,
+   "median": 167.3987,
+   "h90": 62.2816,
+   "score": 0.033696,
+   "score_iqr": 0.042167
+  },
+  {
+   "record_id": "T0043",
+   "group": "autocarindia.com/auto-features/mahindra-xev-9s-real-world-range-tested-explained-440015",
+   "record_type": "consumption",
+   "observed": 165.6,
+   "median": 157.6537,
+   "h90": 68.7366,
+   "score": 0.115605,
+   "score_iqr": 0.141852
+  },
+  {
+   "record_id": "T0044",
+   "group": "autocarindia.com/auto-features/2026-hyundai-ioniq-5-real-world-range-tested-explained-440980",
+   "record_type": "consumption",
+   "observed": 160.8,
+   "median": 166.65,
+   "h90": 54.6455,
+   "score": 0.107053,
+   "score_iqr": 0.126316
+  },
+  {
+   "record_id": "T0045",
+   "group": "autocarindia.com/auto-features/2026-hyundai-ioniq-5-real-world-range-tested-explained-440980",
+   "record_type": "consumption",
+   "observed": 175.1,
+   "median": 160.7061,
+   "h90": 60.052,
+   "score": 0.23969,
+   "score_iqr": 0.278929
+  },
+  {
+   "record_id": "T0046",
+   "group": "autocarindia.com/auto-features/mg-windsor-ev-range-in-real-world-tests-city-and-highway-range-tested-434052",
+   "record_type": "consumption",
+   "observed": 116.3,
+   "median": 136.8584,
+   "h90": 50.198,
+   "score": 0.409546,
+   "score_iqr": 0.508368
+  },
+  {
+   "record_id": "T0047",
+   "group": "autocarindia.com/auto-features/mg-windsor-ev-range-in-real-world-tests-city-and-highway-range-tested-434052",
+   "record_type": "consumption",
+   "observed": 131.6,
+   "median": 140.4866,
+   "h90": 64.0514,
+   "score": 0.138741,
+   "score_iqr": 0.156682
+  },
+  {
+   "record_id": "T0048",
+   "group": "autocarindia.com/auto-features/hyundai-creta-electric-real-world-range-tested-explained-436645",
+   "record_type": "consumption",
+   "observed": 105.8,
+   "median": 139.7278,
+   "h90": 53.7622,
+   "score": 0.631071,
+   "score_iqr": 0.765115
+  },
+  {
+   "record_id": "T0049",
+   "group": "autocarindia.com/auto-features/hyundai-creta-electric-real-world-range-tested-explained-436645",
+   "record_type": "consumption",
+   "observed": 135.9,
+   "median": 142.6122,
+   "h90": 59.341,
+   "score": 0.113112,
+   "score_iqr": 0.142742
+  },
+  {
+   "record_id": "T0056",
+   "group": "m.autocarindia.com/advice/real-world-range-tested-evs-under-rs-25-lakh-434105",
+   "record_type": "consumption",
+   "observed": 128.2,
+   "median": 99.4515,
+   "h90": 30.2448,
+   "score": 0.950527,
+   "score_iqr": 1.180428
+  },
+  {
+   "record_id": "T0062",
+   "group": "autocarindia.com/auto-features/tesla-model-y-rwd-real-world-range-tested-explained-440915",
+   "record_type": "consumption",
+   "observed": 171.2,
+   "median": 157.6311,
+   "h90": 52.4273,
+   "score": 0.258813,
+   "score_iqr": 0.309501
+  },
+  {
+   "record_id": "T0063",
+   "group": "autocarindia.com/auto-features/tesla-model-y-rwd-real-world-range-tested-explained-440915",
+   "record_type": "consumption",
+   "observed": 153.4,
+   "median": 158.503,
+   "h90": 63.43,
+   "score": 0.08045,
+   "score_iqr": 0.090186
+  },
+  {
+   "record_id": "T0066",
+   "group": "autocarindia.com/car-news-amp/2021-tata-tigor-ev-real-world-range-tested-explained-422337",
+   "record_type": "consumption",
+   "observed": 130.0,
+   "median": 105.5858,
+   "h90": 35.9719,
+   "score": 0.678702,
+   "score_iqr": 0.820925
+  },
+  {
+   "record_id": "T0067",
+   "group": "autocarindia.com/car-news-amp/2021-tata-tigor-ev-real-world-range-tested-explained-422337",
+   "record_type": "consumption",
+   "observed": 143.3,
+   "median": 130.6437,
+   "h90": 46.701,
+   "score": 0.271006,
+   "score_iqr": 0.346724
+  },
+  {
+   "record_id": "T0071",
+   "group": "indiacsr.in/mg-windsor-pro-drive-review-real-world-range-test",
+   "record_type": "range_test",
+   "observed": 412.5,
+   "median": 365.7652,
+   "h90": 106.543,
+   "score": 0.438647,
+   "score_iqr": 0.53283
+  },
+  {
+   "record_id": "T0072",
+   "group": "autocarindia.com/auto-features/kia-syros-ev-real-world-range-tested-explained-441317",
+   "record_type": "consumption",
+   "observed": 105.0,
+   "median": 125.3138,
+   "h90": 44.6199,
+   "score": 0.455263,
+   "score_iqr": 0.575903
+  },
+  {
+   "record_id": "T0073",
+   "group": "autocarindia.com/auto-features/kia-syros-ev-real-world-range-tested-explained-441317",
+   "record_type": "consumption",
+   "observed": 162.9,
+   "median": 150.66,
+   "h90": 59.1968,
+   "score": 0.206768,
+   "score_iqr": 0.249011
+  },
+  {
+   "record_id": "T0074",
+   "group": "autocarindia.com/auto-features/mg-hector-tomahawk-ev-real-world-range-tested-explained-441165",
+   "record_type": "consumption",
+   "observed": 139.9,
+   "median": 154.5415,
+   "h90": 63.0558,
+   "score": 0.232199,
+   "score_iqr": 0.278133
+  },
+  {
+   "record_id": "T0075",
+   "group": "autocarindia.com/auto-features/mg-hector-tomahawk-ev-real-world-range-tested-explained-441165",
+   "record_type": "consumption",
+   "observed": 174.5,
+   "median": 149.2362,
+   "h90": 58.3492,
+   "score": 0.432976,
+   "score_iqr": 0.490009
+  },
+  {
+   "record_id": "T0076",
+   "group": "autocarindia.com/car-reviews-amp/mg-hector-tomahawk-ev-whats-in-a-name-440562",
+   "record_type": "consumption",
+   "observed": 206.2,
+   "median": 113.9408,
+   "h90": 35.3134,
+   "score": 2.612584,
+   "score_iqr": 3.172657
+  },
+  {
+   "record_id": "T0077",
+   "group": "autocarindia.com/auto-features/vinfast-vf7-real-world-range-tested-explained-440446",
+   "record_type": "consumption",
+   "observed": 196.1,
+   "median": 136.5588,
+   "h90": 51.3834,
+   "score": 1.158764,
+   "score_iqr": 1.396989
+  },
+  {
+   "record_id": "T0078",
+   "group": "autocarindia.com/auto-features/vinfast-vf7-real-world-range-tested-explained-440446",
+   "record_type": "consumption",
+   "observed": 168.9,
+   "median": 161.6746,
+   "h90": 58.3252,
+   "score": 0.123882,
+   "score_iqr": 0.148112
+  },
+  {
+   "record_id": "T0079",
+   "group": "autocarindia.com/auto-features/tesla-model-y-long-range-rwd-real-world-range-tested-explained-440435",
+   "record_type": "consumption",
+   "observed": 197.6,
+   "median": 150.5025,
+   "h90": 46.4612,
+   "score": 1.013694,
+   "score_iqr": 1.238118
+  },
+  {
+   "record_id": "T0080",
+   "group": "autocarindia.com/auto-features/tesla-model-y-long-range-rwd-real-world-range-tested-explained-440435",
+   "record_type": "consumption",
+   "observed": 168.1,
+   "median": 163.3363,
+   "h90": 61.0668,
+   "score": 0.078008,
+   "score_iqr": 0.089689
+  },
+  {
+   "record_id": "T0085",
+   "group": "autocarindia.com/advice-amp/bmw-ix-real-world-range-tested-explained-431830",
+   "record_type": "consumption",
+   "observed": 208.3,
+   "median": 169.0906,
+   "h90": 53.5408,
+   "score": 0.732327,
+   "score_iqr": 0.927368
+  },
+  {
+   "record_id": "T0088",
+   "group": "carwale.com/news/bmw-i7-edrive50-real-world-range-test-results",
+   "record_type": "range_test",
+   "observed": 466.6,
+   "median": 638.1837,
+   "h90": 222.051,
+   "score": 0.772722,
+   "score_iqr": 0.888302
+  },
+  {
+   "record_id": "T0089",
+   "group": "autocarindia.com/advice-amp/kia-ev6-facelift-real-world-range-tested-explained-435228",
+   "record_type": "consumption",
+   "observed": 193.1,
+   "median": 171.0053,
+   "h90": 59.7001,
+   "score": 0.370095,
+   "score_iqr": 0.442238
+  },
+  {
+   "record_id": "T0090",
+   "group": "autocarindia.com/advice-amp/kia-ev6-facelift-real-world-range-tested-explained-435228",
+   "record_type": "consumption",
+   "observed": 149.9,
+   "median": 161.7847,
+   "h90": 62.2874,
+   "score": 0.190804,
+   "score_iqr": 0.222233
+  },
+  {
+   "record_id": "T0091",
+   "group": "zigwheels.com/news-features/ev-news/kia-ev6-what-we-learnt-from-driving-it-to-0/51604",
+   "record_type": "range_test",
+   "observed": 502.2,
+   "median": 509.3058,
+   "h90": 177.3402,
+   "score": 0.040069,
+   "score_iqr": 0.048737
+  },
+  {
+   "record_id": "T0092",
+   "group": "carwale.com/news/hyundai-ioniq-5-claimed-range-vs-carwale-tested-range",
+   "record_type": "consumption",
+   "observed": 163.9,
+   "median": 140.9414,
+   "h90": 43.1293,
+   "score": 0.532319,
+   "score_iqr": 0.642931
+  },
+  {
+   "record_id": "T0095",
+   "group": "carwale.com/news/citroen-ec3-real-world-range-tested",
+   "record_type": "range_test",
+   "observed": 218.8,
+   "median": 243.8637,
+   "h90": 71.5771,
+   "score": 0.350164,
+   "score_iqr": 0.427429
+  },
+  {
+   "record_id": "T0096",
+   "group": "autocarindia.com/car-news/tata-nexon-ev-real-world-range-tested-explained-420958",
+   "record_type": "consumption",
+   "observed": 139.9,
+   "median": 120.3435,
+   "h90": 40.3724,
+   "score": 0.484403,
+   "score_iqr": 0.574103
+  },
+  {
+   "record_id": "T0097",
+   "group": "autocarindia.com/car-news/tata-nexon-ev-real-world-range-tested-explained-420958",
+   "record_type": "consumption",
+   "observed": 150.2,
+   "median": 130.6409,
+   "h90": 49.2557,
+   "score": 0.397093,
+   "score_iqr": 0.477271
+  },
+  {
+   "record_id": "T0098",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 109.3,
+   "median": 115.8087,
+   "h90": 36.8833,
+   "score": 0.176468,
+   "score_iqr": 0.222778
+  },
+  {
+   "record_id": "T0099",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 141.2,
+   "median": 141.2004,
+   "h90": 67.6948,
+   "score": 6e-06,
+   "score_iqr": 6e-06
+  },
+  {
+   "record_id": "T0100",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 114.8,
+   "median": 119.6933,
+   "h90": 43.1961,
+   "score": 0.113281,
+   "score_iqr": 0.146619
+  },
+  {
+   "record_id": "T0101",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 166.7,
+   "median": 156.5456,
+   "h90": 58.6288,
+   "score": 0.173199,
+   "score_iqr": 0.212911
+  },
+  {
+   "record_id": "T0104",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 151.5,
+   "median": 127.5923,
+   "h90": 39.5827,
+   "score": 0.603994,
+   "score_iqr": 0.734351
+  },
+  {
+   "record_id": "T0105",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 180.5,
+   "median": 144.9644,
+   "h90": 53.3577,
+   "score": 0.665988,
+   "score_iqr": 0.84174
+  },
+  {
+   "record_id": "T0108",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 166.7,
+   "median": 147.1329,
+   "h90": 49.3522,
+   "score": 0.396479,
+   "score_iqr": 0.478252
+  },
+  {
+   "record_id": "T0109",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 173.6,
+   "median": 160.105,
+   "h90": 62.4419,
+   "score": 0.216121,
+   "score_iqr": 0.253197
+  },
+  {
+   "record_id": "T0110",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 185.9,
+   "median": 154.0659,
+   "h90": 60.5662,
+   "score": 0.525609,
+   "score_iqr": 0.63599
+  },
+  {
+   "record_id": "T0111",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 195.7,
+   "median": 119.8379,
+   "h90": 40.3745,
+   "score": 1.878961,
+   "score_iqr": 2.447314
+  },
+  {
+   "record_id": "T0112",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 196.9,
+   "median": 149.9611,
+   "h90": 58.5423,
+   "score": 0.801794,
+   "score_iqr": 1.001362
+  },
+  {
+   "record_id": "T0113",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 186.6,
+   "median": 139.3593,
+   "h90": 63.5208,
+   "score": 0.743705,
+   "score_iqr": 0.93493
+  },
+  {
+   "record_id": "T0114",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 216.9,
+   "median": 183.4065,
+   "h90": 66.8102,
+   "score": 0.501323,
+   "score_iqr": 0.637531
+  },
+  {
+   "record_id": "T0115",
+   "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+   "record_type": "consumption",
+   "observed": 209.2,
+   "median": 180.9578,
+   "h90": 65.9691,
+   "score": 0.428112,
+   "score_iqr": 0.519472
+  }
+ ],
+ "correction": {
+  "model": "HistGradientBoostingRegressor",
+  "params": {
+   "max_iter": 60,
+   "learning_rate": 0.05,
+   "max_depth": 2,
+   "min_samples_leaf": 8,
+   "l2_regularization": 1.0,
+   "random_state": 0
+  },
+  "features": [
+   "distance_km",
+   "speed_band",
+   "temp_c",
+   "ac",
+   "passengers",
+   "battery_kwh",
+   "record_type"
+  ],
+  "target": "energy log-ratio log(observed / predicted median); inverse for range tests",
+  "cross_fit_folds": 5,
+  "n": 71,
+  "k": 0.8704524650128183,
+  "k_applied": 1.0,
+  "rows": [
+   {
+    "record_id": "T0009",
+    "group": "autocarindia.com/auto-features/mahindra-xev-9e-real-world-range-tested-explained-436045",
+    "record_type": "consumption",
+    "observed": 185.9,
+    "median": 172.5977,
+    "h90": 55.1649,
+    "score": 0.241138,
+    "score_iqr": 0.300736
+   },
+   {
+    "record_id": "T0010",
+    "group": "autocarindia.com/auto-features/mahindra-xev-9e-real-world-range-tested-explained-436045",
+    "record_type": "consumption",
+    "observed": 161.8,
+    "median": 185.1292,
+    "h90": 67.5662,
+    "score": 0.345279,
+    "score_iqr": 0.418026
+   },
+   {
+    "record_id": "T0013",
+    "group": "autocarindia.com/auto-features/tata-tiago-ev-vs-citroen-ec3-real-world-range-comparison-431733",
+    "record_type": "consumption",
+    "observed": 128.7,
+    "median": 96.9014,
+    "h90": 35.5721,
+    "score": 0.89392,
+    "score_iqr": 1.089068
+   },
+   {
+    "record_id": "T0022",
+    "group": "cardekho.com/india-car-news/this-is-how-far-the-mg-comet-ev-can-go-in-a-single-charge-31157.htm",
+    "record_type": "range_test",
+    "observed": 182.0,
+    "median": 131.8682,
+    "h90": 46.8402,
+    "score": 1.070273,
+    "score_iqr": 1.307579
+   },
+   {
+    "record_id": "T0024",
+    "group": "91wheels.com/expert-review/does-the-tata-curvv-ev-cover-450km-in-one-charge",
+    "record_type": "soc_trip",
+    "observed": 70.0,
+    "median": 104.285,
+    "h90": 46.8879,
+    "score": 0.731212,
+    "score_iqr": 1.083622
+   },
+   {
+    "record_id": "T0044",
+    "group": "autocarindia.com/auto-features/2026-hyundai-ioniq-5-real-world-range-tested-explained-440980",
+    "record_type": "consumption",
+    "observed": 160.8,
+    "median": 180.3623,
+    "h90": 59.1419,
+    "score": 0.330768,
+    "score_iqr": 0.390287
+   },
+   {
+    "record_id": "T0045",
+    "group": "autocarindia.com/auto-features/2026-hyundai-ioniq-5-real-world-range-tested-explained-440980",
+    "record_type": "consumption",
+    "observed": 175.1,
+    "median": 173.9293,
+    "h90": 64.9932,
+    "score": 0.018012,
+    "score_iqr": 0.020961
+   },
+   {
+    "record_id": "T0066",
+    "group": "autocarindia.com/car-news-amp/2021-tata-tigor-ev-real-world-range-tested-explained-422337",
+    "record_type": "consumption",
+    "observed": 130.0,
+    "median": 109.9035,
+    "h90": 37.4429,
+    "score": 0.536725,
+    "score_iqr": 0.649197
+   },
+   {
+    "record_id": "T0067",
+    "group": "autocarindia.com/car-news-amp/2021-tata-tigor-ev-real-world-range-tested-explained-422337",
+    "record_type": "consumption",
+    "observed": 143.3,
+    "median": 141.3121,
+    "h90": 50.5146,
+    "score": 0.039354,
+    "score_iqr": 0.050349
+   },
+   {
+    "record_id": "T0071",
+    "group": "indiacsr.in/mg-windsor-pro-drive-review-real-world-range-test",
+    "record_type": "range_test",
+    "observed": 412.5,
+    "median": 366.2032,
+    "h90": 106.6706,
+    "score": 0.434017,
+    "score_iqr": 0.527206
+   },
+   {
+    "record_id": "T0092",
+    "group": "carwale.com/news/hyundai-ioniq-5-claimed-range-vs-carwale-tested-range",
+    "record_type": "consumption",
+    "observed": 163.9,
+    "median": 159.9438,
+    "h90": 48.9442,
+    "score": 0.080832,
+    "score_iqr": 0.097628
+   },
+   {
+    "record_id": "T0011",
+    "group": "autocarindia.com/car-news/mg-zs-ev-real-world-range-tested-explained-424521",
+    "record_type": "consumption",
+    "observed": 149.3,
+    "median": 117.8451,
+    "h90": 36.1363,
+    "score": 0.870452,
+    "score_iqr": 1.074197
+   },
+   {
+    "record_id": "T0021",
+    "group": "carwale.com/news/mg-comet-claims-a-230km-driving-range-what-do-you-think-we-got",
+    "record_type": "range_test",
+    "observed": 191.0,
+    "median": 158.3784,
+    "h90": 47.4126,
+    "score": 0.688036,
+    "score_iqr": 0.850059
+   },
+   {
+    "record_id": "T0025",
+    "group": "91wheels.com/expert-review/tata-curvv-ev-55-kwh-range-test-empowered-a-top-model",
+    "record_type": "range_test",
+    "observed": 401.3,
+    "median": 370.4489,
+    "h90": 127.8468,
+    "score": 0.241313,
+    "score_iqr": 0.274764
+   },
+   {
+    "record_id": "T0033",
+    "group": "cardekho.com/road-test/tata-nexon-ev-battery-draining-first-drive-review-654.htm",
+    "record_type": "soc_trip",
+    "observed": 87.0,
+    "median": 65.6358,
+    "h90": 20.6331,
+    "score": 1.035434,
+    "score_iqr": 1.282589
+   },
+   {
+    "record_id": "T0034",
+    "group": "autocarindia.com/auto-features/2026-tata-punch-ev-real-world-range-tested-explained-440983",
+    "record_type": "consumption",
+    "observed": 126.3,
+    "median": 112.2548,
+    "h90": 39.8737,
+    "score": 0.352244,
+    "score_iqr": 0.427005
+   },
+   {
+    "record_id": "T0035",
+    "group": "autocarindia.com/auto-features/2026-tata-punch-ev-real-world-range-tested-explained-440983",
+    "record_type": "consumption",
+    "observed": 137.2,
+    "median": 137.4435,
+    "h90": 50.2709,
+    "score": 0.004844,
+    "score_iqr": 0.005784
+   },
+   {
+    "record_id": "T0042",
+    "group": "autocarindia.com/auto-features/mahindra-xev-9s-real-world-range-tested-explained-440015",
+    "record_type": "consumption",
+    "observed": 165.3,
+    "median": 181.8893,
+    "h90": 67.6729,
+    "score": 0.245139,
+    "score_iqr": 0.306764
+   },
+   {
+    "record_id": "T0043",
+    "group": "autocarindia.com/auto-features/mahindra-xev-9s-real-world-range-tested-explained-440015",
+    "record_type": "consumption",
+    "observed": 165.6,
+    "median": 171.3007,
+    "h90": 74.6867,
+    "score": 0.076329,
+    "score_iqr": 0.093658
+   },
+   {
+    "record_id": "T0056",
+    "group": "m.autocarindia.com/advice/real-world-range-tested-evs-under-rs-25-lakh-434105",
+    "record_type": "consumption",
+    "observed": 128.2,
+    "median": 109.9563,
+    "h90": 33.4395,
+    "score": 0.545575,
+    "score_iqr": 0.677532
+   },
+   {
+    "record_id": "T0079",
+    "group": "autocarindia.com/auto-features/tesla-model-y-long-range-rwd-real-world-range-tested-explained-440435",
+    "record_type": "consumption",
+    "observed": 197.6,
+    "median": 163.5306,
+    "h90": 50.4831,
+    "score": 0.674868,
+    "score_iqr": 0.824279
+   },
+   {
+    "record_id": "T0080",
+    "group": "autocarindia.com/auto-features/tesla-model-y-long-range-rwd-real-world-range-tested-explained-440435",
+    "record_type": "consumption",
+    "observed": 168.1,
+    "median": 177.4752,
+    "h90": 66.3529,
+    "score": 0.141294,
+    "score_iqr": 0.16245
+   },
+   {
+    "record_id": "T0023",
+    "group": "carwale.com/news/mg-zs-ev-claimed-range-vs-carwale-tested-range",
+    "record_type": "range_test",
+    "observed": 340.0,
+    "median": 365.8416,
+    "h90": 123.1029,
+    "score": 0.209919,
+    "score_iqr": 0.250506
+   },
+   {
+    "record_id": "T0026",
+    "group": "cars24.com/news/reviews/tata-curvv-ev-range-test-how-close-is-it-to-the-claimed-range",
+    "record_type": "soc_trip",
+    "observed": 39.0,
+    "median": 28.8098,
+    "h90": 17.7779,
+    "score": 0.573194,
+    "score_iqr": 0.945983
+   },
+   {
+    "record_id": "T0048",
+    "group": "autocarindia.com/auto-features/hyundai-creta-electric-real-world-range-tested-explained-436645",
+    "record_type": "consumption",
+    "observed": 105.8,
+    "median": 140.4917,
+    "h90": 54.0561,
+    "score": 0.641772,
+    "score_iqr": 0.778088
+   },
+   {
+    "record_id": "T0049",
+    "group": "autocarindia.com/auto-features/hyundai-creta-electric-real-world-range-tested-explained-436645",
+    "record_type": "consumption",
+    "observed": 135.9,
+    "median": 138.1081,
+    "h90": 57.4668,
+    "score": 0.038424,
+    "score_iqr": 0.048489
+   },
+   {
+    "record_id": "T0062",
+    "group": "autocarindia.com/auto-features/tesla-model-y-rwd-real-world-range-tested-explained-440915",
+    "record_type": "consumption",
+    "observed": 171.2,
+    "median": 160.3726,
+    "h90": 53.3391,
+    "score": 0.202993,
+    "score_iqr": 0.242749
+   },
+   {
+    "record_id": "T0063",
+    "group": "autocarindia.com/auto-features/tesla-model-y-rwd-real-world-range-tested-explained-440915",
+    "record_type": "consumption",
+    "observed": 153.4,
+    "median": 155.3174,
+    "h90": 62.1552,
+    "score": 0.030848,
+    "score_iqr": 0.034581
+   },
+   {
+    "record_id": "T0074",
+    "group": "autocarindia.com/auto-features/mg-hector-tomahawk-ev-real-world-range-tested-explained-441165",
+    "record_type": "consumption",
+    "observed": 139.9,
+    "median": 179.5109,
+    "h90": 73.2438,
+    "score": 0.540809,
+    "score_iqr": 0.647791
+   },
+   {
+    "record_id": "T0075",
+    "group": "autocarindia.com/auto-features/mg-hector-tomahawk-ev-real-world-range-tested-explained-441165",
+    "record_type": "consumption",
+    "observed": 174.5,
+    "median": 166.2531,
+    "h90": 65.0025,
+    "score": 0.12687,
+    "score_iqr": 0.143582
+   },
+   {
+    "record_id": "T0085",
+    "group": "autocarindia.com/advice-amp/bmw-ix-real-world-range-tested-explained-431830",
+    "record_type": "consumption",
+    "observed": 208.3,
+    "median": 195.1061,
+    "h90": 61.7783,
+    "score": 0.213568,
+    "score_iqr": 0.270447
+   },
+   {
+    "record_id": "T0096",
+    "group": "autocarindia.com/car-news/tata-nexon-ev-real-world-range-tested-explained-420958",
+    "record_type": "consumption",
+    "observed": 139.9,
+    "median": 124.4887,
+    "h90": 41.763,
+    "score": 0.369019,
+    "score_iqr": 0.437352
+   },
+   {
+    "record_id": "T0097",
+    "group": "autocarindia.com/car-news/tata-nexon-ev-real-world-range-tested-explained-420958",
+    "record_type": "consumption",
+    "observed": 150.2,
+    "median": 130.161,
+    "h90": 49.0748,
+    "score": 0.408336,
+    "score_iqr": 0.490783
+   },
+   {
+    "record_id": "T0098",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 109.3,
+    "median": 116.4419,
+    "h90": 37.0849,
+    "score": 0.192581,
+    "score_iqr": 0.24312
+   },
+   {
+    "record_id": "T0099",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 141.2,
+    "median": 136.7409,
+    "h90": 65.5569,
+    "score": 0.068019,
+    "score_iqr": 0.06876
+   },
+   {
+    "record_id": "T0100",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 114.8,
+    "median": 120.3477,
+    "h90": 43.4323,
+    "score": 0.127732,
+    "score_iqr": 0.165323
+   },
+   {
+    "record_id": "T0101",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 166.7,
+    "median": 151.6014,
+    "h90": 56.7772,
+    "score": 0.265927,
+    "score_iqr": 0.3269
+   },
+   {
+    "record_id": "T0104",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 151.5,
+    "median": 129.8113,
+    "h90": 40.2711,
+    "score": 0.538568,
+    "score_iqr": 0.654804
+   },
+   {
+    "record_id": "T0105",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 180.5,
+    "median": 142.0509,
+    "h90": 52.2853,
+    "score": 0.735371,
+    "score_iqr": 0.929433
+   },
+   {
+    "record_id": "T0108",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 166.7,
+    "median": 170.9053,
+    "h90": 57.326,
+    "score": 0.073357,
+    "score_iqr": 0.088487
+   },
+   {
+    "record_id": "T0109",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 173.6,
+    "median": 178.3612,
+    "h90": 69.562,
+    "score": 0.068445,
+    "score_iqr": 0.080187
+   },
+   {
+    "record_id": "T0110",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 185.9,
+    "median": 170.8042,
+    "h90": 67.1464,
+    "score": 0.224819,
+    "score_iqr": 0.272033
+   },
+   {
+    "record_id": "T0111",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 195.7,
+    "median": 127.4196,
+    "h90": 42.9288,
+    "score": 1.590549,
+    "score_iqr": 2.071662
+   },
+   {
+    "record_id": "T0112",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 196.9,
+    "median": 166.2535,
+    "h90": 64.9026,
+    "score": 0.472192,
+    "score_iqr": 0.589722
+   },
+   {
+    "record_id": "T0113",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 186.6,
+    "median": 148.176,
+    "h90": 67.5395,
+    "score": 0.568911,
+    "score_iqr": 0.715192
+   },
+   {
+    "record_id": "T0114",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 216.9,
+    "median": 203.3325,
+    "h90": 74.0688,
+    "score": 0.183174,
+    "score_iqr": 0.232942
+   },
+   {
+    "record_id": "T0115",
+    "group": "v3cars.com/car-guide/all-v3-electric-cars-real-world-range-test-claimed-range",
+    "record_type": "consumption",
+    "observed": 209.2,
+    "median": 192.4064,
+    "h90": 70.1427,
+    "score": 0.239421,
+    "score_iqr": 0.290514
+   },
+   {
+    "record_id": "T0014",
+    "group": "carwale.com/news/tata-nexon-ev-45-real-world-driving-range-tested",
+    "record_type": "range_test",
+    "observed": 329.7,
+    "median": 338.4608,
+    "h90": 113.5373,
+    "score": 0.077162,
+    "score_iqr": 0.092905
+   },
+   {
+    "record_id": "T0015",
+    "group": "zigwheels.com/news-features/ev-news/heres-a-look-at-all-the-tata-evs-and-their-real-world-range/54737",
+    "record_type": "range_test",
+    "observed": 381.3,
+    "median": 418.6737,
+    "h90": 143.9776,
+    "score": 0.25958,
+    "score_iqr": 0.264196
+   },
+   {
+    "record_id": "T0038",
+    "group": "autocarindia.com/auto-features/toyota-urban-cruiser-ebella-real-world-range-tested-explained-440994",
+    "record_type": "consumption",
+    "observed": 157.0,
+    "median": 157.5589,
+    "h90": 53.6201,
+    "score": 0.010424,
+    "score_iqr": 0.013072
+   },
+   {
+    "record_id": "T0039",
+    "group": "autocarindia.com/auto-features/toyota-urban-cruiser-ebella-real-world-range-tested-explained-440994",
+    "record_type": "consumption",
+    "observed": 147.1,
+    "median": 158.9599,
+    "h90": 63.3061,
+    "score": 0.187343,
+    "score_iqr": 0.239375
+   },
+   {
+    "record_id": "T0040",
+    "group": "autocarindia.com/auto-features/kia-carens-clavis-ev-real-world-range-tested-explained-439975",
+    "record_type": "consumption",
+    "observed": 134.2,
+    "median": 140.9318,
+    "h90": 49.5209,
+    "score": 0.135939,
+    "score_iqr": 0.164889
+   },
+   {
+    "record_id": "T0041",
+    "group": "autocarindia.com/auto-features/kia-carens-clavis-ev-real-world-range-tested-explained-439975",
+    "record_type": "consumption",
+    "observed": 149.0,
+    "median": 149.8863,
+    "h90": 62.8589,
+    "score": 0.0141,
+    "score_iqr": 0.017627
+   },
+   {
+    "record_id": "T0046",
+    "group": "autocarindia.com/auto-features/mg-windsor-ev-range-in-real-world-tests-city-and-highway-range-tested-434052",
+    "record_type": "consumption",
+    "observed": 116.3,
+    "median": 146.3767,
+    "h90": 53.6892,
+    "score": 0.560201,
+    "score_iqr": 0.695375
+   },
+   {
+    "record_id": "T0047",
+    "group": "autocarindia.com/auto-features/mg-windsor-ev-range-in-real-world-tests-city-and-highway-range-tested-434052",
+    "record_type": "consumption",
+    "observed": 131.6,
+    "median": 149.6246,
+    "h90": 68.2177,
+    "score": 0.264222,
+    "score_iqr": 0.29839
+   },
+   {
+    "record_id": "T0076",
+    "group": "autocarindia.com/car-reviews-amp/mg-hector-tomahawk-ev-whats-in-a-name-440562",
+    "record_type": "consumption",
+    "observed": 206.2,
+    "median": 126.3164,
+    "h90": 39.1489,
+    "score": 2.040506,
+    "score_iqr": 2.47794
+   },
+   {
+    "record_id": "T0088",
+    "group": "carwale.com/news/bmw-i7-edrive50-real-world-range-test-results",
+    "record_type": "range_test",
+    "observed": 466.6,
+    "median": 557.1302,
+    "h90": 193.8491,
+    "score": 0.467014,
+    "score_iqr": 0.536867
+   },
+   {
+    "record_id": "T0089",
+    "group": "autocarindia.com/advice-amp/kia-ev6-facelift-real-world-range-tested-explained-435228",
+    "record_type": "consumption",
+    "observed": 193.1,
+    "median": 187.2952,
+    "h90": 65.3871,
+    "score": 0.088776,
+    "score_iqr": 0.106082
+   },
+   {
+    "record_id": "T0090",
+    "group": "autocarindia.com/advice-amp/kia-ev6-facelift-real-world-range-tested-explained-435228",
+    "record_type": "consumption",
+    "observed": 149.9,
+    "median": 174.0746,
+    "h90": 67.0191,
+    "score": 0.360712,
+    "score_iqr": 0.420129
+   },
+   {
+    "record_id": "T0007",
+    "group": "autocarindia.com/auto-features/tata-curvv-ev-real-world-range-tested-explained-434081",
+    "record_type": "consumption",
+    "observed": 148.1,
+    "median": 137.609,
+    "h90": 88.5752,
+    "score": 0.118442,
+    "score_iqr": 0.21022
+   },
+   {
+    "record_id": "T0008",
+    "group": "autocarindia.com/auto-features/tata-curvv-ev-real-world-range-tested-explained-434081",
+    "record_type": "consumption",
+    "observed": 153.4,
+    "median": 162.0247,
+    "h90": 104.3704,
+    "score": 0.082635,
+    "score_iqr": 0.134184
+   },
+   {
+    "record_id": "T0020",
+    "group": "autocarindia.com/car-reviews/mg-comet-review-road-test-428752/range-and-charging",
+    "record_type": "consumption",
+    "observed": 89.5,
+    "median": 107.9935,
+    "h90": 36.8485,
+    "score": 0.501879,
+    "score_iqr": 0.628017
+   },
+   {
+    "record_id": "T0029",
+    "group": "autocarindia.com/advice-amp/mahindra-be-6-real-world-range-tested-explained-435815",
+    "record_type": "consumption",
+    "observed": 180.2,
+    "median": 170.4549,
+    "h90": 63.232,
+    "score": 0.154116,
+    "score_iqr": 0.19731
+   },
+   {
+    "record_id": "T0030",
+    "group": "autocarindia.com/advice-amp/mahindra-be-6-real-world-range-tested-explained-435815",
+    "record_type": "consumption",
+    "observed": 172.1,
+    "median": 172.8425,
+    "h90": 62.2343,
+    "score": 0.011931,
+    "score_iqr": 0.013864
+   },
+   {
+    "record_id": "T0032",
+    "group": "carwale.com/news/tata-tiago-ev-claimed-range-vs-carwale-tested-range",
+    "record_type": "range_test",
+    "observed": 213.9,
+    "median": 230.871,
+    "h90": 72.2623,
+    "score": 0.234853,
+    "score_iqr": 0.27378
+   },
+   {
+    "record_id": "T0072",
+    "group": "autocarindia.com/auto-features/kia-syros-ev-real-world-range-tested-explained-441317",
+    "record_type": "consumption",
+    "observed": 105.0,
+    "median": 121.8717,
+    "h90": 43.3943,
+    "score": 0.388801,
+    "score_iqr": 0.491829
+   },
+   {
+    "record_id": "T0073",
+    "group": "autocarindia.com/auto-features/kia-syros-ev-real-world-range-tested-explained-441317",
+    "record_type": "consumption",
+    "observed": 162.9,
+    "median": 146.5218,
+    "h90": 57.5708,
+    "score": 0.284489,
+    "score_iqr": 0.34261
+   },
+   {
+    "record_id": "T0077",
+    "group": "autocarindia.com/auto-features/vinfast-vf7-real-world-range-tested-explained-440446",
+    "record_type": "consumption",
+    "observed": 196.1,
+    "median": 145.4259,
+    "h90": 54.7199,
+    "score": 0.926064,
+    "score_iqr": 1.11645
+   },
+   {
+    "record_id": "T0078",
+    "group": "autocarindia.com/auto-features/vinfast-vf7-real-world-range-tested-explained-440446",
+    "record_type": "consumption",
+    "observed": 168.9,
+    "median": 172.1725,
+    "h90": 62.1124,
+    "score": 0.052687,
+    "score_iqr": 0.062992
+   },
+   {
+    "record_id": "T0091",
+    "group": "zigwheels.com/news-features/ev-news/kia-ev6-what-we-learnt-from-driving-it-to-0/51604",
+    "record_type": "range_test",
+    "observed": 502.2,
+    "median": 452.5971,
+    "h90": 157.5942,
+    "score": 0.314751,
+    "score_iqr": 0.382839
+   },
+   {
+    "record_id": "T0095",
+    "group": "carwale.com/news/citroen-ec3-real-world-range-tested",
+    "record_type": "range_test",
+    "observed": 218.8,
+    "median": 231.3127,
+    "h90": 67.8932,
+    "score": 0.1843,
+    "score_iqr": 0.224967
+   }
+  ],
+  "in_releases": false
+ }
+}

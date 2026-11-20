@@ -698,6 +698,12 @@ fits the project. Nothing here is applied unless both sides agree.
 - Frontend note: debounce the place box (send after ~300 ms idle and 3+ characters) and pass the chosen result's `name`, `lat`, `lon` straight into `origin`/`destination`.
 - v8 addendum (code review, same day): new 422 `route_too_short` (ends under 1 km apart); 429 `rate_limited` when more than `VERITY_NEW_ROUTES_PER_HOUR` (default 20, server-wide) NEW routes are fetched in an hour (demo and already-fetched routes are never limited); the departure hour is read in IST whatever offset the request uses (02:30Z = the 08:00 forecast).
 
+### 2026-11-21 - v13: `band_method` on releases, `bands` on `/api/health` (finale WP5)
+
+- Every release (`POST /api/dispatch` and each `POST /api/plan` option) gains `band_method: {name ("split conformal"|"model only"), n (real calibration trips or null), k (conformal quantile or null), k_applied (>= 1), sources [], note}`. Real cars: split conformal from `data/processed/conformal.json` (built from the India TRAINING split by `experiments/e7_honest_bands.py`); simulated demo vehicles: "model only" (their bands come from the simulator). The note always says coverage holds on average over trips like the calibration set, never for one trip.
+- `GET /api/health` gains `bands: {method, n, k, k_applied, calibrated_at}`.
+- On 2026-11-21: n = 71, k = 0.95, so `k_applied` = 1.0 and no release number changes (bands are never narrowed). Demo responses are unchanged apart from the new block.
+
 ### 2026-11-21 - v12: `POST /api/plan` trip options (finale WP4)
 
 - New `POST /api/plan`. Request: every `POST /api/dispatch` field plus optional `preferences: {objectives (any of "fastest"|"fewest_stops"|"safest", default all three), preferred_operators [], avoid_operators [], arrival_buffer_pct (5-50, default 10 = the engine reserve), max_stops (0-6 or null)}`.

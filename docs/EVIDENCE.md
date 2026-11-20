@@ -13,7 +13,8 @@ Hand-maintained from the result files named in each row (re-run: `uv run python 
 | Claim | Value | n and 95% CI | REAL or SIMULATED | Source file |
 |---|---|---|---|---|
 | Hand-collected corpus size | trips 6 rows (0 verified), charger evidence 0, app snapshots 0, app reviews 0, vehicle specs 13 | counts on 2026-11-13 | REAL (empty so far) | results/real_data_summary.json |
-| E1-India (SoC / Wh/km / range on public Indian trips) | NOT_RUN: no verified held-out record | n=0 | REAL | results/e1_india_real.json |
+| E1-India (SoC / Wh/km / range on public Indian trips) | class-prior planner: MAE 25.9 Wh/km (16 consumption), 30.9 km (5 range tests); 90 % band covers 20/21. OLS regression 25.8 Wh/km, covers 14/21 | held-out n=21 (11 source pages), FINAL; 2026-11-21 | REAL (self-reported, India) | results/e1_india_real.json |
+| E7 honest bands (WP5) | conformal k = 0.95 on 71 training trips (out of sample) -> applied 1.0, releases unchanged; held-out 90 % coverage: physics 19/21 (Wilson 71-97 %), physics + learned correction 19/21, pure ML regression 14/21 (45-83 %) | calibration n=71 (40 pages), held-out n=21; MAE seed-sensitive (8 context scenarios per trip: 26-30 Wh/km) | REAL (self-reported, India) | results/e7_honest_bands.json, data/processed/conformal.json |
 | Charger evidence, channel trust, E3-real | NOT_RUN: 0 usable evidence rows, 0 snapshots, 0 reports | n=0 | REAL | results/e3_real_evidence.json |
 | Voice of customer (app reviews) | NOT_RUN: 0 reviews | n=0 | REAL | results/voc_app_reviews.json |
 | Range Passport capacity, BMW i3 (all 40 usable TRAINING trips, 728 km) | 19.39 kWh per 100 SoC points vs measured 22.70 (V x I): **-14.5 %** | 80 % CrI 17.97-20.53, 95 % CrI 17.19-20.99; truth OUTSIDE the 95 % interval | REAL (Germany, not India) | results/range_passport_bmw_i3.json, results/f9_passport_validation.json |
@@ -43,6 +44,8 @@ Hand-maintained from the result files named in each row (re-run: `uv run python 
 - Same-site independence in reality; directory records guarantee access/working status; assumed 25 kW is measured power.
 - All attacks detected: E5 misses the ten-day evasive ring.
 - Sub-second dispatch or model/MC confidence proves real-world safety.
+- "90 % guaranteed" or that conformal k = 0.95 proves every release band is calibrated: it holds on average over public reports like the 71 training trips, whose unknown context widens the predictive.
+- That the learned correction is in the product or beats physics: it is an experiment (n=21 held-out, overlapping intervals).
 
 ## Status and limitations
 Status as of 2026-11-18. REAL means an external recorded source, not a Verity field

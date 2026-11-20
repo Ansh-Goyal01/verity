@@ -93,9 +93,30 @@ def _result_rows(results_dir: Path) -> list[str]:
                      f"inside the 80% interval: {'yes' if cap['truth_in_ci80'] else 'no'}"))
         rows.append(("BMW i3 battery drop per trip", "REAL (Germany)", f"{bmw['n_trips_scored']} trips",
                      f"median error {drop['median_abs_error_pp']:.2f} points; the 95% band covers {_pct(drop['band95_coverage'])} of trips"))
+    rows += _e7_rows(_read(results_dir / "e7_honest_bands.json"))
     out = ["| Result | Data | n | Outcome |", "|---|---|---|---|"]
     out += [f"| {a} | {b} | {c} | {d} |" for a, b, c, d in rows]
     return out
+
+
+def _e7_rows(e7: dict | None) -> list[tuple[str, str, str, str]]:
+    """WP5: held-out 90 % coverage per method, with the conformal k it was calibrated with (training split only)."""
+    if not e7 or not e7.get("methods"):
+        return []
+    tag = " PRELIMINARY" if e7["status"] == "PRELIMINARY" else ""
+    cal = e7["calibration"]
+
+    def cov90(method: str) -> str:
+        c = (e7["methods"][method].get("coverage") or {}).get("90%")
+        return "no band" if c is None else f"{c['k']}/{c['n']} ({_interval(c['wilson95'])})"
+
+    return [("E7 90% band covers held-out Indian trips" + tag, "REAL (India, self-reported)",
+             f"{e7['counts']['test']} trips",
+             f"physics {cov90('physics_only')}; pure ML regression {cov90('ml_regression')}"),
+            ("E7 conformal inflation k (training split, out of sample)", "REAL (India, self-reported)",
+             f"{cal['n']} trips",
+             f"k = {cal['k']:.2f}, applied {cal['k_applied']:.2f} (bands are never narrowed); "
+             f"physics + learned correction covers {cov90('physics_correction_conformal')}")]
 
 
 def render_tables(results_dir: Path) -> str:

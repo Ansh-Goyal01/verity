@@ -1,20 +1,25 @@
 {
  "experiment": "E1-India",
  "is_simulated": false,
- "label": "REAL: public self-reported Indian trips, n=0",
- "status": "NOT_RUN",
- "reason": "no verified held-out records yet",
- "generated_at": "2026-11-19T17:59:23+00:00",
+ "label": "REAL: public self-reported Indian trips, n=21",
+ "status": "FINAL",
+ "reason": "",
+ "generated_at": "2026-11-20T20:33:34+00:00",
  "counts": {
-  "enriched_records": 0,
-  "evaluable": 0,
-  "skipped": {},
+  "enriched_records": 101,
+  "evaluable": 92,
+  "skipped": {
+   "no unique vehicle spec": 9
+  },
   "excluded_distance_mismatch": [],
-  "train": 0,
-  "test": 0,
-  "test_by_type": {},
-  "source_groups_train": 0,
-  "source_groups_test": 0
+  "train": 71,
+  "test": 21,
+  "test_by_type": {
+   "range_test": 5,
+   "consumption": 16
+  },
+  "source_groups_train": 40,
+  "source_groups_test": 11
  },
  "assumptions": {
   "SELF_REPORT_SD_PP": 1.0,
@@ -34,12 +39,137 @@
   "MIN_CALIBRATION_RECORDS": 3,
   "TEST_FRACTION": 0.3
  },
- "methods": {},
+ "methods": {
+  "verity_prior": {
+   "mae_by_type": {
+    "range_test": {
+     "n": 5,
+     "mae": 30.854,
+     "unit": "km"
+    },
+    "consumption": {
+     "n": 16,
+     "mae": 25.939,
+     "unit": "Wh/km"
+    }
+   },
+   "coverage": {
+    "50%": {
+     "k": 12,
+     "n": 21,
+     "coverage": 0.5714,
+     "wilson95": [
+      0.3655,
+      0.7553
+     ]
+    },
+    "80%": {
+     "k": 19,
+     "n": 21,
+     "coverage": 0.9048,
+     "wilson95": [
+      0.7109,
+      0.9735
+     ]
+    },
+    "90%": {
+     "k": 20,
+     "n": 21,
+     "coverage": 0.9524,
+     "wilson95": [
+      0.7733,
+      0.9915
+     ]
+    }
+   }
+  },
+  "verity_calibrated": {
+   "mae_by_type": {},
+   "coverage": null
+  },
+  "claimed_linear": {
+   "mae_by_type": {
+    "range_test": {
+     "n": 5,
+     "mae": 137.588,
+     "unit": "km"
+    },
+    "consumption": {
+     "n": 16,
+     "mae": 57.79,
+     "unit": "Wh/km"
+    }
+   },
+   "coverage": null
+  },
+  "flat_minus_25": {
+   "mae_by_type": {
+    "range_test": {
+     "n": 5,
+     "mae": 21.884,
+     "unit": "km"
+    },
+    "consumption": {
+     "n": 16,
+     "mae": 26.115,
+     "unit": "Wh/km"
+    }
+   },
+   "coverage": null
+  },
+  "regression": {
+   "mae_by_type": {
+    "range_test": {
+     "n": 5,
+     "mae": 32.675,
+     "unit": "km"
+    },
+    "consumption": {
+     "n": 16,
+     "mae": 25.754,
+     "unit": "Wh/km"
+    }
+   },
+   "coverage": {
+    "50%": {
+     "k": 6,
+     "n": 21,
+     "coverage": 0.2857,
+     "wilson95": [
+      0.1381,
+      0.4996
+     ]
+    },
+    "80%": {
+     "k": 13,
+     "n": 21,
+     "coverage": 0.619,
+     "wilson95": [
+      0.4088,
+      0.7925
+     ]
+    },
+    "90%": {
+     "k": 14,
+     "n": 21,
+     "coverage": 0.6667,
+     "wilson95": [
+      0.4537,
+      0.8281
+     ]
+    }
+   }
+  }
+ },
  "per_model_calibration": {},
  "notes": [
   "Self-reported public data: SoC is whole percent; distances and conditions are as published.",
   "Point baselines (claimed_linear, flat_minus_25) have no band, so no coverage.",
   "highway_100_plus is capped by the planner's free highway speed (26 m/s) and may be under-predicted.",
   "Wilson intervals treat records as independent; several records can share one vehicle or author."
- ]
+ ],
+ "fit_info": {
+  "calibrated_vehicles": [],
+  "regression": "fit on training records only"
+ }
 }

@@ -59,7 +59,7 @@ def test_health_reports_the_graph_in_use_and_whether_voice_has_a_key(client: Tes
         body = client.get("/api/health").json()
     finally:
         app.dependency_overrides.pop(voice_key_present, None)
-    assert set(body) == {"status", "version", "neo4j", "is_simulated", "graph", "sarvam_key_present"}
+    assert set(body) == {"status", "version", "neo4j", "is_simulated", "graph", "sarvam_key_present", "bands"}
     assert body["neo4j"] == "in_memory" and body["graph"]["backend"] == "memory"
     assert body["graph"]["nodes"] > 0 and body["graph"]["relationships"] > 0
     assert body["sarvam_key_present"] is has_key

@@ -1,0 +1,220 @@
+{
+ "experiment": "E7",
+ "is_simulated": false,
+ "label": "REAL: public self-reported Indian trips, held-out n=21",
+ "status": "FINAL",
+ "reason": "",
+ "generated_at": "2026-11-20T20:45:32+00:00",
+ "counts": {
+  "enriched_records": 101,
+  "evaluable": 92,
+  "skipped": {
+   "no unique vehicle spec": 9
+  },
+  "calibration_train": 71,
+  "test": 21,
+  "test_by_type": {
+   "range_test": 5,
+   "consumption": 16
+  },
+  "source_groups_train": 40,
+  "source_groups_test": 11
+ },
+ "calibration": {
+  "n": 71,
+  "k": 0.9505269265893495,
+  "k_applied": 1.0,
+  "k_iqr": 1.1804275648310336,
+  "n_correction": 71,
+  "k_corrected": 0.8704524650128183,
+  "k_corrected_applied": 1.0
+ },
+ "methods": {
+  "physics_only": {
+   "mae_by_type": {
+    "range_test": {
+     "n": 5,
+     "mae": 33.608,
+     "unit": "km"
+    },
+    "consumption": {
+     "n": 16,
+     "mae": 29.853,
+     "unit": "Wh/km"
+    }
+   },
+   "coverage": {
+    "50%": {
+     "k": 13,
+     "n": 21,
+     "coverage": 0.619,
+     "wilson95": [
+      0.4088,
+      0.7925
+     ]
+    },
+    "80%": {
+     "k": 18,
+     "n": 21,
+     "coverage": 0.8571,
+     "wilson95": [
+      0.6536,
+      0.9502
+     ]
+    },
+    "90%": {
+     "k": 19,
+     "n": 21,
+     "coverage": 0.9048,
+     "wilson95": [
+      0.7109,
+      0.9735
+     ]
+    }
+   }
+  },
+  "physics_conformal": {
+   "mae_by_type": {
+    "range_test": {
+     "n": 5,
+     "mae": 33.608,
+     "unit": "km"
+    },
+    "consumption": {
+     "n": 16,
+     "mae": 29.853,
+     "unit": "Wh/km"
+    }
+   },
+   "coverage": {
+    "50%": {
+     "k": 13,
+     "n": 21,
+     "coverage": 0.619,
+     "wilson95": [
+      0.4088,
+      0.7925
+     ]
+    },
+    "80%": {
+     "k": 18,
+     "n": 21,
+     "coverage": 0.8571,
+     "wilson95": [
+      0.6536,
+      0.9502
+     ]
+    },
+    "90%": {
+     "k": 19,
+     "n": 21,
+     "coverage": 0.9048,
+     "wilson95": [
+      0.7109,
+      0.9735
+     ]
+    }
+   }
+  },
+  "physics_correction_conformal": {
+   "mae_by_type": {
+    "range_test": {
+     "n": 5,
+     "mae": 31.521,
+     "unit": "km"
+    },
+    "consumption": {
+     "n": 16,
+     "mae": 28.569,
+     "unit": "Wh/km"
+    }
+   },
+   "coverage": {
+    "50%": {
+     "k": 12,
+     "n": 21,
+     "coverage": 0.5714,
+     "wilson95": [
+      0.3655,
+      0.7553
+     ]
+    },
+    "80%": {
+     "k": 19,
+     "n": 21,
+     "coverage": 0.9048,
+     "wilson95": [
+      0.7109,
+      0.9735
+     ]
+    },
+    "90%": {
+     "k": 19,
+     "n": 21,
+     "coverage": 0.9048,
+     "wilson95": [
+      0.7109,
+      0.9735
+     ]
+    }
+   }
+  },
+  "ml_regression": {
+   "mae_by_type": {
+    "range_test": {
+     "n": 5,
+     "mae": 31.931,
+     "unit": "km"
+    },
+    "consumption": {
+     "n": 16,
+     "mae": 25.738,
+     "unit": "Wh/km"
+    }
+   },
+   "coverage": {
+    "50%": {
+     "k": 7,
+     "n": 21,
+     "coverage": 0.3333,
+     "wilson95": [
+      0.1719,
+      0.5463
+     ]
+    },
+    "80%": {
+     "k": 13,
+     "n": 21,
+     "coverage": 0.619,
+     "wilson95": [
+      0.4088,
+      0.7925
+     ]
+    },
+    "90%": {
+     "k": 14,
+     "n": 21,
+     "coverage": 0.6667,
+     "wilson95": [
+      0.4537,
+      0.8281
+     ]
+    }
+   }
+  }
+ },
+ "method_labels": {
+  "physics_only": "(a) physics only",
+  "physics_conformal": "(b) physics + conformal",
+  "physics_correction_conformal": "(c) physics + correction + conformal",
+  "ml_regression": "(d) pure ML regression (baseline)"
+ },
+ "notes": [
+  "Conformal coverage holds on average over trips like the calibration set (public, self-reported Indian trips); it is not a guarantee for any single trip.",
+  "k is calibrated at the 90 % level; 50 % and 80 % coverage after widening are reported, not promised.",
+  "Bands are never narrowed: k below 1 is reported and not applied.",
+  "(d) is the existing OLS Wh/km baseline of E1-India.",
+  "Seed sensitivity: india_eval draws only 8 unknown-context scenarios per trip, so physics MAE on these 21 trips moves between about 26 and 30 Wh/km with the seed (E1-India's seed gives 25.9); k and coverage move with it. Not tuned after seeing held-out results.",
+  "Self-reported public data: SoC is whole percent; Wilson intervals treat records as independent."
+ ]
+}

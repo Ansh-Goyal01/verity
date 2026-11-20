@@ -12,6 +12,13 @@
     "nodes": 4897,
     "relationships": 8026
    },
+   "bands": {
+    "method": "split conformal",
+    "n": 71,
+    "k": 0.951,
+    "k_applied": 1.0,
+    "calibrated_at": "2026-11-20T20:37:50+00:00"
+   },
    "sarvam_key_present": true
   },
   "scenario": {
@@ -7488,7 +7495,7 @@
     ],
     "refusal_reason": null,
     "verify_chargers": [],
-    "compute_ms": 3263,
+    "compute_ms": 4299,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -7535,6 +7542,14 @@
      "trips": 6,
      "basis": "simulated trips",
      "label": "Calibrated on 6 simulated trips"
+    },
+    "band_method": {
+     "name": "model only",
+     "n": null,
+     "k": null,
+     "k_applied": 1.0,
+     "sources": [],
+     "note": "Simulated demo vehicle: its bands come from the simulator and are not calibrated on real trips."
     },
     "is_simulated": true
    },
@@ -14931,7 +14946,7 @@
     ],
     "refusal_reason": null,
     "verify_chargers": [],
-    "compute_ms": 3121,
+    "compute_ms": 4118,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -14978,6 +14993,14 @@
      "trips": 8,
      "basis": "simulated trips",
      "label": "Calibrated on 8 simulated trips"
+    },
+    "band_method": {
+     "name": "model only",
+     "n": null,
+     "k": null,
+     "k_applied": 1.0,
+     "sources": [],
+     "note": "Simulated demo vehicle: its bands come from the simulator and are not calibrated on real trips."
     },
     "is_simulated": true
    },
@@ -22412,7 +22435,7 @@
       }
      }
     ],
-    "compute_ms": 3340,
+    "compute_ms": 3681,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -22459,6 +22482,14 @@
      "trips": 4,
      "basis": "simulated trips",
      "label": "Calibrated on 4 simulated trips"
+    },
+    "band_method": {
+     "name": "model only",
+     "n": null,
+     "k": null,
+     "k_applied": 1.0,
+     "sources": [],
+     "note": "Simulated demo vehicle: its bands come from the simulator and are not calibrated on real trips."
     },
     "is_simulated": true
    }
@@ -26240,7 +26271,7 @@
    ],
    "levers": [],
    "earning_rs_per_hour": 60.0,
-   "compute_ms": 354,
+   "compute_ms": 400,
    "n_runs": 1500,
    "speech": {
     "en-IN": "Take the ride. The chance of completing it and reaching a working charger is 95 percent or more. After the drop, charge at Radisson Blu Plaza Delhi Airport: about 79 minutes, roughly 80 rupees at an example earning rate.",

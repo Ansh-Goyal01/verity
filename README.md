@@ -111,6 +111,8 @@ stale). A count of 0 means nothing has been collected yet. The live version is `
 | E2 the 90% arrival band covers the outcome | simulated | 540 trips | shared trip factors 91.8%, independent segments 27.6% |
 | BMW i3 usable-capacity error | REAL (Germany) | 19 trips | -10.5%; truth inside the 95% interval: yes, inside the 80% interval: no |
 | BMW i3 battery drop per trip | REAL (Germany) | 19 trips | median error 0.95 points; the 95% band covers 47.0% of trips |
+| E7 90% band covers held-out Indian trips | REAL (India, self-reported) | 21 trips | physics 19/21 (71.1% to 97.4%); pure ML regression 14/21 (45.4% to 82.8%) |
+| E7 conformal inflation k (training split, out of sample) | REAL (India, self-reported) | 71 trips | k = 0.95, applied 1.00 (bands are never narrowed); physics + learned correction covers 19/21 (71.1% to 97.4%) |
 <!-- readme-tables:end -->
 
 The simulator shares the planner's physics family, so simulated results are the optimistic case. Full provenance,

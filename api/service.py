@@ -59,6 +59,7 @@ from verity.vehicles import get_prior
 from verity.ride_voice import spoken_ride_answer
 from verity.voice_loop import SPEECH_LANGUAGES, spoken_answers
 
+from .bands import load_band_calibration
 from .data_sources import DEMO_FLEET_LABEL, any_simulated, build_data_sources
 from .graph_endpoints import GraphEndpoints
 from .limits import LruCache
@@ -330,6 +331,7 @@ class EngineService(GraphEndpoints):
         self.graph.populate(lambda g: populate_road_network(g, self.near, self.trust, float(self.poly_km[-1]),
                                                             ALT_AHEAD_KM))
         self.fleet = self._build_fleet()
+        self.bands = load_band_calibration()  # WP5: conformal k from the training split (real cars only)
         self.catalog = load_catalog()  # the real Indian cars (WP2): vehicles_india.csv, calibrated on training trips only
         self.plans: LruCache[str, StoredPlan] = LruCache(PLAN_CACHE_SIZE)
         self._option_sets: LruCache[str, dict] = LruCache(OPTION_SET_CACHE_SIZE)  # WP4: whole POST /api/plan answers
@@ -368,7 +370,10 @@ class EngineService(GraphEndpoints):
         backend, counts = self._graph_counts()  # one read of the backend: both labels below come from it
         return {"status": "ok", "version": __version__, "neo4j": "connected" if backend == "neo4j" else "in_memory",
                 "is_simulated": True,
-                "graph": {"backend": backend, "nodes": counts.nodes, "relationships": counts.relationships}}
+                "graph": {"backend": backend, "nodes": counts.nodes, "relationships": counts.relationships},
+                "bands": {"method": "split conformal" if self.bands.available else "model only", "n": self.bands.n,
+                          "k": None if self.bands.k is None else round(self.bands.k, 3),
+                          "k_applied": round(self.bands.k_applied, 3), "calibrated_at": self.bands.created_at}}
 
     def _graph_counts(self) -> tuple[str, GraphCounts]:
         """(backend the counts came from, counts). A Neo4j failure here falls back to the mirror like any other
@@ -551,7 +556,7 @@ class EngineService(GraphEndpoints):
             inputs = self._route_inputs(view, resolved)
             return view, inputs, dispatch(ctx, resolved.route, inputs[0], inputs[1], start_soc=req["start_soc_pct"],
                                           target_confidence=req["target_confidence"], seed=int(key[:8], 16),
-                                          cfg=self.cfg, other_vehicles=others, graph=g)
+                                          cfg=self._cfg_for(picked), other_vehicles=others, graph=g)
 
         view, (near, trust, near_reports), result = self.graph.call(plan_on)
         self._adopt(view)
@@ -560,6 +565,10 @@ class EngineService(GraphEndpoints):
         self.plans[plan_id] = StoredPlan(result.state, response, dict(req), resolved.poly, resolved.poly_km)
         self._record_plan(plan_id, response, near, trust)
         return response
+
+    def _cfg_for(self, picked: PickedVehicle) -> ForecastConfig:
+        """The Monte Carlo settings for this vehicle: real cars get the conformal band scale (WP5), demo cars do not."""
+        return replace(self.cfg, band_scale=self.bands.scale_for(vehicle_simulated=picked.vehicle["is_simulated"]))
 
     def _log_timing(self, plan_id: str, t0: float, q0: int, s0: float) -> None:
         q1, s1 = self._graph_queries()
@@ -598,6 +607,7 @@ class EngineService(GraphEndpoints):
             "verify_chargers": result.verify_chargers,
             "compute_ms": result.compute_ms, "n_runs": self.cfg.n_runs, "data_sources": sources,
             "vehicle": picked.vehicle, "calibration": picked.calibration,
+            "band_method": self.bands.block(vehicle_simulated=picked.vehicle["is_simulated"]),
             "is_simulated": any_simulated(sources),
         }
         return response
@@ -624,7 +634,7 @@ class EngineService(GraphEndpoints):
             inputs = self._route_inputs(view, resolved)
             return view, inputs, plan_options(picked.ctx, resolved.route, inputs[0], inputs[1],
                                               start_soc=req["start_soc_pct"], target_confidence=req["target_confidence"],
-                                              prefs=prefs, seed=int(key[:8], 16), cfg=self.cfg, graph=g)
+                                              prefs=prefs, seed=int(key[:8], 16), cfg=self._cfg_for(picked), graph=g)
 
         view, (near, trust, near_reports), out = self.graph.call(plan_on)
         self._adopt(view)
