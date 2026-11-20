@@ -1,4 +1,61 @@
 file,row_id,reason,nearest_candidate,nearest_distance_m,name_score
+charger_evidence.csv,E0036,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0037,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0038,no directory charger within 250 m (via geocoded_address),CH-0141,394.7,0.0
+charger_evidence.csv,E0039,no directory charger within 250 m (via geocoded_address),CH-0141,394.7,0.0
+charger_evidence.csv,E0040,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0041,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0042,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0043,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0044,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0045,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0046,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0047,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0048,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0049,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0060,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0061,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0062,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0063,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0064,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0065,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0066,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0067,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0068,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0069,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0070,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0071,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0072,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0073,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0074,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0075,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0076,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0077,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0078,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0079,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0080,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0081,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0082,no directory charger within 250 m (via geocoded_address),CH-1760,2187.7,0.0
+charger_evidence.csv,E0083,no directory charger within 250 m (via geocoded_address),CH-1760,2187.7,0.0
+charger_evidence.csv,E0084,no directory charger within 250 m (via geocoded_address),CH-1760,2187.7,0.0
+charger_evidence.csv,E0085,no directory charger within 250 m (via geocoded_address),CH-1760,2187.7,0.0
+charger_evidence.csv,E0086,no directory charger within 250 m (via geocoded_address),CH-1760,2187.7,0.0
+charger_evidence.csv,E0087,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0088,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0089,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0090,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0091,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0092,no directory charger within 250 m (via geocoded_address),CH-2258,103880.5,0.0
+charger_evidence.csv,E0093,no directory charger within 250 m (via geocoded_address),CH-2258,103880.5,0.0
+charger_evidence.csv,E0094,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0095,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0096,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0097,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0098,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0099,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0100,"no lat/lon, no coordinates in place_url, no street-level geocode",,,
+charger_evidence.csv,E0101,directory chargers within 250 m but none with a similar name (via geocoded_address),CH-1447,133.6,0.0
+charger_evidence.csv,E0102,directory chargers within 250 m but none with a similar name (via geocoded_address),CH-1447,133.6,0.0
 app_status_snapshots.csv,S0001,charger_name matches no matched evidence row,,,
 app_status_snapshots.csv,S0002,charger_name matches no matched evidence row,,,
 app_status_snapshots.csv,S0003,charger_name matches no matched evidence row,,,

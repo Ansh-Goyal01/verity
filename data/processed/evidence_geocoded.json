@@ -1,0 +1,130 @@
+{
+ "is_simulated": false,
+ "generated_at": "2026-11-20T18:29:32+00:00",
+ "source": "Photon (komoot), OpenStreetMap data; street/POI-level results only",
+ "rows": {
+  "E0036": null,
+  "E0037": null,
+  "E0038": {
+   "lat": 28.587561,
+   "lon": 77.043663,
+   "kind": "commercial",
+   "label": "Afflatus Global Visa - Best Visa Consultant in Delhi, Delhi",
+   "query": "205 Delhi Rd, Sector 10 Dwarka, Delhi 110075"
+  },
+  "E0039": {
+   "lat": 28.587561,
+   "lon": 77.043663,
+   "kind": "commercial",
+   "label": "Afflatus Global Visa - Best Visa Consultant in Delhi, Delhi",
+   "query": "205 Delhi Rd, Sector 10 Dwarka, Delhi 110075"
+  },
+  "E0040": null,
+  "E0041": null,
+  "E0042": null,
+  "E0043": null,
+  "E0044": null,
+  "E0045": null,
+  "E0046": null,
+  "E0047": null,
+  "E0048": null,
+  "E0049": null,
+  "E0060": null,
+  "E0061": null,
+  "E0062": null,
+  "E0063": null,
+  "E0064": null,
+  "E0065": null,
+  "E0066": null,
+  "E0067": null,
+  "E0068": null,
+  "E0069": null,
+  "E0070": null,
+  "E0071": null,
+  "E0072": null,
+  "E0073": null,
+  "E0074": null,
+  "E0075": null,
+  "E0076": null,
+  "E0077": null,
+  "E0078": null,
+  "E0079": null,
+  "E0080": null,
+  "E0081": null,
+  "E0082": {
+   "lat": 18.499783,
+   "lon": 73.862735,
+   "kind": "educational_institution",
+   "label": "FIITJEE, Pune, Maharashtra",
+   "query": "Shankar Sheth Rd, Swargate, Pune 411037"
+  },
+  "E0083": {
+   "lat": 18.499783,
+   "lon": 73.862735,
+   "kind": "educational_institution",
+   "label": "FIITJEE, Pune, Maharashtra",
+   "query": "Shankar Sheth Rd, Swargate, Pune 411037"
+  },
+  "E0084": {
+   "lat": 18.499783,
+   "lon": 73.862735,
+   "kind": "educational_institution",
+   "label": "FIITJEE, Pune, Maharashtra",
+   "query": "Shankar Sheth Rd, Swargate, Pune 411037"
+  },
+  "E0085": {
+   "lat": 18.499783,
+   "lon": 73.862735,
+   "kind": "educational_institution",
+   "label": "FIITJEE, Pune, Maharashtra",
+   "query": "Shankar Sheth Rd, Swargate, Pune 411037"
+  },
+  "E0086": {
+   "lat": 18.499783,
+   "lon": 73.862735,
+   "kind": "educational_institution",
+   "label": "FIITJEE, Pune, Maharashtra",
+   "query": "Shankar Sheth Rd, Swargate, Pune 411037"
+  },
+  "E0087": null,
+  "E0088": null,
+  "E0089": null,
+  "E0090": null,
+  "E0091": null,
+  "E0092": {
+   "lat": 25.613209,
+   "lon": 85.055121,
+   "kind": "car",
+   "label": "NEXA (Alankar Auto, Patna, Bailey Road), Patna, Bihar",
+   "query": "09, Lekha Nagar, Khagaul, Patna, Bihar 801505"
+  },
+  "E0093": {
+   "lat": 25.613209,
+   "lon": 85.055121,
+   "kind": "car",
+   "label": "NEXA (Alankar Auto, Patna, Bailey Road), Patna, Bihar",
+   "query": "09, Lekha Nagar, Khagaul, Patna, Bihar 801505"
+  },
+  "E0094": null,
+  "E0095": null,
+  "E0096": null,
+  "E0097": null,
+  "E0098": null,
+  "E0099": null,
+  "E0100": null,
+  "E0101": {
+   "lat": 13.041353,
+   "lon": 77.621671,
+   "kind": "bus_stop",
+   "label": "Manyata Embassy Business Park, Bengaluru, Karnataka",
+   "query": "MS Ramaiah North City, Manyata Tech Park, Nagavara, Bengaluru 560045"
+  },
+  "E0102": {
+   "lat": 13.041353,
+   "lon": 77.621671,
+   "kind": "bus_stop",
+   "label": "Manyata Embassy Business Park, Bengaluru, Karnataka",
+   "query": "MS Ramaiah North City, Manyata Tech Park, Nagavara, Bengaluru 560045"
+  }
+ }
+}

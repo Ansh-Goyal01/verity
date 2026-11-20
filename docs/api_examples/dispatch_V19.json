@@ -4,7 +4,7 @@
  "decision": "INSUFFICIENT_EVIDENCE",
  "confidence": 0.9,
  "confidence_display": "90%",
- "reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
+ "reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Verify these 3 chargers and the plan stands at today's estimate of 90% (target 90%).",
  "speech": {
   "en-IN": "There is not enough evidence to promise this trip yet, so we will not guess.",
   "hi-IN": "पक्का कहने के लिए अभी पर्याप्त जानकारी नहीं है, इसलिए हम कोई वादा नहीं कर रहे।"
@@ -5926,6 +5926,12 @@
     "n_reports": 0,
     "days_since_last": null,
     "trust_level": "unknown"
+   },
+   "trust": {
+    "level": "unknown",
+    "n_reports": 0,
+    "days_since_last": null,
+    "basis": "prior only"
    }
   },
   {
@@ -5941,6 +5947,12 @@
     "n_reports": 10,
     "days_since_last": 1,
     "trust_level": "high"
+   },
+   "trust": {
+    "level": "high",
+    "n_reports": 10,
+    "days_since_last": 1,
+    "basis": "own reports"
    }
   }
  ],
@@ -5952,7 +5964,13 @@
    "lat": 28.4245314,
    "lon": 77.5209704,
    "p_reach": 1.0,
-   "p_works": 0.8
+   "p_works": 0.8,
+   "trust": {
+    "level": "unknown",
+    "n_reports": 0,
+    "days_since_last": null,
+    "basis": "prior only"
+   }
   },
   {
    "for_stop_index": 0,
@@ -5961,7 +5979,13 @@
    "lat": 28.3190968,
    "lon": 77.5517525,
    "p_reach": 1.0,
-   "p_works": 0.85
+   "p_works": 0.85,
+   "trust": {
+    "level": "low",
+    "n_reports": 1,
+    "days_since_last": 41,
+    "basis": "own reports"
+   }
   },
   {
    "for_stop_index": 1,
@@ -5970,7 +5994,13 @@
    "lat": 27.2708197,
    "lon": 78.0407736,
    "p_reach": 0.35,
-   "p_works": 0.7
+   "p_works": 0.7,
+   "trust": {
+    "level": "medium",
+    "n_reports": 3,
+    "days_since_last": 12,
+    "basis": "own reports"
+   }
   }
  ],
  "bingo_line": [
@@ -7395,8 +7425,40 @@
    "label": "Traffic on arterial and urban stretches is highly variable"
   }
  ],
- "refusal_reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
- "compute_ms": 8008,
+ "refusal_reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Verify these 3 chargers and the plan stands at today's estimate of 90% (target 90%).",
+ "verify_chargers": [
+  {
+   "charger_id": "CH-0023",
+   "name": "Mansavi SuperCharge Point",
+   "trust": {
+    "level": "unknown",
+    "n_reports": 0,
+    "days_since_last": null,
+    "basis": "prior only"
+   }
+  },
+  {
+   "charger_id": "CH-0020",
+   "name": "GBU- CHARGING STATION",
+   "trust": {
+    "level": "unknown",
+    "n_reports": 0,
+    "days_since_last": null,
+    "basis": "prior only"
+   }
+  },
+  {
+   "charger_id": "CH-0015",
+   "name": "Tata",
+   "trust": {
+    "level": "low",
+    "n_reports": 1,
+    "days_since_last": 41,
+    "basis": "own reports"
+   }
+  }
+ ],
+ "compute_ms": 2555,
  "n_runs": 1500,
  "data_sources": {
   "route": {

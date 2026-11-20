@@ -8,6 +8,7 @@ not tagged is dropped (the schema needs kW > 0) rather than given an invented nu
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,8 +20,12 @@ from .paths import PROCESSED_DIR
 from .schemas import ChargerRecord, Connector
 from .trips import haversine_m
 
-CHARGERS_FILE = PROCESSED_DIR / "chargers_ncr.json"
+CHARGERS_FILE = PROCESSED_DIR / "chargers_ncr.json"  # the frozen NCR + Noida-Agra snapshot (ids CH-0001..)
+NCR_CHARGERS_FILE = CHARGERS_FILE
+INDIA_CHARGERS_FILE = PROCESSED_DIR / "chargers_india.json"  # NCR snapshot + the rest of India (WP3)
+CHARGERS_ENV = "VERITY_CHARGERS"
 MERGE_RADIUS_M = 50.0
+KM_PER_DEG_LAT = 111.0
 
 # OSM socket tag -> connector type label. Approximate - verify against the OSM wiki before relying on it.
 OSM_SOCKETS = {
@@ -159,9 +164,50 @@ def source_of(rec: ChargerRecord) -> str:
     return "ocm" if any(s.startswith("ocm:") for s in ids) else "simulated"
 
 
-def load_chargers(path: Path = CHARGERS_FILE) -> tuple[list[ChargerRecord], dict]:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+def default_chargers_file() -> Path:
+    """VERITY_CHARGERS if set, else the India directory when it has been built, else the NCR snapshot."""
+    if env := os.environ.get(CHARGERS_ENV, "").strip():
+        return Path(env)
+    return INDIA_CHARGERS_FILE if INDIA_CHARGERS_FILE.exists() else NCR_CHARGERS_FILE
+
+
+def load_chargers(path: Path | None = None) -> tuple[list[ChargerRecord], dict]:
+    data = json.loads(Path(path or default_chargers_file()).read_text(encoding="utf-8"))
     return [ChargerRecord.model_validate(c) for c in data["chargers"]], {k: v for k, v in data.items() if k != "chargers"}
+
+
+def in_any_box(lat: float, lon: float, boxes: Iterable[Iterable[float]]) -> bool:
+    """Inside any (south, west, north, east) box."""
+    return any(s <= lat <= n and w <= lon <= e for s, w, n, e in boxes)
+
+
+def _id_number(cid: str) -> int:
+    m = re.fullmatch(r"CH-(\d+)", cid)
+    return int(m.group(1)) if m else 0
+
+
+def extend_directory(base: list[ChargerRecord], new: Iterable[ChargerRecord], frozen_boxes: Iterable[Iterable[float]],
+                     radius_m: float = MERGE_RADIUS_M) -> tuple[list[ChargerRecord], dict]:
+    """The base directory UNCHANGED (same records, same ids) plus the new records outside ``frozen_boxes``, merged
+    within ``radius_m`` among themselves; a new record within ``radius_m`` of a base charger is dropped (the base
+    already has it). New ids continue after the base's highest ``CH-`` number, in lat/lon order (WP3)."""
+    boxes = [tuple(b) for b in frozen_boxes]
+    incoming = list(new)
+    outside = [r for r in incoming if not in_any_box(r.lat, r.lon, boxes)]
+    merged, n_merged = merge_duplicates(outside, radius_m)
+    if base and merged:
+        b_lat, b_lon = np.array([c.lat for c in base]), np.array([c.lon for c in base])
+        keep = [r for r in merged if float(haversine_m(np.full(len(base), r.lat), np.full(len(base), r.lon),
+                                                         b_lat, b_lon).min()) > radius_m]
+    else:
+        keep = merged
+    start = max((_id_number(c.id) for c in base), default=0) + 1
+    ordered = sorted(keep, key=lambda r: (round(r.lat, 6), round(r.lon, 6), r.source_ids))
+    added = [r.model_copy(update={"id": f"CH-{i:04d}"}) for i, r in enumerate(ordered, start=start)]
+    stats = {"new_records": len(incoming), "inside_frozen_boxes_dropped": len(incoming) - len(outside),
+             "merged_away_within_50m": n_merged, "duplicates_of_base_dropped": len(merged) - len(keep),
+             "added": len(added), "base": len(base)}
+    return [*base, *added], stats
 
 
 @dataclass(frozen=True)
@@ -173,9 +219,20 @@ class RouteCharger:
 
 def chargers_near_route(chargers: Iterable[ChargerRecord], poly_latlon: np.ndarray, poly_km: np.ndarray,
                         max_offset_km: float = 5.0) -> list[RouteCharger]:
-    """Chargers within ``max_offset_km`` of the route polyline, with their position along it (km)."""
+    """Chargers within ``max_offset_km`` of the route polyline, with their position along it (km). A charger outside
+    the route's bounding box widened by ``max_offset_km`` cannot qualify, so it is skipped before the haversine."""
     out = []
-    for c in chargers:
+    recs = list(chargers)
+    if not recs or len(poly_latlon) == 0:
+        return out
+    margin_lat = max_offset_km / KM_PER_DEG_LAT * 1.01
+    max_abs_lat = float(np.abs(poly_latlon[:, 0]).max()) + margin_lat
+    margin_lon = margin_lat / max(np.cos(np.radians(min(max_abs_lat, 89.0))), 1e-6)
+    lo_lat, hi_lat = float(poly_latlon[:, 0].min()) - margin_lat, float(poly_latlon[:, 0].max()) + margin_lat
+    lo_lon, hi_lon = float(poly_latlon[:, 1].min()) - margin_lon, float(poly_latlon[:, 1].max()) + margin_lon
+    for c in recs:
+        if not (lo_lat <= c.lat <= hi_lat and lo_lon <= c.lon <= hi_lon):
+            continue
         d = haversine_m(np.full(len(poly_latlon), c.lat), np.full(len(poly_latlon), c.lon),
                         poly_latlon[:, 0], poly_latlon[:, 1])
         i = int(np.argmin(d))

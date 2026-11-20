@@ -126,6 +126,23 @@ class Evidence(Resp):
     trust_level: TrustLevel
 
 
+TrustBasis = Literal["own reports", "operator pool", "prior only"]
+
+
+class StopTrust(Resp):
+    """WP3: how much evidence stands behind a stop's or backup's p_works, and where it comes from."""
+    level: TrustLevel
+    n_reports: int = Field(ge=0)
+    days_since_last: int | None
+    basis: TrustBasis
+
+
+class VerifyCharger(Resp):
+    charger_id: str
+    name: str
+    trust: StopTrust
+
+
 class Stop(Resp):
     charger_id: str
     name: str
@@ -136,6 +153,7 @@ class Stop(Resp):
     charge_minutes: int
     p_works: float
     evidence: Evidence
+    trust: StopTrust  # WP3
 
 
 class Alternate(Resp):
@@ -146,6 +164,7 @@ class Alternate(Resp):
     lon: float
     p_reach: float
     p_works: float
+    trust: StopTrust  # WP3
 
 
 class BingoPoint(Resp):
@@ -243,6 +262,7 @@ class DispatchResponse(Resp):
     levers: list[Lever]
     risk_sources: list[RiskSource]
     refusal_reason: str | None
+    verify_chargers: list[VerifyCharger] = []  # WP3: chargers whose verification could clear a refusal
     compute_ms: int
     n_runs: int = Field(ge=1)  # Monte Carlo runs behind every probability here (W0.3): never hardcode it
     data_sources: DataSources  # WP1: where each input came from; is_simulated is derived from it
@@ -319,6 +339,7 @@ class ApiCharger(Resp):
     n_reports: int
     days_since_last: int | None
     source: Literal["osm", "ocm", "audit", "simulated"]
+    trust_basis: TrustBasis  # WP3
 
 
 class ChargersResponse(Resp):

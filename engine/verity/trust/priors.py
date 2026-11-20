@@ -86,3 +86,31 @@ def prior_for(operator: str | None, site_type: str | None, region: str | None = 
     p = sum(e.strength * e.p_works for e in evidence) / total
     strength = min(max(total, MIN_STRENGTH), MAX_STRENGTH)
     return BetaPrior(p * strength, (1.0 - p) * strength, tuple(evidence))
+
+
+# ---------------------------------------------------------------- operator pooling (WP3)
+# Operator names that mean "no operator known" (Open Charge Map's placeholder included): never pooled.
+NO_OPERATOR = frozenset({"", "(unknown operator)", "unknown operator", "unknown", "(business owner at location)"})
+
+
+def operator_key(name: str | None) -> str:
+    """Pooling key: the normalised operator, or "" when none is known."""
+    low = normalise_operator(name)
+    return "" if low in NO_OPERATOR else low
+
+
+def pooled_prior(prior: BetaPrior, k_working: int, n: int) -> BetaPrior:
+    """Shrink the operator's real record toward this charger's own prior (hierarchical Beta, WP3).
+
+    p = (k + s0 * p0) / (n + s0), with (p0, s0) the charger's existing prior mean and strength, so a handful of
+    operator reports moves the prior a little and many move it more. The pooled strength n + s0 is capped at
+    MAX_STRENGTH: an operator's other chargers never count for more than ~8 reports about THIS one.
+    """
+    if n <= 0:
+        return prior
+    s0, p0 = prior.a + prior.b, prior.mean
+    p = (k_working + s0 * p0) / (n + s0)
+    strength = min(n + s0, MAX_STRENGTH)
+    note = PriorEvidence(k_working / n, float(n), f"operator pool: {k_working} of {n} recent real reports on this "
+                                                     "operator's other chargers say working")
+    return BetaPrior(p * strength, (1.0 - p) * strength, (*prior.evidence, note))

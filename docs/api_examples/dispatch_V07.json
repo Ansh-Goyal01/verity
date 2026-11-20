@@ -5926,6 +5926,12 @@
     "n_reports": 1,
     "days_since_last": 41,
     "trust_level": "low"
+   },
+   "trust": {
+    "level": "low",
+    "n_reports": 1,
+    "days_since_last": 41,
+    "basis": "own reports"
    }
   },
   {
@@ -5941,6 +5947,12 @@
     "n_reports": 0,
     "days_since_last": null,
     "trust_level": "unknown"
+   },
+   "trust": {
+    "level": "unknown",
+    "n_reports": 0,
+    "days_since_last": null,
+    "basis": "prior only"
    }
   }
  ],
@@ -5952,7 +5964,13 @@
    "lat": 27.55039596637711,
    "lon": 77.75506264207092,
    "p_reach": 0.75,
-   "p_works": 0.7
+   "p_works": 0.7,
+   "trust": {
+    "level": "unknown",
+    "n_reports": 0,
+    "days_since_last": null,
+    "basis": "prior only"
+   }
   },
   {
    "for_stop_index": 1,
@@ -5961,7 +5979,13 @@
    "lat": 27.5495366,
    "lon": 77.7557237,
    "p_reach": 0.75,
-   "p_works": 0.95
+   "p_works": 0.95,
+   "trust": {
+    "level": "high",
+    "n_reports": 10,
+    "days_since_last": 1,
+    "basis": "own reports"
+   }
   },
   {
    "for_stop_index": 1,
@@ -5970,7 +5994,13 @@
    "lat": 27.2708197,
    "lon": 78.0407736,
    "p_reach": 0.0,
-   "p_works": 0.7
+   "p_works": 0.7,
+   "trust": {
+    "level": "medium",
+    "n_reports": 3,
+    "days_since_last": 12,
+    "basis": "own reports"
+   }
   }
  ],
  "bingo_line": [
@@ -7400,7 +7430,8 @@
   }
  ],
  "refusal_reason": null,
- "compute_ms": 6683,
+ "verify_chargers": [],
+ "compute_ms": 3709,
  "n_runs": 1500,
  "data_sources": {
   "route": {

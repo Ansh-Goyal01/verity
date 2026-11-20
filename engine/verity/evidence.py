@@ -34,6 +34,7 @@ from .trips import haversine_m
 
 IST = timezone(timedelta(hours=5, minutes=30), "IST")
 MATCH_RADIUS_M = 100.0
+GEOCODED_RADIUS_M = 250.0  # an address geocode is coarser than a map pin (WP3, approximate - verify)
 NAME_MIN_SCORE = 0.5  # share of the shorter name's tokens found in the other name (approximate - verify)
 DEFAULT_HOUR_IST = 12  # evidence with a date but no time is placed at noon IST (+-12 h, disclosed)
 APP_WINDOW_H = 48.0  # "operator app showed available within 48 h of a dated failure report" (either side)
@@ -87,11 +88,16 @@ def url_location(url: str) -> tuple[float, float] | None:
     return None
 
 
-def row_location(row: Row) -> tuple[tuple[float, float] | None, str]:
+def row_location(row: Row, geocoded: dict[str, tuple[float, float]] | None = None
+                 ) -> tuple[tuple[float, float] | None, str]:
+    """lat/lon typed in the row, then a map-link pin, then the row's address geocoded (WP3), in that order."""
     if row.get("lat") and row.get("lon"):
         return (float(row["lat"]), float(row["lon"])), "lat_lon"
-    loc = url_location(row.get("place_url", ""))
-    return (loc, "place_url_coordinates") if loc else (None, "")
+    if loc := url_location(row.get("place_url", "")):
+        return loc, "place_url_coordinates"
+    if geocoded and (g := geocoded.get(row.get("evidence_id", ""))):
+        return (float(g[0]), float(g[1])), "geocoded_address"
+    return None, ""
 
 
 # ---------------------------------------------------------------- matching
@@ -112,25 +118,28 @@ def _distances(chargers: Sequence[ChargerRecord], lat: float, lon: float) -> np.
                        np.array([c.lat for c in chargers]), np.array([c.lon for c in chargers]))
 
 
-def _by_location(row: Row, chargers: Sequence[ChargerRecord]) -> Match:
+def _by_location(row: Row, chargers: Sequence[ChargerRecord],
+                 geocoded: dict[str, tuple[float, float]] | None = None) -> Match:
     rid = row["evidence_id"]
-    loc, how = row_location(row)
+    loc, how = row_location(row, geocoded)
     if loc is None:
-        return Match(EVIDENCE_FILE, rid, None, "", "no lat/lon and no coordinates in place_url")
+        return Match(EVIDENCE_FILE, rid, None, "", "no lat/lon, no coordinates in place_url, no street-level geocode")
+    radius = GEOCODED_RADIUS_M if how == "geocoded_address" else MATCH_RADIUS_M
     if not chargers:
         return Match(EVIDENCE_FILE, rid, None, "", "charger directory is empty")
     label = f"{row.get('charger_name', '')} {row.get('operator', '')}"
     dist = _distances(chargers, *loc)
     near = [(name_similarity(label, f"{chargers[i].name} {chargers[i].operator}"), float(dist[i]), chargers[i])
-            for i in np.flatnonzero(dist <= MATCH_RADIUS_M)]
+            for i in np.flatnonzero(dist <= radius)]
     good = sorted((s for s in near if s[0] >= NAME_MIN_SCORE), key=lambda s: (-s[0], s[1]))
     if good:
         score, d, best = good[0]
-        return Match(EVIDENCE_FILE, rid, best.id, "location_name", "", round(d, 1), round(score, 2))
+        method = "geocoded_name" if how == "geocoded_address" else "location_name"
+        return Match(EVIDENCE_FILE, rid, best.id, method, "", round(d, 1), round(score, 2))
     i = int(np.argmin(dist))
     nearest = chargers[i]
-    reason = (f"directory chargers within {MATCH_RADIUS_M:.0f} m but none with a similar name (via {how})" if near
-              else f"no directory charger within {MATCH_RADIUS_M:.0f} m (via {how})")
+    reason = (f"directory chargers within {radius:.0f} m but none with a similar name (via {how})" if near
+              else f"no directory charger within {radius:.0f} m (via {how})")
     return Match(EVIDENCE_FILE, rid, None, "", reason, round(float(dist[i]), 1),
                  round(name_similarity(label, f"{nearest.name} {nearest.operator}"), 2), nearest.id)
 
@@ -146,7 +155,8 @@ def _agreeing(keys_to_ids: dict[object, set[str]]) -> dict[object, str]:
 
 
 def match_evidence(rows: Sequence[Row], chargers: Sequence[ChargerRecord],
-                   overrides: dict[str, str]) -> dict[str, Match]:
+                   overrides: dict[str, str], geocoded: dict[str, tuple[float, float]] | None = None
+                   ) -> dict[str, Match]:
     ids = {c.id for c in chargers}
     by_source = {s: c.id for c in chargers for s in c.source_ids}
     out: dict[str, Match] = {}
@@ -157,7 +167,7 @@ def match_evidence(rows: Sequence[Row], chargers: Sequence[ChargerRecord],
         elif (link := directory_link(row.get("place_url", ""))) and link in by_source:
             out[rid] = Match(EVIDENCE_FILE, rid, by_source[link], "directory_link")
         else:
-            out[rid] = _by_location(row, chargers)
+            out[rid] = _by_location(row, chargers, geocoded)
     seen: dict[object, set[str]] = defaultdict(set)
     for r in rows:
         if r.get("place_url") and (cid := out[r["evidence_id"]].charger_id):

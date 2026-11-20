@@ -20,7 +20,11 @@ import numpy as np
 
 from verity.chargers import (
     CHARGERS_FILE,
+    INDIA_CHARGERS_FILE,
+    NCR_CHARGERS_FILE,
     assign_ids,
+    extend_directory,
+    load_chargers,
     merge_duplicates,
     parse_ocm_poi,
     parse_osm_element,
@@ -55,6 +59,67 @@ def fetch_ocm(client: CachedClient, key: str) -> list[dict]:
                                      headers={"X-API-Key": key})
         pois.extend(payload)
     return pois
+
+
+INDIA_TIMEOUT_S = 240.0
+OCM_PAGE = 5000  # Open Charge Map results per request for all of India
+
+
+def overpass_india_query() -> str:
+    """Every amenity=charging_station inside India's national boundary (OSM admin_level 2, ISO3166-1 = IN)."""
+    return ('[out:json][timeout:180];area["ISO3166-1"="IN"][admin_level=2]->.in;'
+            '(node["amenity"="charging_station"](area.in);way["amenity"="charging_station"](area.in););out center tags;')
+
+
+def fetch_ocm_india(client: CachedClient, key: str) -> list[dict]:
+    payload, _ = client.get_json(OCM_URL, {"output": "json", "countrycode": "IN", "maxresults": OCM_PAGE,
+                                           "compact": "false", "verbose": "false"}, headers={"X-API-Key": key})
+    return payload
+
+
+def main_india() -> int:
+    """WP3: the frozen NCR snapshot (ids unchanged) + every other Indian charger. No synthetic fallback: on a network
+    failure nothing is written and the API keeps using the NCR file."""
+    base, base_meta = load_chargers(NCR_CHARGERS_FILE)
+    if base_meta.get("is_simulated"):
+        print("The NCR base file is SYNTHETIC; rebuild it with the plain import first.")
+        return 1
+    client = CachedClient(timeout=INDIA_TIMEOUT_S)
+    try:
+        payload, _ = client.post_json(OVERPASS_URL, {"data": overpass_india_query()})
+    except (NetworkUnavailable, RequestBudgetExceeded) as exc:
+        print(f"OpenStreetMap fetch failed ({exc}); nothing written, the API keeps {NCR_CHARGERS_FILE.name}")
+        return 1
+    parsed = [parse_osm_element(el) for el in payload.get("elements", [])]
+    osm = [r for r, _ in parsed if r is not None]
+    records, ocm_n, ocm_status = list(osm), None, ""
+    key = load_env().get("OCM_API_KEY", "")
+    if not key:
+        ocm_status = "BLOCKED: Open Charge Map needs a free API key (OCM_API_KEY in .env); not fetched"
+    else:
+        try:
+            ocm = [r for r in (parse_ocm_poi(p) for p in fetch_ocm_india(client, key)) if r is not None]
+            ocm_n, ocm_status = len(ocm), ("fetched" if len(ocm) < OCM_PAGE else f"fetched; hit the {OCM_PAGE} page cap")
+            records += ocm
+        except (NetworkUnavailable, RequestBudgetExceeded, KeyError, TypeError) as exc:
+            ocm_status = f"FAILED: {type(exc).__name__}"
+    frozen = base_meta.get("bboxes") or [list(b) for b in BBOXES]
+    final, stats = extend_directory(base, records, frozen)
+    out = {
+        "is_simulated": False, "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "scope": "India (OSM area ISO3166-1=IN)", "base_file": NCR_CHARGERS_FILE.name,
+        "base_generated_at": base_meta.get("generated_at"), "frozen_bboxes": frozen, "bboxes": frozen,
+        "sources": {"osm_records": len(osm), "ocm_records": ocm_n, "ocm_status": ocm_status},
+        "extend": stats, "connectors_dropped_no_tagged_power": sum(d for _, d in parsed),
+        "note": ("NCR + Noida-Agra are the frozen base snapshot (ids CH-0001.. unchanged); new chargers inside those "
+                 "boxes are not added. site_type is a keyword heuristic; untagged connector power is dropped."),
+        "chargers": [r.model_dump(mode="json") for r in final],
+    }
+    INDIA_CHARGERS_FILE.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    print(f"OSM {len(osm)} | OCM {ocm_n} ({ocm_status}) | {stats} | total {len(final)} -> {INDIA_CHARGERS_FILE}")
+    print("top operators:", Counter(r.operator or "(none)" for r in final).most_common(10))
+    print(f"requests made in total: {client.requests_made()}")
+    return 0
 
 
 def synthetic_corridor() -> list[ChargerRecord]:
@@ -132,4 +197,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main_india() if "--india" in sys.argv[1:] else main())

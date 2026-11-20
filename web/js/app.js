@@ -114,7 +114,7 @@
     return `<span class="tt-k">${esc(c.source || 'directory')} · ${esc(c.charger_id)}</span><br><b>${esc(c.name)}</b><br>`
       + `${c.p_works === null || c.p_works === undefined ? 'Chance it works: unknown' : pct(c.p_works) + ' chance it works'}<br>`
       + `${isNum(c.n_reports) ? c.n_reports : '—'} reports · ${c.days_since_last === null || c.days_since_last === undefined ? 'no recent report' : 'last ' + c.days_since_last + ' days ago'}<br>`
-      + `Trust: <b>${esc(c.trust_level || 'unknown')}</b>${c.operator ? ' · ' + esc(c.operator) : ''}`;
+      + `Trust: <b>${esc(c.trust_level || 'unknown')}</b>${c.trust_basis ? ' (' + esc(c.trust_basis) + ')' : ''}${c.operator ? ' · ' + esc(c.operator) : ''}`;
   }
 
   /* ------------------------------------------------------------------ shared UI */
@@ -244,7 +244,7 @@
         <div class="rel-title"><small>DISPATCH RELEASE · ${esc(p.plan_id)}</small><h2>${esc(id)} · ${esc(v.label)} — ${esc(b.origin.name)} to ${esc(b.destination.name)}</h2><p>${esc(v.health_note)} · ${v.trips_calibrated} calibrated trips · usable ${isNum(v.usable_kwh_estimate?.p50) ? v.usable_kwh_estimate.p50 + ' kWh (p10 ' + v.usable_kwh_estimate.p10 + ', p90 ' + v.usable_kwh_estimate.p90 + ')' : '—'}</p></div>
         ${stamp(p.decision, 'big' + (REDUCED ? '' : ' slam'))}
       </div>
-      ${refused ? `<div class="refusal-box"><b style="color:var(--unknown)">Not released.</b> ${esc(p.refusal_reason)}</div>` : ''}
+      ${refused ? `<div class="refusal-box"><b style="color:var(--unknown)">Not released.</b> ${esc(p.refusal_reason)}${(p.verify_chargers || []).length ? `<br><b>Verify before departure:</b> ${p.verify_chargers.map(v => `${esc(v.name)} <span class="op">(${esc(v.charger_id)} · ${esc(v.trust?.basis || 'prior only')})</span>`).join(', ')}` : ''}</div>` : ''}
       <div class="rel-stats">
         <div><small>Target</small><b>${pct(b.target_confidence)}</b></div>
         <div><small>Distance</small><b>${isNum(p.route?.distance_km) ? round1(p.route.distance_km) + ' km' : '—'}</b></div>
@@ -283,7 +283,7 @@
       if (at) L.circleMarker(at, { radius: 7, color: tok('--nogo'), weight: 3, fillColor: tok('--bg'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Point of no return</span><br><b>km ${round1(p.point_of_no_return_km)}</b><br>Past here, turning back is no longer the safe option.`).addTo(m.layer);
     }
     (p.alternates || []).forEach(a => L.circleMarker([a.lat, a.lon], { radius: 9, color: tok('--unknown'), weight: 3, fillColor: tok('--bg'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Alternate · ${esc(a.charger_id)}</span><br><b>${esc(a.name)}</b><br>${pct(a.p_reach)} chance to reach · ${pct(a.p_works)} chance it works`).addTo(m.layer));
-    (p.stops || []).forEach((s, i) => L.circleMarker([s.lat, s.lon], { radius: 11, color: tok('--bg'), weight: 3, fillColor: tok('--accent'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Planned stop ${i + 1} · km ${round1(s.km_along_route)}</span><br><b>${esc(s.name)}</b><br>${pct(s.p_works)} chance it works · charge ${s.charge_minutes} min<br>${s.evidence?.n_reports ?? '—'} reports · trust ${esc(s.evidence?.trust_level || 'unknown')}`).addTo(m.layer));
+    (p.stops || []).forEach((s, i) => L.circleMarker([s.lat, s.lon], { radius: 11, color: tok('--bg'), weight: 3, fillColor: tok('--accent'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Planned stop ${i + 1} · km ${round1(s.km_along_route)}</span><br><b>${esc(s.name)}</b><br>${pct(s.p_works)} chance it works · charge ${s.charge_minutes} min<br>${s.evidence?.n_reports ?? '—'} reports · trust ${esc(s.evidence?.trust_level || 'unknown')}${s.trust?.basis ? ' · ' + esc(s.trust.basis) : ''}`).addTo(m.layer));
     endpointMarkers(m, state.scenario.booking);
     $('#d-legend').innerHTML = `<span><i style="background:var(--accent)"></i>Planned stop</span><span><i class="ring" style="border-color:var(--unknown)"></i>Alternate</span><span><i class="ring" style="border-color:var(--nogo)"></i>Point of no return</span>` + ['high', 'medium', 'low', 'unknown'].map(t => `<span><i style="background:${trustColor(t)};opacity:.7"></i>${t} trust</span>`).join('');
     requestAnimationFrame(() => fitMap(m));
@@ -291,7 +291,7 @@
 
   function renderPlan(p, v) {
     const items = [{ km: 0, cls: 'start', title: state.scenario.booking.origin.name, body: `Depart with ${v.soc_pct}% battery`, tags: [] }];
-    (p.stops || []).forEach((s, i) => items.push({ km: s.km_along_route, cls: 'stop', title: s.name, body: `Arrive around ${s.arrive_soc_p50}% (p50) and charge for ${s.charge_minutes} min`, tags: [`<span class="tag"><b>${pct(s.p_works)}</b> works</span>`, `<span class="tag">${s.evidence?.n_reports ?? '—'} reports${isNum(s.evidence?.days_since_last) ? `, last ${s.evidence.days_since_last} d ago` : ''}</span>`, `<span class="tag ${esc(s.evidence?.trust_level || 'unknown')}">trust ${esc(s.evidence?.trust_level || 'unknown')}</span>`], label: `Stop ${i + 1}` }));
+    (p.stops || []).forEach((s, i) => items.push({ km: s.km_along_route, cls: 'stop', title: s.name, body: `Arrive around ${s.arrive_soc_p50}% (p50) and charge for ${s.charge_minutes} min`, tags: [`<span class="tag"><b>${pct(s.p_works)}</b> works</span>`, `<span class="tag">${s.evidence?.n_reports ?? '—'} reports${isNum(s.evidence?.days_since_last) ? `, last ${s.evidence.days_since_last} d ago` : ''}</span>`, `<span class="tag ${esc(s.evidence?.trust_level || 'unknown')}">trust ${esc(s.evidence?.trust_level || 'unknown')}</span>`, ...(s.trust?.basis ? [`<span class="tag">${esc(s.trust.basis)}</span>`] : [])], label: `Stop ${i + 1}` }));
     if (isNum(p.point_of_no_return_km)) items.push({ km: p.point_of_no_return_km, cls: 'ponr', title: 'Point of no return', body: 'After this point the safe options are ahead, not behind.', tags: [] });
     items.push({ km: p.route?.distance_km, cls: 'end', title: state.scenario.booking.destination.name, body: isNum(p.arrival_soc?.p50) ? `Arrive with about ${p.arrival_soc.p50}% (p50)` : 'Arrival battery unavailable', tags: [] });
     items.sort((a, b) => (a.km ?? 0) - (b.km ?? 0));

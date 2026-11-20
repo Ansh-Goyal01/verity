@@ -573,6 +573,7 @@ class DispatchResult:
     state: "PlanState | None" = field(default=None, repr=False)
     reason: str = ""  # one sentence naming the charger that carries the decision (W0.6)
     reason_facts: dict | None = None  # the numbers behind it, for speech in other languages
+    verify_chargers: list[dict] = field(default_factory=list)  # WP3: verifying these could clear a refusal
 
 
 @dataclass(frozen=True, eq=False)
@@ -590,6 +591,13 @@ def _evidence(node: Node) -> dict:
     t = node.trust
     return {"n_reports": t.n_reports if t else 0, "days_since_last": None if not t or t.days_since_last is None
             else int(round(t.days_since_last)), "trust_level": t.trust_level if t else "unknown"}
+
+
+def trust_block(node: Node) -> dict:
+    """WP3 ``trust`` on every stop and backup: level, recent reports, age and where the estimate comes from."""
+    e, t = _evidence(node), node.trust
+    return {"level": e["trust_level"], "n_reports": e["n_reports"], "days_since_last": e["days_since_last"],
+            "basis": t.basis if t is not None else "prior only"}
 
 
 def _stale(node: Node) -> bool:
@@ -682,6 +690,7 @@ def dispatch(
     # "90 % / NO_GO" for a 90 % target; 2.5 points is below the Monte Carlo's own resolution anyway.
     shown, shown_pess = round_prob(conf), round_prob(conf_pess)
     decision, refusal = "GO" if meets_target(conf, target_confidence) else "NO_GO", None
+    charger_refusal = False  # the refusal is about charger evidence (WP3: say which chargers to verify)
     if thin_vehicle:
         decision = "INSUFFICIENT_EVIDENCE"
         refusal = ("This vehicle has no calibrated trips yet, so its real range is unknown. Log one or two short "
@@ -697,12 +706,20 @@ def dispatch(
                       "clear."))
     elif decision == "GO" and shown_pess < target_confidence - 1e-9 and trust_aware:
         weak = ", ".join(sorted({n.charger.name if n.charger else n.id for n in stale}))
-        decision = "INSUFFICIENT_EVIDENCE"
+        decision, charger_refusal = "INSUFFICIENT_EVIDENCE", True
+        n_weak = len({n.id for n in stale})
         refusal = (f"The plan only meets the {target_confidence:.0%} target if chargers with stale or missing reports "
                    f"({weak}) work; with a pessimistic reading of them confidence falls to about {shown_pess:.0%}. "
-                   "Ask the community to verify them before departure.")
+                   f"Verify {'this charger' if n_weak == 1 else f'these {n_weak} chargers'} and the plan stands at "
+                   f"today's estimate of {shown:.0%} (target {target_confidence:.0%}).")
 
     result = _assemble(vehicle, ctx, stops, ev, nodes, decision, refusal, polyline or [], rng)
+    if charger_refusal:
+        seen: dict[str, dict] = {}
+        for n in stale:
+            seen.setdefault(n.id, {"charger_id": n.id, "name": n.charger.name if n.charger else n.id,
+                                   "trust": trust_block(n)})
+        result.verify_chargers = list(seen.values())
     if compute_levers:  # lever re-plans read only the confidence; skip their reason
         without = lambda node: evaluate_plan(ctx, stops, np.random.default_rng(seed + 4),  # noqa: E731
                                              p_override=None if node is None else {node.id: 0.0}).confidence
@@ -749,7 +766,7 @@ def _assemble(vehicle: VehicleContext, ctx: Ctx, stops: Sequence[Stop], ev: Plan
             "km_along_route": round(n.km, 1),
             "arrive_soc_p50": int(round(float(np.nanmedian(arr)))) if np.isfinite(arr).any() else 0,
             "charge_minutes": int(round(float(ev.gains[i].mean()) * ctx.min_per_pp(n) + 0.0)),
-            "p_works": round_prob(n.p_works), "evidence": _evidence(n),
+            "p_works": round_prob(n.p_works), "evidence": _evidence(n), "trust": trust_block(n),
             "power_assumed": n.kw is None,
         })
         for alt in st.alts:
@@ -758,7 +775,8 @@ def _assemble(vehicle: VehicleContext, ctx: Ctx, stops: Sequence[Stop], ev: Plan
                               "name": alt.charger.name if alt.charger else alt.id,
                               "lat": alt.charger.lat if alt.charger else None,
                               "lon": alt.charger.lon if alt.charger else None,
-                              "p_reach": round_prob(reach), "p_works": round_prob(alt.p_works)})
+                              "p_reach": round_prob(reach), "p_works": round_prob(alt.p_works),
+                              "trust": trust_block(alt)})
     bingo = bingo_line(ctx, stops, rng)
     exp = np.quantile(ev.trace, [0.1, 0.5, 0.9], axis=0)
     for i, row in enumerate(bingo):

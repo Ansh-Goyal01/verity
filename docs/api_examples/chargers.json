@@ -12,7 +12,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0002",
@@ -26,7 +27,8 @@
    "trust_level": "medium",
    "n_reports": 3,
    "days_since_last": 12,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "own reports"
   },
   {
    "charger_id": "CH-0003",
@@ -40,7 +42,8 @@
    "trust_level": "high",
    "n_reports": 10,
    "days_since_last": 1,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "own reports"
   },
   {
    "charger_id": "CH-0004",
@@ -54,7 +57,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0005",
@@ -68,7 +72,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0006",
@@ -82,7 +87,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0007",
@@ -96,7 +102,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0008",
@@ -110,7 +117,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0009",
@@ -124,7 +132,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0010",
@@ -138,7 +147,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0012",
@@ -152,7 +162,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0014",
@@ -166,7 +177,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0015",
@@ -180,7 +192,8 @@
    "trust_level": "low",
    "n_reports": 1,
    "days_since_last": 41,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "own reports"
   },
   {
    "charger_id": "CH-0017",
@@ -194,7 +207,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0018",
@@ -208,7 +222,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0019",
@@ -222,7 +237,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0020",
@@ -236,7 +252,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0021",
@@ -250,7 +267,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0022",
@@ -264,7 +282,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0023",
@@ -278,7 +297,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0024",
@@ -292,7 +312,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0025",
@@ -306,7 +327,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0026",
@@ -320,7 +342,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0027",
@@ -334,7 +357,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0028",
@@ -348,7 +372,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0029",
@@ -362,7 +387,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0030",
@@ -376,7 +402,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0031",
@@ -390,7 +417,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0032",
@@ -404,7 +432,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0033",
@@ -418,7 +447,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0034",
@@ -432,7 +462,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0035",
@@ -446,7 +477,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0036",
@@ -460,7 +492,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0037",
@@ -474,7 +507,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0038",
@@ -488,7 +522,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0039",
@@ -502,7 +537,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0040",
@@ -516,7 +552,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0041",
@@ -530,7 +567,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0042",
@@ -544,7 +582,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0043",
@@ -558,7 +597,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0044",
@@ -572,7 +612,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0045",
@@ -586,7 +627,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0046",
@@ -600,7 +642,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0047",
@@ -614,7 +657,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0048",
@@ -628,7 +672,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0049",
@@ -642,7 +687,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0050",
@@ -656,7 +702,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0051",
@@ -670,7 +717,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0052",
@@ -684,7 +732,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0053",
@@ -698,7 +747,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0054",
@@ -712,7 +762,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0055",
@@ -726,7 +777,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0056",
@@ -740,7 +792,8 @@
    "trust_level": "high",
    "n_reports": 7,
    "days_since_last": 1,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "own reports"
   },
   {
    "charger_id": "CH-0057",
@@ -754,7 +807,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0058",
@@ -768,7 +822,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0059",
@@ -782,7 +837,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0060",
@@ -796,7 +852,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0061",
@@ -810,7 +867,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0062",
@@ -824,7 +882,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0063",
@@ -838,7 +897,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0064",
@@ -852,7 +912,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0065",
@@ -866,7 +927,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0066",
@@ -880,7 +942,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0067",
@@ -894,7 +957,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0068",
@@ -908,7 +972,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0069",
@@ -922,7 +987,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0070",
@@ -936,7 +1002,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0071",
@@ -950,7 +1017,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0072",
@@ -964,7 +1032,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0073",
@@ -978,7 +1047,8 @@
    "trust_level": "medium",
    "n_reports": 3,
    "days_since_last": 2,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "own reports"
   },
   {
    "charger_id": "CH-0074",
@@ -992,7 +1062,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0075",
@@ -1006,7 +1077,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0076",
@@ -1020,7 +1092,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0077",
@@ -1034,7 +1107,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0078",
@@ -1061,7 +1135,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0079",
@@ -1075,7 +1150,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0080",
@@ -1089,7 +1165,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0081",
@@ -1103,7 +1180,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0082",
@@ -1117,7 +1195,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0083",
@@ -1131,7 +1210,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0084",
@@ -1145,7 +1225,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0085",
@@ -1159,7 +1240,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0086",
@@ -1173,7 +1255,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0087",
@@ -1187,7 +1270,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0088",
@@ -1201,7 +1285,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0089",
@@ -1215,7 +1300,8 @@
    "trust_level": "medium",
    "n_reports": 4,
    "days_since_last": 1,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "own reports"
   },
   {
    "charger_id": "CH-0090",
@@ -1229,7 +1315,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0091",
@@ -1243,7 +1330,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0092",
@@ -1257,7 +1345,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0093",
@@ -1271,7 +1360,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0094",
@@ -1285,7 +1375,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0095",
@@ -1299,7 +1390,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0096",
@@ -1313,7 +1405,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0097",
@@ -1327,7 +1420,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0098",
@@ -1341,7 +1435,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0099",
@@ -1355,7 +1450,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0100",
@@ -1369,7 +1465,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0101",
@@ -1383,7 +1480,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0102",
@@ -1397,7 +1495,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0103",
@@ -1411,7 +1510,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0104",
@@ -1425,7 +1525,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0105",
@@ -1439,7 +1540,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0106",
@@ -1453,7 +1555,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0107",
@@ -1467,7 +1570,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0108",
@@ -1481,7 +1585,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0109",
@@ -1495,7 +1600,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0110",
@@ -1509,7 +1615,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0111",
@@ -1523,7 +1630,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0112",
@@ -1537,7 +1645,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0113",
@@ -1551,7 +1660,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0114",
@@ -1565,7 +1675,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0115",
@@ -1579,7 +1690,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0116",
@@ -1593,7 +1705,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0117",
@@ -1607,7 +1720,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0118",
@@ -1621,7 +1735,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0119",
@@ -1635,7 +1750,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0120",
@@ -1649,7 +1765,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0121",
@@ -1663,7 +1780,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0122",
@@ -1677,7 +1795,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0123",
@@ -1691,7 +1810,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0124",
@@ -1705,7 +1825,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0125",
@@ -1719,7 +1840,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0126",
@@ -1733,7 +1855,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0127",
@@ -1747,7 +1870,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0128",
@@ -1761,7 +1885,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0129",
@@ -1775,7 +1900,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0130",
@@ -1789,7 +1915,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0131",
@@ -1803,7 +1930,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0132",
@@ -1817,7 +1945,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0133",
@@ -1831,7 +1960,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0134",
@@ -1845,7 +1975,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0135",
@@ -1859,7 +1990,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0136",
@@ -1873,7 +2005,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0137",
@@ -1887,7 +2020,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0138",
@@ -1901,7 +2035,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0139",
@@ -1915,7 +2050,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0140",
@@ -1929,7 +2065,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0141",
@@ -1943,7 +2080,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0142",
@@ -1957,7 +2095,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0143",
@@ -1971,7 +2110,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0144",
@@ -1985,7 +2125,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0145",
@@ -1999,7 +2140,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0146",
@@ -2013,7 +2155,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0147",
@@ -2027,7 +2170,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0148",
@@ -2041,7 +2185,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0149",
@@ -2055,7 +2200,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0150",
@@ -2069,7 +2215,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0151",
@@ -2083,7 +2230,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0152",
@@ -2097,7 +2245,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0153",
@@ -2111,7 +2260,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0154",
@@ -2125,7 +2275,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0155",
@@ -2139,7 +2290,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0156",
@@ -2153,7 +2305,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0157",
@@ -2167,7 +2320,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0158",
@@ -2181,7 +2335,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0159",
@@ -2195,7 +2350,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0160",
@@ -2209,7 +2365,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0161",
@@ -2223,7 +2380,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0162",
@@ -2237,7 +2395,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0163",
@@ -2251,7 +2410,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0164",
@@ -2265,7 +2425,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0165",
@@ -2279,7 +2440,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0166",
@@ -2293,7 +2455,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0167",
@@ -2307,7 +2470,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0168",
@@ -2321,7 +2485,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0169",
@@ -2335,7 +2500,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0170",
@@ -2349,7 +2515,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0171",
@@ -2363,7 +2530,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0172",
@@ -2377,7 +2545,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0173",
@@ -2391,7 +2560,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0174",
@@ -2405,7 +2575,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0175",
@@ -2419,7 +2590,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0176",
@@ -2433,7 +2605,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0177",
@@ -2447,7 +2620,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0178",
@@ -2461,7 +2635,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0179",
@@ -2475,7 +2650,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0180",
@@ -2489,7 +2665,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0181",
@@ -2503,7 +2680,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0182",
@@ -2517,7 +2695,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0183",
@@ -2531,7 +2710,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0184",
@@ -2545,7 +2725,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0185",
@@ -2559,7 +2740,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0186",
@@ -2573,7 +2755,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0187",
@@ -2587,7 +2770,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0188",
@@ -2601,7 +2785,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0189",
@@ -2615,7 +2800,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0190",
@@ -2629,7 +2815,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0191",
@@ -2643,7 +2830,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0192",
@@ -2657,7 +2845,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0193",
@@ -2671,7 +2860,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0194",
@@ -2685,7 +2875,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0195",
@@ -2699,7 +2890,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0196",
@@ -2713,7 +2905,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0197",
@@ -2727,7 +2920,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0198",
@@ -2741,7 +2935,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0199",
@@ -2755,7 +2950,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0200",
@@ -2769,7 +2965,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0201",
@@ -2783,7 +2980,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0202",
@@ -2797,7 +2995,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0203",
@@ -2811,7 +3010,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0204",
@@ -2825,7 +3025,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0205",
@@ -2839,7 +3040,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0206",
@@ -2853,7 +3055,8 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "ocm"
+   "source": "ocm",
+   "trust_basis": "prior only"
   },
   {
    "charger_id": "CH-0207",
@@ -2867,7 +3070,97 @@
    "trust_level": "unknown",
    "n_reports": 0,
    "days_since_last": null,
-   "source": "osm"
+   "source": "osm",
+   "trust_basis": "prior only"
+  },
+  {
+   "charger_id": "CH-2290",
+   "name": "Adani",
+   "lat": 27.0572006,
+   "lon": 78.2727739,
+   "operator": "Adani",
+   "site_type": "unknown",
+   "connectors": [],
+   "p_works": 0.8,
+   "trust_level": "unknown",
+   "n_reports": 0,
+   "days_since_last": null,
+   "source": "osm",
+   "trust_basis": "prior only"
+  },
+  {
+   "charger_id": "CH-2291",
+   "name": "EV charging station (OpenStreetMap)",
+   "lat": 27.203849,
+   "lon": 78.1141208,
+   "operator": "",
+   "site_type": "unknown",
+   "connectors": [],
+   "p_works": 0.8,
+   "trust_level": "unknown",
+   "n_reports": 0,
+   "days_since_last": null,
+   "source": "osm",
+   "trust_basis": "prior only"
+  },
+  {
+   "charger_id": "CH-2320",
+   "name": "Tata Power Charging Station",
+   "lat": 29.004736226674396,
+   "lon": 77.03264404293509,
+   "operator": "Tata Power",
+   "site_type": "unknown",
+   "connectors": [
+    {
+     "type": "CCS (Type 2)",
+     "kw": 25.0
+    },
+    {
+     "type": "Type 2 (Tethered Connector) ",
+     "kw": 7.0
+    }
+   ],
+   "p_works": 0.8,
+   "trust_level": "unknown",
+   "n_reports": 0,
+   "days_since_last": null,
+   "source": "ocm",
+   "trust_basis": "prior only"
+  },
+  {
+   "charger_id": "CH-2321",
+   "name": "EV charging station (OpenStreetMap)",
+   "lat": 29.1437683,
+   "lon": 78.2392668,
+   "operator": "",
+   "site_type": "unknown",
+   "connectors": [],
+   "p_works": 0.8,
+   "trust_level": "unknown",
+   "n_reports": 0,
+   "days_since_last": null,
+   "source": "osm",
+   "trust_basis": "prior only"
+  },
+  {
+   "charger_id": "CH-2322",
+   "name": "Tata Power Charging Station",
+   "lat": 29.157943138865306,
+   "lon": 77.03586564376201,
+   "operator": "Tata Power",
+   "site_type": "unknown",
+   "connectors": [
+    {
+     "type": "CCS (Type 2)",
+     "kw": 25.0
+    }
+   ],
+   "p_works": 0.8,
+   "trust_level": "unknown",
+   "n_reports": 0,
+   "days_since_last": null,
+   "source": "ocm",
+   "trust_basis": "prior only"
   }
  ],
  "is_simulated": true

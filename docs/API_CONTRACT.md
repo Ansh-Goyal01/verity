@@ -698,6 +698,14 @@ fits the project. Nothing here is applied unless both sides agree.
 - Frontend note: debounce the place box (send after ~300 ms idle and 3+ characters) and pass the chosen result's `name`, `lat`, `lon` straight into `origin`/`destination`.
 - v8 addendum (code review, same day): new 422 `route_too_short` (ends under 1 km apart); 429 `rate_limited` when more than `VERITY_NEW_ROUTES_PER_HOUR` (default 20, server-wide) NEW routes are fetched in an hour (demo and already-fetched routes are never limited); the departure hour is read in IST whatever offset the request uses (02:30Z = the 08:00 forecast).
 
+### 2026-11-21 - v10: trust basis on stops and backups, `verify_chargers`, India-wide charger directory (finale WP3)
+
+- Reason: docs/FINALE_BUILD.md WP3. Chargers exist along any Indian route, and a refusal says which chargers to verify.
+- Every `stops[]` and `alternates[]` item gains `trust: {level, n_reports, days_since_last, basis}`, with `basis` one of "own reports" | "operator pool" | "prior only". The old `evidence` block on stops is unchanged.
+- Releases gain `verify_chargers: [{charger_id, name, trust}]`: non-empty only for the stale-charger INSUFFICIENT_EVIDENCE. Its `refusal_reason` now ends "Verify these N chargers and the plan stands at today's estimate of X% (target Y%)." instead of "Ask the community to verify them before departure."
+- `GET /api/chargers` rows gain `trust_basis`; its `is_simulated` is true only when a returned charger has a simulated source or simulated reports.
+- The directory is India-wide (2,349 chargers) when `data/processed/chargers_india.json` exists. Existing ids are unchanged; `POST /api/ride-check` keeps its NCR area. Demo dispatch decisions, confidences and stops are unchanged.
+
 ### 2026-11-20 - v9: `GET /api/vehicles`, any Indian car on `POST /api/dispatch`, `vehicle` + `calibration` (finale WP2)
 
 - Reason: docs/FINALE_BUILD.md WP2. A driver picks any real Indian car, not only the simulated demo fleet.

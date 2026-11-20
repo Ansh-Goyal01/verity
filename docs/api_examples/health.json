@@ -5,8 +5,8 @@
  "is_simulated": true,
  "graph": {
   "backend": "memory",
-  "nodes": 479,
-  "relationships": 519
+  "nodes": 4897,
+  "relationships": 8026
  },
  "sarvam_key_present": true
 }

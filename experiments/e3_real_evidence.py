@@ -24,7 +24,8 @@ from pathlib import Path
 
 from verity import evidence as ev
 from verity import india_eval as ie
-from verity.chargers import CHARGERS_FILE, chargers_near_route, load_chargers
+from verity.chargers import chargers_near_route, load_chargers
+from verity.evidence_load import load_geocoded, real_evidence
 from verity.corpus import APP_SNAPSHOTS, CHARGER_EVIDENCE, MATCH_OVERRIDES, VEHICLES, FileSpec, read_csv, usable_rows
 from verity.dispatch import VehicleContext, plan_only
 from verity.forecast import ForecastConfig
@@ -170,17 +171,20 @@ def run_e3_real(chargers: list[ChargerRecord], trust: dict, boxes: list, enriche
 
 # ---------------------------------------------------------------- main
 def run(corpus: Path = CORPUS_DIR, now: datetime | None = None, e3: bool = True,
-        chargers_file: Path = CHARGERS_FILE, write_side_files: bool = True) -> dict:
+        chargers_file: Path | None = None, write_side_files: bool = True,
+        geocoded: dict[str, tuple[float, float]] | None = None) -> dict:
+    """``chargers_file`` None = the API's directory (India when built); ``geocoded`` None = the saved geocodes."""
     now = now or datetime.now(timezone.utc)
     directory, meta = load_chargers(chargers_file)
+    if geocoded is None:  # saved geocodes are keyed by the REAL corpus's row ids: never apply them to another corpus
+        geocoded = load_geocoded() if Path(corpus).resolve() == CORPUS_DIR.resolve() else {}
+    real = real_evidence(directory, corpus, geocoded)  # the same path the API takes
     ev_rows, snap_rows = _rows(corpus, CHARGER_EVIDENCE), _rows(corpus, APP_SNAPSHOTS)
     overrides = {r["row_id"]: r["charger_id"] for r in _rows(corpus, MATCH_OVERRIDES)}
-    ev_m = ev.match_evidence(ev_rows, directory, overrides)
-    snap_m = ev.match_snapshots(snap_rows, ev_rows, ev_m, {c.id for c in directory}, overrides)
-    items = ev.items_from(ev_rows, snap_rows, ev_m, snap_m)
-    reports = ev.reports_from(items)
+    ev_m = {m.row_id: m for m in real.matches if m.file == ev.EVIDENCE_FILE}
+    snap_m = {m.row_id: m for m in real.matches if m.file != ev.EVIDENCE_FILE}
+    items, reports, chargers = real.items, real.reports, real.chargers
     updates = ev.rated_kw_updates(items)
-    chargers = ev.apply_rated_kw(directory, updates)
     # Rings are off: public channels co-report on popular chargers by nature, which is not collusion.
     fit = TrustEngine(chargers, use_rings=False, use_usage=False).estimate(reports, now) if reports else None
     trust = fit.chargers if fit else TrustEngine(chargers).estimate([], now).chargers

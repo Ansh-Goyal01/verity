@@ -180,6 +180,11 @@ the rows because the CSV has no notes column:
 
 > Availability on the takeover machine: raw BMW files are absent; real E1 is NOT DONE (dataset not on this machine). The profiling below is historical work completed before the fixed split; no test trips were opened in this takeover.
 
+## Charger directory and evidence locations (WP3)
+
+- `data/processed/chargers_india.json`: the NCR snapshot (`chargers_ncr.json`, ids CH-0001..CH-0207, unchanged) plus every other Indian charger from OpenStreetMap and Open Charge Map (`uv run python scripts/import_chargers.py --india`). New chargers inside the NCR / Noida-Agra boxes are not added, so existing ids never move.
+- `data/processed/evidence_geocoded.json`: Photon geocodes of evidence rows that had no location (`uv run python scripts/geocode_evidence.py`); only street/POI-level results are used. **Collectors: a lat/lon or a Google Maps pin link in the row is far better.** On 21 Nov no geocoded row matched a charger, so evidence without a pin does not reach trust.
+
 ## BMW i3 dataset: what is in the files (read this before using the loader)
 
 Source: "Battery and Heating Data in Real Driving Cycles", Steinstraeter, Buberger and Trifonov, TU Munich, Institute of

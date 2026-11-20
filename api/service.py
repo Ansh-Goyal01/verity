@@ -49,6 +49,7 @@ from verity.trust.graph_build import (
     plan_record,
     populate_road_network,
 )
+from verity.evidence_load import load_geocoded, real_evidence
 from verity.trust.clock import rebase_real_reports
 from verity.trust.reports_sim import NOW
 from verity.ridecheck import RideInput, ride_check
@@ -311,11 +312,16 @@ class EngineService(GraphEndpoints):
         # Any other route is fetched per request (WP1); the client factory is injectable so tests replay recordings.
         self.resolver = RouteResolver(self.route, self.snap, BOOKING, route_client or functools.cache(CachedClient))
         directory, self.directory_meta = load_chargers()
+        # WP3: real hand-collected evidence (verified rows matched to the directory) seeds the graph next to the
+        # simulated demo reports; it keeps is_simulated false, so real-route plans keep it.
+        self.real_evidence = real_evidence(directory, geocoded=load_geocoded())
+        directory = self.real_evidence.chargers
         self.demo_reports = demo_reports_for(chargers_near_route(directory, self.poly, self.poly_km, CORRIDOR_KM))
         self.driver_demo_reports = driver_demo_reports(directory)
         # The graph (Neo4j when it works, in-memory otherwise) is what trust and dispatch read; the directory file
         # only seeds it. VERITY_GRAPH=auto|memory|neo4j overrides the default (auto).
-        self.graph: GraphHandle = open_graph(directory, self.demo_reports + self.driver_demo_reports,
+        self.graph: GraphHandle = open_graph(directory, self.demo_reports + self.driver_demo_reports
+                                             + self.real_evidence.reports,
                                              prefer=graph_backend or os.environ.get("VERITY_GRAPH", "auto"))
         self._adopt(self.graph.call(self._read_view))
         self.graph.populate(lambda g: populate_road_network(g, self.near, self.trust, float(self.poly_km[-1]),
@@ -380,7 +386,7 @@ class EngineService(GraphEndpoints):
         chargers = [c for c in graph.chargers() if not c.id.startswith(TEST_PREFIX)]
         known = {c.id for c in chargers}
         reports = rebase_real_reports([r for r in graph.reports() if r.charger_id in known], self.clock())
-        trust = TrustEngine(chargers).estimate(reports, NOW).chargers
+        trust = TrustEngine(chargers, pool_operators=True).estimate(reports, NOW).chargers
         return GraphView(chargers, trust, chargers_near_route(chargers, self.poly, self.poly_km, CORRIDOR_KM),
                          tuple(reports))
 
@@ -498,7 +504,7 @@ class EngineService(GraphEndpoints):
         else:
             near = chargers_near_route(view.chargers, resolved.poly, resolved.poly_km, CORRIDOR_KM)
             reports = [r for r in view.reports if not r.is_simulated]
-            trust = TrustEngine(view.chargers).estimate(reports, NOW).chargers
+            trust = TrustEngine(view.chargers, pool_operators=True).estimate(reports, NOW).chargers
         ids = {rc.charger.id for rc in near}
         return near, trust, [r for r in reports if r.charger_id in ids]
 
@@ -572,6 +578,7 @@ class EngineService(GraphEndpoints):
             "alternates": result.alternates, "bingo_line": result.bingo_line,
             "point_of_no_return_km": result.point_of_no_return_km, "breakdown": result.breakdown,
             "levers": result.levers, "risk_sources": result.risk_sources, "refusal_reason": result.refusal_reason,
+            "verify_chargers": result.verify_chargers,
             "compute_ms": result.compute_ms, "n_runs": self.cfg.n_runs, "data_sources": sources,
             "vehicle": picked.vehicle, "calibration": picked.calibration,
             "is_simulated": any_simulated(sources),
@@ -601,10 +608,12 @@ class EngineService(GraphEndpoints):
 
     # -- ride check (F8b) --------------------------------------------------------------------------------------------
     def _check_area(self, *points: tuple[float, float]) -> None:
-        lats, lons = [c.lat for c in self.chargers], [c.lon for c in self.chargers]
+        """Ride-check stays inside the frozen NCR + Noida-Agra directory boxes even when the India file is loaded
+        (WP3): its gazetteer, demo pins and simulated fleet only cover that area."""
+        boxes = self.directory_meta.get("frozen_bboxes") or self.directory_meta.get("bboxes") or []
+        m = AREA_MARGIN_DEG
         for lat, lon in points:
-            if not (min(lats) - AREA_MARGIN_DEG <= lat <= max(lats) + AREA_MARGIN_DEG
-                    and min(lons) - AREA_MARGIN_DEG <= lon <= max(lons) + AREA_MARGIN_DEG):
+            if not any(s - m <= lat <= n + m and w - m <= lon <= e + m for s, w, n, e in boxes):
                 raise ApiError(422, "unsupported_area", "This prototype checks rides inside Delhi NCR and the Noida-Agra "
                                "corridor only (the area of its charger directory).")
 
@@ -693,8 +702,11 @@ class EngineService(GraphEndpoints):
                 "site_type": c.site_type, "connectors": [{"type": k.type, "kw": k.kw} for k in c.connectors],
                 "p_works": round_prob(t.p_works), "trust_level": t.trust_level, "n_reports": t.n_reports,
                 "days_since_last": None if t.days_since_last is None else int(round(t.days_since_last)),
-                "source": source_of(c)})
-        return {"chargers": out, "is_simulated": True}
+                "source": source_of(c), "trust_basis": t.basis})
+        ids = {o["charger_id"] for o in out}
+        simulated = (any(o["source"] == "simulated" for o in out)
+                     or any(r.is_simulated for r in view.reports if r.charger_id in ids))
+        return {"chargers": out, "is_simulated": simulated}
 
     def replay(self, plan_id: str) -> dict:
         """A scripted trip for the driver view: a trip that drains faster than planned (85th-percentile energy
