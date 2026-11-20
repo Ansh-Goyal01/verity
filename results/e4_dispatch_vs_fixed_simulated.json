@@ -20,83 +20,83 @@
    ],
    "stranded_only_fixed": 13,
    "stranded_only_dispatch": 2,
-   "mean_minutes_fixed_not_stranded": 208.5,
-   "mean_minutes_dispatch_not_stranded": 208.2,
-   "plan_ms_fixed_mean": 392.0,
-   "plan_ms_dispatch_mean": 354.0
+   "mean_minutes_fixed_not_stranded": 209.3,
+   "mean_minutes_dispatch_not_stranded": 208.7,
+   "plan_ms_fixed_mean": 92.0,
+   "plan_ms_dispatch_mean": 83.0
   },
   "10% chargers down": {
    "trips": 200,
-   "stranded_fixed": 29,
+   "stranded_fixed": 27,
    "stranded_dispatch": 6,
-   "stranding_rate_fixed": 0.145,
+   "stranding_rate_fixed": 0.135,
    "stranding_rate_dispatch": 0.03,
    "ci95_fixed": [
-    0.103,
-    0.2
+    0.094,
+    0.189
    ],
    "ci95_dispatch": [
     0.014,
     0.064
    ],
-   "stranded_only_fixed": 25,
+   "stranded_only_fixed": 23,
    "stranded_only_dispatch": 2,
-   "mean_minutes_fixed_not_stranded": 210.8,
-   "mean_minutes_dispatch_not_stranded": 210.8,
-   "plan_ms_fixed_mean": 526.0,
-   "plan_ms_dispatch_mean": 466.0
+   "mean_minutes_fixed_not_stranded": 211.2,
+   "mean_minutes_dispatch_not_stranded": 210.6,
+   "plan_ms_fixed_mean": 82.0,
+   "plan_ms_dispatch_mean": 72.0
   },
   "20% chargers down": {
    "trips": 200,
-   "stranded_fixed": 41,
-   "stranded_dispatch": 5,
-   "stranding_rate_fixed": 0.205,
-   "stranding_rate_dispatch": 0.025,
+   "stranded_fixed": 44,
+   "stranded_dispatch": 4,
+   "stranding_rate_fixed": 0.22,
+   "stranding_rate_dispatch": 0.02,
    "ci95_fixed": [
-    0.155,
-    0.266
+    0.168,
+    0.282
    ],
    "ci95_dispatch": [
-    0.011,
-    0.057
+    0.008,
+    0.05
    ],
-   "stranded_only_fixed": 36,
+   "stranded_only_fixed": 40,
    "stranded_only_dispatch": 0,
-   "mean_minutes_fixed_not_stranded": 216.3,
-   "mean_minutes_dispatch_not_stranded": 216.8,
-   "plan_ms_fixed_mean": 392.0,
-   "plan_ms_dispatch_mean": 370.0
+   "mean_minutes_fixed_not_stranded": 217.8,
+   "mean_minutes_dispatch_not_stranded": 218.3,
+   "plan_ms_fixed_mean": 81.0,
+   "plan_ms_dispatch_mean": 72.0
   },
   "40% chargers down": {
    "trips": 200,
-   "stranded_fixed": 75,
-   "stranded_dispatch": 7,
-   "stranding_rate_fixed": 0.375,
-   "stranding_rate_dispatch": 0.035,
+   "stranded_fixed": 64,
+   "stranded_dispatch": 6,
+   "stranding_rate_fixed": 0.32,
+   "stranding_rate_dispatch": 0.03,
    "ci95_fixed": [
-    0.311,
-    0.444
+    0.259,
+    0.388
    ],
    "ci95_dispatch": [
-    0.017,
-    0.07
+    0.014,
+    0.064
    ],
-   "stranded_only_fixed": 68,
-   "stranded_only_dispatch": 0,
-   "mean_minutes_fixed_not_stranded": 217.0,
-   "mean_minutes_dispatch_not_stranded": 218.9,
-   "plan_ms_fixed_mean": 265.0,
-   "plan_ms_dispatch_mean": 246.0
+   "stranded_only_fixed": 59,
+   "stranded_only_dispatch": 1,
+   "mean_minutes_fixed_not_stranded": 215.1,
+   "mean_minutes_dispatch_not_stranded": 216.8,
+   "plan_ms_fixed_mean": 79.0,
+   "plan_ms_dispatch_mean": 69.0
   }
  },
  "compute": {
   "real_route_km": 190.77,
   "chargers_near_route": 10,
   "runs_per_forecast": 2000,
-  "full_dispatch_ms_mean": 4425.0,
-  "full_dispatch_ms_max": 4734
+  "full_dispatch_ms_mean": 1979.0,
+  "full_dispatch_ms_max": 2441
  },
- "runtime_s": 728.4,
+ "runtime_s": 153.8,
  "notes": [
   "The 0 % row is the control: stranding there comes from energy-forecast error, not chargers.",
   "Chargers, reports and failures are SIMULATED; energy truth comes from verity.sim.",

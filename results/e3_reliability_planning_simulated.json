@@ -7,33 +7,33 @@
   "20% chargers down": {
    "trips": 200,
    "first_stop_changes": 0.805,
-   "stop_set_changes": 0.845,
-   "stranding_rate_blind": 0.095,
-   "stranding_rate_trust_aware": 0.025,
-   "stranded_only_when_blind": 14,
+   "stop_set_changes": 0.855,
+   "stranding_rate_blind": 0.08,
+   "stranding_rate_trust_aware": 0.02,
+   "stranded_only_when_blind": 12,
    "stranded_only_when_aware": 0,
-   "mean_minutes_blind_not_stranded": 215.8,
-   "mean_minutes_aware_not_stranded": 215.4,
-   "mean_minutes_lost_by_being_aware": -0.4,
-   "plan_ms_blind_mean": 350.0,
-   "plan_ms_aware_mean": 320.0
+   "mean_minutes_blind_not_stranded": 216.4,
+   "mean_minutes_aware_not_stranded": 215.9,
+   "mean_minutes_lost_by_being_aware": -0.6,
+   "plan_ms_blind_mean": 79.0,
+   "plan_ms_aware_mean": 71.0
   },
   "40% chargers down": {
    "trips": 200,
    "first_stop_changes": 0.805,
-   "stop_set_changes": 0.85,
-   "stranding_rate_blind": 0.16,
-   "stranding_rate_trust_aware": 0.035,
-   "stranded_only_when_blind": 26,
-   "stranded_only_when_aware": 1,
-   "mean_minutes_blind_not_stranded": 217.0,
+   "stop_set_changes": 0.83,
+   "stranding_rate_blind": 0.125,
+   "stranding_rate_trust_aware": 0.03,
+   "stranded_only_when_blind": 21,
+   "stranded_only_when_aware": 2,
+   "mean_minutes_blind_not_stranded": 217.2,
    "mean_minutes_aware_not_stranded": 217.0,
-   "mean_minutes_lost_by_being_aware": -0.0,
-   "plan_ms_blind_mean": 415.0,
-   "plan_ms_aware_mean": 381.0
+   "mean_minutes_lost_by_being_aware": -0.2,
+   "plan_ms_blind_mean": 79.0,
+   "plan_ms_aware_mean": 69.0
   }
  },
- "runtime_s": 343.6,
+ "runtime_s": 68.6,
  "notes": [
   "Chargers, reports and failures are SIMULATED; energy truth comes from verity.sim.",
   "Failure rates 20 % / 40 % follow PLAN s3 figures (approximate - verify)."

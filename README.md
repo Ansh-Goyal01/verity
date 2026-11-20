@@ -105,9 +105,9 @@ stale). A count of 0 means nothing has been collected yet. The live version is `
 | Result | Data | n | Outcome |
 |---|---|---|---|
 | E4 stranded trips, 0% chargers down | simulated | 200 trips | fixed plan 9.0% (5.8% to 13.8%), dispatch 3.5% (1.7% to 7.0%) |
-| E4 stranded trips, 20% chargers down | simulated | 200 trips | fixed plan 20.5% (15.5% to 26.6%), dispatch 2.5% (1.1% to 5.7%) |
-| E4 stranded trips, 40% chargers down | simulated | 200 trips | fixed plan 37.5% (31.1% to 44.4%), dispatch 3.5% (1.7% to 7.0%) |
-| E3 stranded trips, 40% chargers down | simulated | 200 trips | reliability-blind 16.0%, trust-aware 3.5% |
+| E4 stranded trips, 20% chargers down | simulated | 200 trips | fixed plan 22.0% (16.8% to 28.2%), dispatch 2.0% (0.8% to 5.0%) |
+| E4 stranded trips, 40% chargers down | simulated | 200 trips | fixed plan 32.0% (25.9% to 38.8%), dispatch 3.0% (1.4% to 6.4%) |
+| E3 stranded trips, 40% chargers down | simulated | 200 trips | reliability-blind 12.5%, trust-aware 3.0% |
 | E2 the 90% arrival band covers the outcome | simulated | 540 trips | shared trip factors 91.8%, independent segments 27.6% |
 | BMW i3 usable-capacity error | REAL (Germany) | 19 trips | -10.5%; truth inside the 95% interval: yes, inside the 80% interval: no |
 | BMW i3 battery drop per trip | REAL (Germany) | 19 trips | median error 0.95 points; the 95% band covers 47.0% of trips |

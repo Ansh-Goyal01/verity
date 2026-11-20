@@ -7488,7 +7488,7 @@
     ],
     "refusal_reason": null,
     "verify_chargers": [],
-    "compute_ms": 4864,
+    "compute_ms": 3263,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -14931,7 +14931,7 @@
     ],
     "refusal_reason": null,
     "verify_chargers": [],
-    "compute_ms": 4083,
+    "compute_ms": 3121,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -22412,7 +22412,7 @@
       }
      }
     ],
-    "compute_ms": 3698,
+    "compute_ms": 3340,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -26240,7 +26240,7 @@
    ],
    "levers": [],
    "earning_rs_per_hour": 60.0,
-   "compute_ms": 443,
+   "compute_ms": 354,
    "n_runs": 1500,
    "speech": {
     "en-IN": "Take the ride. The chance of completing it and reaching a working charger is 95 percent or more. After the drop, charge at Radisson Blu Plaza Delhi Airport: about 79 minutes, roughly 80 rupees at an example earning rate.",
@@ -28398,30 +28398,30 @@
     "20% chargers down": {
      "trips": 200,
      "first_stop_changes": 0.805,
-     "stop_set_changes": 0.845,
-     "stranding_rate_blind": 0.095,
-     "stranding_rate_trust_aware": 0.025,
-     "stranded_only_when_blind": 14,
+     "stop_set_changes": 0.855,
+     "stranding_rate_blind": 0.08,
+     "stranding_rate_trust_aware": 0.02,
+     "stranded_only_when_blind": 12,
      "stranded_only_when_aware": 0,
-     "mean_minutes_blind_not_stranded": 215.8,
-     "mean_minutes_aware_not_stranded": 215.4,
-     "mean_minutes_lost_by_being_aware": -0.4,
-     "plan_ms_blind_mean": 350.0,
-     "plan_ms_aware_mean": 320.0
+     "mean_minutes_blind_not_stranded": 216.4,
+     "mean_minutes_aware_not_stranded": 215.9,
+     "mean_minutes_lost_by_being_aware": -0.6,
+     "plan_ms_blind_mean": 79.0,
+     "plan_ms_aware_mean": 71.0
     },
     "40% chargers down": {
      "trips": 200,
      "first_stop_changes": 0.805,
-     "stop_set_changes": 0.85,
-     "stranding_rate_blind": 0.16,
-     "stranding_rate_trust_aware": 0.035,
-     "stranded_only_when_blind": 26,
-     "stranded_only_when_aware": 1,
-     "mean_minutes_blind_not_stranded": 217.0,
+     "stop_set_changes": 0.83,
+     "stranding_rate_blind": 0.125,
+     "stranding_rate_trust_aware": 0.03,
+     "stranded_only_when_blind": 21,
+     "stranded_only_when_aware": 2,
+     "mean_minutes_blind_not_stranded": 217.2,
      "mean_minutes_aware_not_stranded": 217.0,
-     "mean_minutes_lost_by_being_aware": -0.0,
-     "plan_ms_blind_mean": 415.0,
-     "plan_ms_aware_mean": 381.0
+     "mean_minutes_lost_by_being_aware": -0.2,
+     "plan_ms_blind_mean": 79.0,
+     "plan_ms_aware_mean": 69.0
     }
    },
    "notes": [
@@ -28451,81 +28451,81 @@
      ],
      "stranded_only_fixed": 13,
      "stranded_only_dispatch": 2,
-     "mean_minutes_fixed_not_stranded": 208.5,
-     "mean_minutes_dispatch_not_stranded": 208.2,
-     "plan_ms_fixed_mean": 392.0,
-     "plan_ms_dispatch_mean": 354.0
+     "mean_minutes_fixed_not_stranded": 209.3,
+     "mean_minutes_dispatch_not_stranded": 208.7,
+     "plan_ms_fixed_mean": 92.0,
+     "plan_ms_dispatch_mean": 83.0
     },
     "10% chargers down": {
      "trips": 200,
-     "stranded_fixed": 29,
+     "stranded_fixed": 27,
      "stranded_dispatch": 6,
-     "stranding_rate_fixed": 0.145,
+     "stranding_rate_fixed": 0.135,
      "stranding_rate_dispatch": 0.03,
      "ci95_fixed": [
-      0.103,
-      0.2
+      0.094,
+      0.189
      ],
      "ci95_dispatch": [
       0.014,
       0.064
      ],
-     "stranded_only_fixed": 25,
+     "stranded_only_fixed": 23,
      "stranded_only_dispatch": 2,
-     "mean_minutes_fixed_not_stranded": 210.8,
-     "mean_minutes_dispatch_not_stranded": 210.8,
-     "plan_ms_fixed_mean": 526.0,
-     "plan_ms_dispatch_mean": 466.0
+     "mean_minutes_fixed_not_stranded": 211.2,
+     "mean_minutes_dispatch_not_stranded": 210.6,
+     "plan_ms_fixed_mean": 82.0,
+     "plan_ms_dispatch_mean": 72.0
     },
     "20% chargers down": {
      "trips": 200,
-     "stranded_fixed": 41,
-     "stranded_dispatch": 5,
-     "stranding_rate_fixed": 0.205,
-     "stranding_rate_dispatch": 0.025,
+     "stranded_fixed": 44,
+     "stranded_dispatch": 4,
+     "stranding_rate_fixed": 0.22,
+     "stranding_rate_dispatch": 0.02,
      "ci95_fixed": [
-      0.155,
-      0.266
+      0.168,
+      0.282
      ],
      "ci95_dispatch": [
-      0.011,
-      0.057
+      0.008,
+      0.05
      ],
-     "stranded_only_fixed": 36,
+     "stranded_only_fixed": 40,
      "stranded_only_dispatch": 0,
-     "mean_minutes_fixed_not_stranded": 216.3,
-     "mean_minutes_dispatch_not_stranded": 216.8,
-     "plan_ms_fixed_mean": 392.0,
-     "plan_ms_dispatch_mean": 370.0
+     "mean_minutes_fixed_not_stranded": 217.8,
+     "mean_minutes_dispatch_not_stranded": 218.3,
+     "plan_ms_fixed_mean": 81.0,
+     "plan_ms_dispatch_mean": 72.0
     },
     "40% chargers down": {
      "trips": 200,
-     "stranded_fixed": 75,
-     "stranded_dispatch": 7,
-     "stranding_rate_fixed": 0.375,
-     "stranding_rate_dispatch": 0.035,
+     "stranded_fixed": 64,
+     "stranded_dispatch": 6,
+     "stranding_rate_fixed": 0.32,
+     "stranding_rate_dispatch": 0.03,
      "ci95_fixed": [
-      0.311,
-      0.444
+      0.259,
+      0.388
      ],
      "ci95_dispatch": [
-      0.017,
-      0.07
+      0.014,
+      0.064
      ],
-     "stranded_only_fixed": 68,
-     "stranded_only_dispatch": 0,
-     "mean_minutes_fixed_not_stranded": 217.0,
-     "mean_minutes_dispatch_not_stranded": 218.9,
-     "plan_ms_fixed_mean": 265.0,
-     "plan_ms_dispatch_mean": 246.0
+     "stranded_only_fixed": 59,
+     "stranded_only_dispatch": 1,
+     "mean_minutes_fixed_not_stranded": 215.1,
+     "mean_minutes_dispatch_not_stranded": 216.8,
+     "plan_ms_fixed_mean": 79.0,
+     "plan_ms_dispatch_mean": 69.0
     }
    },
    "compute": {
     "real_route_km": 190.77,
     "chargers_near_route": 10,
     "runs_per_forecast": 2000,
-    "full_dispatch_ms_mean": 4425.0,
-    "full_dispatch_ms_max": 4734
+    "full_dispatch_ms_mean": 1979.0,
+    "full_dispatch_ms_max": 2441
    },
    "notes": [
     "The 0 % row is the control: stranding there comes from energy-forecast error, not chargers.",
@@ -28715,16 +28715,16 @@
    "steps": [
     {
      "step": "tests",
-     "ok": true,
-     "seconds": 103.5,
-     "returncode": 0,
+     "ok": false,
+     "seconds": 5.5,
+     "returncode": 2,
      "missing_outputs": [],
-     "last_line": "================= 364 passed, 10 skipped in 101.37s (0:01:41) ================="
+     "last_line": "============================== 1 error in 4.21s ==============================="
     },
     {
      "step": "E1",
      "ok": true,
-     "seconds": 4.3,
+     "seconds": 3.3,
      "returncode": 0,
      "missing_outputs": [],
      "last_line": "Plain regression (no physics)          n=1: MAE 7.02 cov 0.81  n=2: MAE 7.77 cov 0.83  n=3: MAE 18.48 cov 0.89  n=5: MAE 31.20 cov 0.97  n=10: MAE 6.66 cov 0.50"
@@ -28732,7 +28732,7 @@
     {
      "step": "E2",
      "ok": true,
-     "seconds": 195.0,
+     "seconds": 66.3,
      "returncode": 0,
      "missing_outputs": [],
      "last_line": "median-forecast relative energy error by class: {'small_ecar': -0.0264, 'compact_esuv': -0.0303, 'e_scooter': -0.0869}"
@@ -28740,23 +28740,23 @@
     {
      "step": "E3",
      "ok": true,
-     "seconds": 254.7,
+     "seconds": 70.7,
      "returncode": 0,
      "missing_outputs": [],
-     "last_line": "40% chargers down: first stop changed 80% | stranded blind 16.0% vs trust-aware 3.5% (only-blind 26, only-aware 1) | minutes lost -0.0 | plan ms 251.0/233.0"
+     "last_line": "40% chargers down: first stop changed 80% | stranded blind 12.5% vs trust-aware 3.0% (only-blind 21, only-aware 2) | minutes lost -0.2 | plan ms 79.0/69.0"
     },
     {
      "step": "E4",
      "ok": true,
-     "seconds": 555.5,
+     "seconds": 156.4,
      "returncode": 0,
      "missing_outputs": [],
-     "last_line": "40% chargers down: stranded fixed 37.5% [0.311, 0.444] vs dispatch 3.5% [0.017, 0.07] (only-fixed 68, only-dispatch 0) | minutes 217.0 vs 218.9"
+     "last_line": "40% chargers down: stranded fixed 32.0% [0.259, 0.388] vs dispatch 3.0% [0.014, 0.064] (only-fixed 59, only-dispatch 1) | minutes 215.1 vs 216.8"
     },
     {
      "step": "E5",
      "ok": true,
-     "seconds": 67.7,
+     "seconds": 11.4,
      "returncode": 0,
      "missing_outputs": [],
      "last_line": "                           ring detection: {'precision': None, 'recall': 0.0, 'worlds_with_any_flag': 0}"
@@ -28764,18 +28764,18 @@
     {
      "step": "neo4j_smoke",
      "ok": false,
-     "seconds": 2.2,
+     "seconds": 2.8,
      "returncode": 1,
      "missing_outputs": [],
-     "last_line": "Neo4j smoke test FAILED: ServiceUnavailable: Failed to DNS resolve address <NEO4J_URI host>: [Errno 11001] getaddrinfo failed"
+     "last_line": "Neo4j smoke test FAILED: ServiceUnavailable: Unable to retrieve routing information"
     },
     {
      "step": "api_examples",
      "ok": true,
-     "seconds": 30.9,
+     "seconds": 14.2,
      "returncode": 0,
      "missing_outputs": [],
-     "last_line": "wrote 14 examples to D:\\hackfront-verity\\docs\\api_examples"
+     "last_line": "wrote 16 examples to D:\\hackfront-verity\\docs\\api_examples"
     }
    ]
   },
