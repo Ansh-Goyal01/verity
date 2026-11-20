@@ -698,6 +698,15 @@ fits the project. Nothing here is applied unless both sides agree.
 - Frontend note: debounce the place box (send after ~300 ms idle and 3+ characters) and pass the chosen result's `name`, `lat`, `lon` straight into `origin`/`destination`.
 - v8 addendum (code review, same day): new 422 `route_too_short` (ends under 1 km apart); 429 `rate_limited` when more than `VERITY_NEW_ROUTES_PER_HOUR` (default 20, server-wide) NEW routes are fetched in an hour (demo and already-fetched routes are never limited); the departure hour is read in IST whatever offset the request uses (02:30Z = the 08:00 forecast).
 
+### 2026-11-21 - v12: `POST /api/plan` trip options (finale WP4)
+
+- New `POST /api/plan`. Request: every `POST /api/dispatch` field plus optional `preferences: {objectives (any of "fastest"|"fewest_stops"|"safest", default all three), preferred_operators [], avoid_operators [], arrival_buffer_pct (5-50, default 10 = the engine reserve), max_stops (0-6 or null)}`.
+- Response: `{options: [release + {labels [objective...], meets_target, stop_count}], unsupported_preferences: [{preference, reason}], preferences (echoed with defaults), n_candidates, avoided_chargers, compute_ms, n_runs, is_simulated}`. Each option has exactly the `POST /api/dispatch` release fields and its own `plan_id`, stored like a dispatch, so `/api/forecast/update`, `/api/demo/replay/{plan_id}` and `/api/graph/why/{plan_id}` work on any option.
+- Objectives choosing the same plan (same stops and charge targets) come back as ONE option carrying every label. When nothing meets the target, fastest / fewest stops fall back to the safest plan with `meets_target: false`.
+- `avoid_operators` removes that operator's chargers from stops AND backups; `preferred_operators` restricts planned stops only. Operator names match case-insensitively and without the directory's country tag ("Statiq" = "Statiq (IN)"). Unknown or contradictory names are listed in `unsupported_preferences`, never silently dropped.
+- Options carry only per-plan levers (charge longer at stop 1, verify a charger); the re-plan levers (cruise at 80, another vehicle) stay on `POST /api/dispatch`. `POST /api/dispatch` is unchanged (same plan ids and numbers).
+- Frontend note: show each option's `labels`, `confidence_display`, `arrival_soc`, `route.duration_min` and `stop_count`; when the driver picks one, keep its `plan_id` for the live drive.
+
 ### 2026-11-21 - v11: smarter planner, `stops[].if_needed` (finale WP3b)
 
 - Reason: Ansh: feasible trips were refused because candidate plans were filtered too strictly (docs/DECISIONS.md WP3b).

@@ -272,6 +272,48 @@ class DispatchResponse(Resp):
     is_simulated: bool
 
 
+# --- trip options (WP4) -----------------------------------------------------------------------------------------
+
+Objective = Literal["fastest", "fewest_stops", "safest"]
+DEFAULT_ARRIVAL_BUFFER_PCT = 10.0  # = verity.forecast.RESERVE_PCT (a test keeps the two equal)
+
+
+class PlanPreferences(Req):
+    objectives: list[Objective] = Field(default_factory=lambda: ["fastest", "fewest_stops", "safest"], min_length=1)
+    preferred_operators: list[Annotated[str, Field(min_length=1, max_length=80)]] = Field(default_factory=list,
+                                                                                          max_length=10)
+    avoid_operators: list[Annotated[str, Field(min_length=1, max_length=80)]] = Field(default_factory=list,
+                                                                                      max_length=10)
+    arrival_buffer_pct: float = Field(default=DEFAULT_ARRIVAL_BUFFER_PCT, ge=5, le=50)
+    max_stops: int | None = Field(default=None, ge=0, le=6)
+
+
+class PlanRequest(DispatchRequest):
+    preferences: PlanPreferences = Field(default_factory=PlanPreferences)
+
+
+class PlanOption(DispatchResponse):
+    labels: list[Objective]  # every objective that chose this plan (WP4 step 4: one option, both labels)
+    meets_target: bool  # its displayed confidence meets the target; False = the best available, said so
+    stop_count: int = Field(ge=0)
+
+
+class UnsupportedPreference(Resp):
+    preference: str
+    reason: str
+
+
+class PlanResponse(Resp):
+    options: list[PlanOption]
+    unsupported_preferences: list[UnsupportedPreference]
+    preferences: PlanPreferences
+    n_candidates: int = Field(ge=0)  # candidate plans scored (once) to choose the options
+    avoided_chargers: int = Field(ge=0)
+    compute_ms: int
+    n_runs: int = Field(ge=1)
+    is_simulated: bool
+
+
 # --- geocoder (WP1) ---------------------------------------------------------------------------------------------
 
 

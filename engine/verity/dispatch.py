@@ -148,6 +148,7 @@ class Ctx:
     target: float
     usable_kwh: float
     drive_cum_min: Array  # cumulative drive minutes at the end of each segment
+    reserve_pct: float = RESERVE_PCT  # battery that must remain at the destination (WP4: the driver's arrival buffer)
 
     @property
     def total_km(self) -> float:
@@ -316,7 +317,7 @@ def leg_table(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool) -> tuple[di
     ppk = float(np.median(ctx.pp_per_km))
     half = np.array([0.0] + [n.detour_km / 2.0 * ppk for n in nodes] + [0.0])
     mins = np.array([ctx.minutes_at(float(k)) for k in kms])
-    need = np.array([RES_STOP] * (len(ids) - 1) + [RESERVE_PCT])  # what must remain on arriving at each point
+    need = np.array([RES_STOP] * (len(ids) - 1) + [ctx.reserve_pct])  # what must remain on arriving at each point
     rows: list[LegRow] = []
     for a in range(len(ids) - 1):
         # leaving charger a's access road and driving down the next charger's access road cost battery too (WP3b)
@@ -382,7 +383,7 @@ def _leg_need(ctx: Ctx, path: Sequence[Node], i: int, j: int) -> float:
     """Charge needed at path[i] to reach path[j] (or END when j == len(path)) at the 90th-percentile energy."""
     node = path[i]
     to_km = path[j].km if j < len(path) else ctx.total_km
-    res = RES_STOP if j < len(path) else RESERVE_PCT
+    res = RES_STOP if j < len(path) else ctx.reserve_pct
     to_detour = path[j].detour_km / 2.0 if j < len(path) else 0.0
     energy = (ctx.runs.used_at_km(to_km) - ctx.runs.used_at_km(node.km)
               + (node.detour_km / 2.0 + to_detour) * ctx.pp_per_km)
@@ -403,7 +404,7 @@ def make_stops(ctx: Ctx, path: Sequence[Node], all_nodes: Sequence[Node], extra_
                               alts_for(node, all_nodes, on_path)))
             continue
         nxt_km = path[i + 1].km if i + 1 < len(path) else ctx.total_km
-        res = RES_STOP if i + 1 < len(path) else RESERVE_PCT
+        res = RES_STOP if i + 1 < len(path) else ctx.reserve_pct
         nxt_detour = path[i + 1].detour_km / 2.0 if i + 1 < len(path) else 0.0
         energy = (ctx.runs.used_at_km(nxt_km) - ctx.runs.used_at_km(node.km)
                   + (node.detour_km / 2.0 + nxt_detour) * ctx.pp_per_km)
@@ -571,7 +572,7 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
         charge_min.append(c_min)
         charged_at.append(where)
     arrival = soc - (runs.total_used - pos_used)
-    success = alive & (arrival >= RESERVE_PCT)
+    success = alive & (arrival >= ctx.reserve_pct)
     lost = minutes + np.where(success, 0.0, STRANDING_PENALTY_MIN)
     trace = ctx.start_soc - runs.soc_used_cum
     for st, gain in zip(stops, gains):
@@ -623,7 +624,7 @@ def bingo_line(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator) -> lis
     out = []
     for si, km in enumerate(runs.km_end):
         used_x = runs.soc_used_cum[sub, si]
-        cands: list[tuple[Array, float, float, str, str]] = [(dest_used - used_x, 1.0, RESERVE_PCT, "__destination__", "")]
+        cands: list[tuple[Array, float, float, str, str]] = [(dest_used - used_x, 1.0, ctx.reserve_pct, "__destination__", "")]
         for n in policy_ahead(stops, float(km)):
             cands.append((runs.used_at_km(n.km)[sub] - used_x, n.p_works, RES_STOP, n.site_id, n.operator))
         energy = np.stack([c[0] for c in cands])  # (C, n)
@@ -727,20 +728,24 @@ def _stale(node: Node) -> bool:
 
 
 def _build_ctx(vehicle: VehicleContext, route: PlannedRoute, start_soc: float, target: float, rng: np.random.Generator,
-               cfg: ForecastConfig, highway_speed_mps: float | None = None) -> Ctx:
+               cfg: ForecastConfig, highway_speed_mps: float | None = None, reserve_pct: float = RESERVE_PCT) -> Ctx:
     mass = vehicle_mass_kg(vehicle)
     runs = simulate_runs(vehicle.post, route, mass_kg=mass, ac_on=vehicle.ac_on, rng=rng, cfg=cfg,
                          highway_speed_mps=highway_speed_mps)
     usable = float(vehicle.post.nominal_kwh * vehicle.post.summary(n=1000)["usable_frac"][0])
-    return Ctx(runs, route, vehicle, float(start_soc), float(target), usable, drive_cum_minutes(route, highway_speed_mps))
+    return Ctx(runs, route, vehicle, float(start_soc), float(target), usable, drive_cum_minutes(route, highway_speed_mps),
+               float(reserve_pct))
 
 
 def _choose(ctx: Ctx, nodes: Sequence[Node], rng: np.random.Generator, *, trust_aware: bool,
-            use_alts: bool = True, graph: ChargerGraph | None = None, diversity: bool = True
+            use_alts: bool = True, graph: ChargerGraph | None = None, diversity: bool = True,
+            stop_nodes: Sequence[Node] | None = None
             ) -> tuple[list[Stop], PlanEval, list[tuple[list[Stop], PlanEval]]]:
     """Among plans meeting the confidence target, the one with the fewest expected lost minutes (driving, detours,
-    charging, queueing, failed stops and the stranding penalty, F8a); otherwise the most reliable one."""
-    paths, _ = propose_paths(ctx, nodes, trust_aware=trust_aware, graph=graph, diversity=diversity)
+    charging, queueing, failed stops and the stranding penalty, F8a); otherwise the most reliable one.
+    ``stop_nodes`` (WP4 preferred operators) limits the PLANNED stops; backups still come from every node."""
+    paths, _ = propose_paths(ctx, nodes if stop_nodes is None else stop_nodes, trust_aware=trust_aware, graph=graph,
+                             diversity=diversity)
     if [] not in paths:
         paths.append([])  # the no-stop plan is always scored, even when infeasible (then it simply fails)
     scored = []
@@ -805,6 +810,21 @@ def dispatch(
     nodes = make_nodes(route_chargers, trust, trust_aware=trust_aware, queue_wait_min=queue_wait_min,
                        operators=graph_operators(graph, route_chargers) if graph is not None else None)
     stops, ev, _ = _choose(ctx, nodes, rng, trust_aware=trust_aware, graph=graph)
+    result = _release(vehicle, route, route_chargers, trust, ctx, nodes, stops, ev, rng, start_soc=start_soc,
+                      target_confidence=target_confidence, polyline=polyline, seed=seed, cfg=cfg,
+                      trust_aware=trust_aware, other_vehicles=other_vehicles, compute_levers=compute_levers, graph=graph)
+    result.compute_ms = int(round(1000 * (time.perf_counter() - t0)))
+    return result
+
+
+def _release(vehicle: VehicleContext, route: PlannedRoute, route_chargers: Sequence[RouteCharger],
+             trust: dict[str, ChargerTrust], ctx: Ctx, nodes: Sequence[Node], stops: list[Stop], ev: PlanEval,
+             rng: np.random.Generator, *, start_soc: float, target_confidence: float, polyline: list | None, seed: int,
+             cfg: ForecastConfig, trust_aware: bool, other_vehicles: Sequence[tuple[VehicleContext, float]],
+             compute_levers: bool, graph: ChargerGraph | None, replan_levers: bool = True) -> DispatchResult:
+    """One chosen plan -> a full release: evidence check, decision, Bingo Line, reason and levers. Shared by
+    ``dispatch`` and every WP4 trip option, so an option is held to exactly the same rules as a dispatch.
+    ``replan_levers`` = also try the levers that re-plan from scratch (cruise at 80, another vehicle)."""
     conf = ev.confidence
 
     # evidence check: would the decision flip if stale/unknown chargers were at their pessimistic value?
@@ -862,8 +882,8 @@ def dispatch(
                                                                      reports_en, ROLE_EN)
     if compute_levers:
         result.levers = _levers(vehicle, route, route_chargers, trust, ctx, stops, ev, nodes, start_soc, target_confidence,
-                                seed, cfg, trust_aware, other_vehicles, stale, conf, decision, graph)
-    result.compute_ms = int(round(1000 * (time.perf_counter() - t0)))
+                                seed, cfg, trust_aware, other_vehicles, stale, conf, decision, graph,
+                                replan=replan_levers)
     return result
 
 
@@ -1030,13 +1050,13 @@ def _risk_sources(vehicle: VehicleContext, ctx: Ctx, stops: Sequence[Stop]) -> l
 
 
 def _levers(vehicle, route, route_chargers, trust, ctx, stops, ev, nodes, start_soc, target, seed, cfg, trust_aware,
-            others, stale, base_conf, decision, graph=None) -> list[dict]:
+            others, stale, base_conf, decision, graph=None, *, replan: bool = True) -> list[dict]:
     levers = []
     base_min = ev.mean_minutes
     slow = dispatch(vehicle, route, route_chargers, trust, start_soc=start_soc, target_confidence=target, seed=seed,
                     cfg=cfg, trust_aware=trust_aware, compute_levers=False, highway_speed_mps=CRUISE_LEVER_MPS,
-                    graph=graph)
-    if slow.confidence_raw > base_conf + LEVER_MIN_GAIN:
+                    graph=graph) if replan else None
+    if slow is not None and slow.confidence_raw > base_conf + LEVER_MIN_GAIN:
         levers.append({"lever_id": "cruise_80", "label": "Cruise at 80 km/h on the highway",
                        "new_confidence": slow.confidence, "time_cost_min": int(round(slow.duration_min - base_min))})
     if stops:
@@ -1047,7 +1067,7 @@ def _levers(vehicle, route, route_chargers, trust, ctx, stops, ev, nodes, start_
         if e2.confidence > base_conf + LEVER_MIN_GAIN:
             levers.append({"lever_id": "charge_more_1", "label": f"Charge {EXTRA_CHARGE_MIN:.0f} more minutes at stop 1",
                            "new_confidence": round_prob(e2.confidence), "time_cost_min": int(round(EXTRA_CHARGE_MIN))})
-    for other, other_soc in others:
+    for other, other_soc in (others if replan else ()):
         alt = dispatch(other, route, route_chargers, trust, start_soc=other_soc, target_confidence=target, seed=seed,
                        cfg=cfg, trust_aware=trust_aware, compute_levers=False, graph=graph)
         if alt.confidence_raw > base_conf + LEVER_MIN_GAIN and alt.decision != "INSUFFICIENT_EVIDENCE":

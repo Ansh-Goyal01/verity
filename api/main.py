@@ -37,6 +37,8 @@ from .models import (
     DemoScenario,
     DispatchRequest,
     DispatchResponse,
+    PlanRequest,
+    PlanResponse,
     DriverDemo,
     ForecastUpdateRequest,
     ForecastUpdateResponse,
@@ -240,6 +242,12 @@ def demo_scenario(svc: EngineService = Depends(get_service)) -> dict:
 @app.post("/api/dispatch", response_model=DispatchResponse)
 def post_dispatch(req: DispatchRequest, svc: EngineService = Depends(get_service)) -> dict:
     return svc.dispatch(req.model_dump())
+
+
+@app.post("/api/plan", response_model=PlanResponse)
+def post_plan(req: PlanRequest, svc: EngineService = Depends(get_service)) -> dict:
+    """WP4: up to three full releases (fastest, fewest stops, safest), each with its own plan id."""
+    return svc.plan(req.model_dump())
 
 
 @app.get("/api/vehicles", response_model=VehiclesResponse)

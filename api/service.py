@@ -35,6 +35,7 @@ from verity.forecast import ForecastConfig, confidence_display, round_prob
 from verity.paths import SIM_DIR
 from verity.catalog import load_catalog, vehicle_context
 from verity.geocode import geocode, geocode_client, normalise_query
+from verity.options import Preferences, plan_options
 from verity.routing import CachedClient, NetworkUnavailable, RequestBudgetExceeded, load_planned_route
 from verity.schemas import ChargerRecord, Report
 from verity.sim import generate_dataset, load_manifest
@@ -62,7 +63,7 @@ from .data_sources import DEMO_FLEET_LABEL, any_simulated, build_data_sources
 from .graph_endpoints import GraphEndpoints
 from .limits import LruCache
 from .route_resolver import ENDPOINT_TOLERANCE_KM, ResolvedRoute, RouteError, RouteResolver, parse_departure
-from .models import DispatchRequest, RideCheckRequest
+from .models import DispatchRequest, PlanRequest, RideCheckRequest
 from .ride import (
     AFTER_DROP_RADIUS_KM,
     EARNING_RATE_SOURCE,
@@ -82,6 +83,7 @@ AREA_MARGIN_DEG = 0.1  # ride checks serve points inside the charger directory's
 
 DEMO_SEED = 1028
 SWEEP_EVERY_S = 600.0  # how often to remove plan legs that a crashed or failed-cleanup request left behind
+OPTION_SET_CACHE_SIZE = 100  # WP4: whole option sets; each option is also a stored plan in PLAN_CACHE_SIZE
 PLAN_CACHE_SIZE = 300  # stored plans (W0.7): identical requests share one id, so this is distinct plans in play
 RIDE_CACHE_SIZE = 300  # fetched ride routes outside the committed bundles
 HEALTH_COUNTS_TTL_S = 30.0  # /api/health is polled; a Neo4j count is a ~200 ms round trip, so reuse it for a while
@@ -330,6 +332,7 @@ class EngineService(GraphEndpoints):
         self.fleet = self._build_fleet()
         self.catalog = load_catalog()  # the real Indian cars (WP2): vehicles_india.csv, calibrated on training trips only
         self.plans: LruCache[str, StoredPlan] = LruCache(PLAN_CACHE_SIZE)
+        self._option_sets: LruCache[str, dict] = LruCache(OPTION_SET_CACHE_SIZE)  # WP4: whole POST /api/plan answers
         self.ride_bundles = load_bundles()  # committed ride routes (no network); others are fetched and cached
         self._ride_cache: LruCache[tuple, dict] = LruCache(RIDE_CACHE_SIZE)
         self._counts_cache: tuple[str, float, GraphCounts] | None = None  # (backend, taken at, counts)
@@ -552,12 +555,23 @@ class EngineService(GraphEndpoints):
 
         view, (near, trust, near_reports), result = self.graph.call(plan_on)
         self._adopt(view)
+        self._log_timing(plan_id, t0, q0, s0)
+        response = self._release_response(plan_id, result, req, picked, resolved, near_reports)
+        self.plans[plan_id] = StoredPlan(result.state, response, dict(req), resolved.poly, resolved.poly_km)
+        self._record_plan(plan_id, response, near, trust)
+        return response
+
+    def _log_timing(self, plan_id: str, t0: float, q0: int, s0: float) -> None:
         q1, s1 = self._graph_queries()
         self.last_graph_timing = {"backend": self.graph.backend, "queries": max(q1 - q0, 0),
                                   "graph_s": max(s1 - s0, 0.0), "total_s": time.perf_counter() - t0}
         log.info("dispatch %s: %d graph queries, %.2f s in the graph of %.2f s total (%s)", plan_id,
                  self.last_graph_timing["queries"], self.last_graph_timing["graph_s"],
                  self.last_graph_timing["total_s"], self.graph.backend)
+
+    def _release_response(self, plan_id: str, result, req: dict, picked: PickedVehicle, resolved: ResolvedRoute,
+                          near_reports: Sequence[Report]) -> dict:
+        """One engine result as a release (the ``POST /api/dispatch`` shape), for a dispatch or a WP4 option."""
         destination = self._speech_destination(req, resolved)
         n_sim = sum(r.is_simulated for r in near_reports)
         sources = build_data_sources(resolved.snap, parse_departure(req["departure_time"]) or datetime.min,
@@ -586,9 +600,60 @@ class EngineService(GraphEndpoints):
             "vehicle": picked.vehicle, "calibration": picked.calibration,
             "is_simulated": any_simulated(sources),
         }
-        self.plans[plan_id] = StoredPlan(result.state, response, dict(req), resolved.poly, resolved.poly_km)
-        self._record_plan(plan_id, response, near, trust)
         return response
+
+    # -- trip options (WP4) -------------------------------------------------------------------------------------------
+    def plan(self, req: dict, *, refresh: bool = False) -> dict:
+        """POST /api/plan: up to three full releases (fastest, fewest stops, safest), each with its own plan id in
+        ``self.plans``, so the live update, replay and graph "why" work on whichever option the driver picks."""
+        req = canonical_request(PlanRequest, req)
+        key = plan_key(req)
+        cached = self._option_sets.get(key)
+        if cached is not None and not refresh:
+            return cached
+        picked = self._vehicle_for(req)
+        resolved = self._resolve_route(req)
+        p = req["preferences"]
+        prefs = Preferences(tuple(p["objectives"]), tuple(p["preferred_operators"]), tuple(p["avoid_operators"]),
+                            float(p["arrival_buffer_pct"]), p["max_stops"])
+        t0, (q0, s0) = time.perf_counter(), self._graph_queries()
+
+        def plan_on(g: ChargerGraph) -> tuple[GraphView, tuple, object]:
+            self._sweep_if_due(g)
+            view = self._read_view(g)
+            inputs = self._route_inputs(view, resolved)
+            return view, inputs, plan_options(picked.ctx, resolved.route, inputs[0], inputs[1],
+                                              start_soc=req["start_soc_pct"], target_confidence=req["target_confidence"],
+                                              prefs=prefs, seed=int(key[:8], 16), cfg=self.cfg, graph=g)
+
+        view, (near, trust, near_reports), out = self.graph.call(plan_on)
+        self._adopt(view)
+        self._log_timing(f"options {key[:8]}", t0, q0, s0)
+        options = []
+        for opt in out.options:
+            opt_req = {**req, "objective": opt.labels[0]}  # what a report-triggered re-plan re-runs (one objective)
+            plan_id = self._plan_id_for(plan_key(opt_req), opt_req)
+            release = self._release_response(plan_id, opt.result, req, picked, resolved, near_reports)
+            release.update({"labels": list(opt.labels), "meets_target": opt.meets_target,
+                            "stop_count": len(release["stops"])})
+            self.plans[plan_id] = StoredPlan(opt.result.state, release, opt_req, resolved.poly, resolved.poly_km)
+            self._record_plan(plan_id, release, near, trust)
+            options.append(release)
+        response = {"options": options, "unsupported_preferences": out.unsupported, "preferences": p,
+                    "n_candidates": out.n_candidates, "avoided_chargers": out.avoided_chargers,
+                    "compute_ms": out.compute_ms, "n_runs": self.cfg.n_runs,
+                    "is_simulated": any(o["is_simulated"] for o in options)}
+        self._option_sets[key] = response
+        return response
+
+    def _refresh(self, request: dict) -> dict:
+        """Re-plan a stored plan as it was asked for: a dispatch, or one WP4 option (by its first objective)."""
+        objective = request.get("objective")
+        if objective is None:
+            return self.dispatch(request, refresh=True)
+        base = {k: v for k, v in request.items() if k != "objective"}
+        options = self.plan(base, refresh=True)["options"]
+        return next((o for o in options if objective in o["labels"]), options[0])
 
     # -- did a new report move a plan? (W3.3) -----------------------------------------------------------------------
     def replan_after_report(self, charger_id: str, *, trust_changed: bool = True,
@@ -604,7 +669,7 @@ class EngineService(GraphEndpoints):
         if not trust_changed or not self._replan_slot.acquire(blocking=False):
             return [], len(uses)
         try:
-            out = [plan_change(pid, st.response, self.dispatch(st.request, refresh=True)) for pid, st in uses[:limit]]
+            out = [plan_change(pid, st.response, self._refresh(st.request)) for pid, st in uses[:limit]]
         finally:
             self._replan_slot.release()
         return out, len(uses) - len(out)
