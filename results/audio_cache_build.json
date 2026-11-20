@@ -2,29 +2,19 @@
  "experiment": "W0.5 audio cache build",
  "is_simulated": true,
  "label": "Sarvam TTS of engine sentences on the SIMULATED demo fleet",
- "generated_at": "2026-11-16T17:59:57+00:00",
+ "generated_at": "2026-11-20T19:34:38+00:00",
  "tts_model": "bulbul:v3",
  "sentences_total": 10,
  "made_now": [
   {
    "language": "en-IN",
-   "source": "voice ride-check read-back (pinned ride)",
-   "characters": 71
+   "source": "dispatch V07 (GO)",
+   "characters": 253
   },
   {
    "language": "hi-IN",
-   "source": "voice ride-check read-back (pinned ride)",
-   "characters": 65
-  },
-  {
-   "language": "en-IN",
-   "source": "voice ride-check answer (pinned ride)",
-   "characters": 220
-  },
-  {
-   "language": "hi-IN",
-   "source": "voice ride-check answer (pinned ride)",
-   "characters": 201
+   "source": "dispatch V07 (GO)",
+   "characters": 279
   }
  ],
  "failed": [],
@@ -34,28 +24,14 @@
    "model": "bulbul:v3",
    "ok": true,
    "http_status": 200,
-   "ms": 1742
+   "ms": 4281
   },
   {
    "path": "/text-to-speech",
    "model": "bulbul:v3",
    "ok": true,
    "http_status": 200,
-   "ms": 1558
-  },
-  {
-   "path": "/text-to-speech",
-   "model": "bulbul:v3",
-   "ok": true,
-   "http_status": 200,
-   "ms": 2600
-  },
-  {
-   "path": "/text-to-speech",
-   "model": "bulbul:v3",
-   "ok": true,
-   "http_status": 200,
-   "ms": 2794
+   "ms": 4101
   }
  ]
 }

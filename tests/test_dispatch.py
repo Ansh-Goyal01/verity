@@ -95,7 +95,8 @@ def test_low_start_soc_needs_a_charging_stop_and_stops_are_ordered() -> None:
     r = run(60.0)
     assert r.stops and [s["km_along_route"] for s in r.stops] == sorted(s["km_along_route"] for s in r.stops)
     assert r.decision in ("GO", "NO_GO") and 0.0 <= r.confidence <= 1.0
-    assert all(0 < s["charge_minutes"] < 120 for s in r.stops)
+    assert all(0 < s["charge_minutes"] < 120 for s in r.stops if not s["if_needed"])
+    assert all(0 <= s["charge_minutes"] < 120 for s in r.stops)
 
 
 def test_probabilities_are_rounded_to_five_percent() -> None:
@@ -404,7 +405,7 @@ def test_reasons_for_direct_trips_no_go_and_insufficient_evidence() -> None:
     direct = dispatch(vehicle(), short, chargers, trust, start_soc=90.0, seed=1, cfg=CFG)
     assert direct.decision == "GO" and not direct.stops
     assert direct.reason == "GO because the destination is reached with reserve, without charging, in 95%+ of runs."
-    stuck = run(start=98.0, specs=(chargers, trust))  # 190 km; a charger at km 50 is too early to help
+    stuck = run(start=98.0, specs=scenario())  # 190 km and no charger at all (WP3b: km 50 now helps, to 100 %)
     assert stuck.decision == "NO_GO" and stuck.reason.startswith("NO_GO because no charging plan reaches the 90%")
     no_go = run(start=20.0)
     assert no_go.decision == "NO_GO" and no_go.reason.startswith("NO_GO because")

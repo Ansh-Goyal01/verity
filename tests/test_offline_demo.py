@@ -23,7 +23,7 @@ from verity.audio_cache import AudioCache
 from verity.voice import SARVAM_BASE, SarvamClient
 
 LOOPBACK = {"127.0.0.1", "::1", "localhost", "0.0.0.0", "", None}  # asyncio's own wake-up sockets use loopback
-PINNED = {"V07": "NO_GO", "V12": "GO", "V19": "INSUFFICIENT_EVIDENCE"}
+PINNED = {"V07": "GO", "V12": "GO", "V19": "INSUFFICIENT_EVIDENCE"}  # WP3b: V07 rescued by a longer charge
 FAKE_NEO4J = {"NEO4J_URI": "neo4j+s://offline.invalid", "NEO4J_USERNAME": "neo4j", "NEO4J_PASSWORD": "not-a-real-password"}
 
 

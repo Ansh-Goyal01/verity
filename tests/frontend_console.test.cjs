@@ -40,7 +40,7 @@ test('a missing preferred vehicle and charger directory leave other releases usa
   const {elements,html}=await render(()=>{},{failedVehicle:'V12',directoryUnavailable:true});
   assert.match(elements.get('#vehicles').innerHTML,/disabled/);
   assert.match(elements.get('#vehicles').innerHTML,/data-id="V07" aria-pressed="true"/);
-  assert.match(elements.get('#release').innerHTML,/NO-GO/);
+  assert.match(elements.get('#release').innerHTML,/class="stamp GO">GO</);  // V07's release (WP3b: rescued by a longer charge)
   assert.match(elements.get('#status').textContent,/charger directory could not load/);
   assert.match(html,/<svg/);
 });

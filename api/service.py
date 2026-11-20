@@ -94,6 +94,7 @@ BOOKING = {"booking_id": "BK-001", "origin": {"name": "Noida", "lat": 28.5355, "
            "destination": {"name": "Agra", "lat": 27.1767, "lon": 78.0081},
            "departure_time": "2026-10-28T14:00:00+05:30", "passengers": 4, "ac_on": True, "target_confidence": 0.9}
 CORRIDOR_KM = 3.0  # chargers within this distance of the route are planning candidates
+WIDE_CORRIDOR_KM = 10.0  # off-route reach for non-demo routes, detour priced in energy + time (WP3b)
 # ENDPOINT_TOLERANCE_KM (imported above) now lives in route_resolver.py; still importable from here.
 PIN_KM_TOLERANCE = 1.0  # a pinned charger must still sit this close (km) to where the scenario expects it
 
@@ -502,7 +503,9 @@ class EngineService(GraphEndpoints):
         if resolved.is_demo:
             near, trust, reports = view.near, view.trust, list(view.reports)
         else:
-            near = chargers_near_route(view.chargers, resolved.poly, resolved.poly_km, CORRIDOR_KM)
+            # Real routes look further off the road (WP3b): a charger in a town 8 km away is a real option, and
+            # the planner charges its detour in battery and minutes, so it is only used when it pays.
+            near = chargers_near_route(view.chargers, resolved.poly, resolved.poly_km, WIDE_CORRIDOR_KM)
             reports = [r for r in view.reports if not r.is_simulated]
             trust = TrustEngine(view.chargers, pool_operators=True).estimate(reports, NOW).chargers
         ids = {rc.charger.id for rc in near}

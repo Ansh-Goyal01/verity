@@ -94,10 +94,10 @@ def test_a_prior_only_car_too_close_to_its_target_is_refused(svc: EngineService)
 
 
 def test_option_b_margin_arithmetic() -> None:
-    assert PRIOR_ONLY_MARGIN == 0.10
-    assert prior_only_too_close(0.85, 0.90) and prior_only_too_close(0.95, 0.90)
-    assert not prior_only_too_close(1.0, 0.90)  # clearly above: GO stands
-    assert not prior_only_too_close(0.80, 0.90)  # clearly below: NO_GO stands
+    assert PRIOR_ONLY_MARGIN == 0.05  # WP3b: the class prior's spread is already in the Monte Carlo
+    assert prior_only_too_close(0.90, 0.90)  # exactly at the target: too close to call without trip history
+    assert not prior_only_too_close(0.95, 0.90)  # one display step above: GO stands
+    assert not prior_only_too_close(0.85, 0.90)  # one display step below: NO_GO stands
 
 
 # --- held-out rows never calibrate a car ------------------------------------------------------------------------------
@@ -160,10 +160,11 @@ def test_a_prior_only_car_says_its_range_is_not_measured(svc: EngineService) -> 
 
 def test_above_a_90_percent_target_a_prior_only_refusal_says_it_cannot_be_cleared(svc: EngineService) -> None:
     r = svc.dispatch(trip("mahindra-xev-9e-79", target_confidence=0.95))
+    clearable = 0.95 + PRIOR_ONLY_MARGIN <= 1.0 + 1e-9  # with the 5-point margin a 95 % target can still be cleared
     if r["decision"] == "INSUFFICIENT_EVIDENCE" and r["refusal_reason"].startswith("Too close"):
-        assert "cannot be cleared" in r["refusal_reason"]
-    else:  # far below the target: an honest NO_GO, never a GO
-        assert r["decision"] == "NO_GO"
+        assert ("cannot be cleared" in r["refusal_reason"]) == (not clearable)
+    else:  # clear of the target either way: the answer stands
+        assert r["decision"] in ("GO", "NO_GO")
 
 
 def test_dispatch_and_ride_check_compute_the_same_mass() -> None:

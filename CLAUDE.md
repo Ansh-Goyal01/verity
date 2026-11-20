@@ -167,7 +167,7 @@ LEG is stored per battery band, never as one fixed probability.
   `uv run python scripts/import_chargers.py`, `scripts/export_api_examples.py`, `scripts/neo4j_smoke_test.py`, `scripts/graph_insights.py`
 - Snapshot (every number a screen shows, copied from saved files; a test fails when it is stale):
   `uv run python scripts/export_snapshot.py` (`--check` only reports). After changing results or the API, first re-run
-  `VERITY_GRAPH=memory uv run python scripts/export_api_examples.py`; Ansh then runs `scripts/export_web_snapshot.py`.
+  `VERITY_GRAPH=memory uv run python scripts/export_api_examples.py`, then `scripts/export_web_snapshot.py` + `scripts/export_drive_cases.py`.
 - README tables (evidence ledger + results, generated from saved files; a test fails when stale):
   `uv run python scripts/export_readme_tables.py` (`--check` only reports). Engine notes moved to `docs/ENGINE_NOTES.md`;
   hosting + the (unbuilt, no Docker here) `Dockerfile`: `docs/DEPLOY.md`.

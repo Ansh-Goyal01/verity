@@ -698,6 +698,12 @@ fits the project. Nothing here is applied unless both sides agree.
 - Frontend note: debounce the place box (send after ~300 ms idle and 3+ characters) and pass the chosen result's `name`, `lat`, `lon` straight into `origin`/`destination`.
 - v8 addendum (code review, same day): new 422 `route_too_short` (ends under 1 km apart); 429 `rate_limited` when more than `VERITY_NEW_ROUTES_PER_HOUR` (default 20, server-wide) NEW routes are fetched in an hour (demo and already-fetched routes are never limited); the departure hour is read in IST whatever offset the request uses (02:30Z = the 08:00 forecast).
 
+### 2026-11-21 - v11: smarter planner, `stops[].if_needed` (finale WP3b)
+
+- Reason: Ansh: feasible trips were refused because candidate plans were filtered too strictly (docs/DECISIONS.md WP3b).
+- `stops[]` gain `if_needed` (bool): an insurance stop most trips drive past; it charges only when the battery comes in lower than expected. Its `charge_minutes` can be 0.
+- Behaviour (no shape change): stops may charge past 80 % (slower, priced in `charge_minutes`); real routes consider chargers up to 10 km off the road, with the detour's battery and time; the stale-charger refusal's "pessimistic reading" is now the 10th percentile of a credible bound; a prior-only car needs 5 (was 10) points of margin; a GO is never released below its own Bingo Line.
+
 ### 2026-11-21 - v10: trust basis on stops and backups, `verify_chargers`, India-wide charger directory (finale WP3)
 
 - Reason: docs/FINALE_BUILD.md WP3. Chargers exist along any Indian route, and a refusal says which chargers to verify.

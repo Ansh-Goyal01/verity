@@ -34,6 +34,8 @@ class ChargerTrust:
     prior_p: float
     basis: str = "prior only"  # own reports | operator pool | prior only (WP3)
     pool_n: int = 0  # real reports on the operator's other chargers behind an "operator pool" prior
+    a_post: float = 0.0  # Beta posterior on P(works); 0 = not known (WP3b credible evidence check)
+    b_post: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -139,7 +141,8 @@ class TrustEngine:
             n = int(mask.sum())
             days = float(rs.age_days[mask].min()) if n else None
             out[c.id] = ChargerTrust(c.id, float(fit.r_mean[i]), float(lo[i]), float(hi[i]), n, days,
-                                     trust_level(n, days), priors[i].mean, basis[i], pool_n[i])
+                                     trust_level(n, days), priors[i].mean, basis[i], pool_n[i],
+                                     float(fit.a_post[i]), float(fit.b_post[i]))
         return TrustReport(out, dict(zip(rs.source_ids, map(float, fit.sens))),
                            dict(zip(rs.source_ids, map(float, fit.spec))),
                            tuple(rs.source_ids[i] for i in flagged), fit.n_iter)

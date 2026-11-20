@@ -22,7 +22,7 @@ WAV = b"RIFF\x24\x00\x00\x00WAVEfmt cached-clip-bytes"
 LIVE_WAV = b"RIFF\x24\x00\x00\x00WAVEfmt live-clip-bytes"
 BASE = {"origin": {"lat": 28.5355, "lon": 77.3910}, "destination": {"lat": 27.1767, "lon": 78.0081},
         "departure_time": "2026-10-28T14:00:00+05:30", "passengers": 4, "ac_on": True, "target_confidence": 0.9}
-DEMO = {"V07": ("NO_GO", 70), "V12": ("GO", 62), "V19": ("INSUFFICIENT_EVIDENCE", 40)}
+DEMO = {"V07": ("GO", 70), "V12": ("GO", 62), "V19": ("INSUFFICIENT_EVIDENCE", 40)}  # WP3b: V07 now charges longer
 DEVANAGARI = re.compile(r"[ऀ-ॿ]")
 
 

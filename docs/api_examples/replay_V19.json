@@ -8,20 +8,20 @@
    "soc_pct": 40
   },
   {
-   "t_offset_s": 452,
+   "t_offset_s": 686,
    "type": "soc_reading",
-   "km": 6.3,
-   "soc_pct": 38
+   "km": 9.6,
+   "soc_pct": 37
   },
   {
-   "t_offset_s": 462,
+   "t_offset_s": 696,
    "type": "charger_report",
-   "charger_id": "CH-0023",
+   "charger_id": "CH-0020",
    "status": "broken",
    "source_trust": "high"
   },
   {
-   "t_offset_s": 472,
+   "t_offset_s": 706,
    "type": "forecast",
    "action": "DIVERT",
    "message": "Planned charger reported broken. Divert to the alternate ahead.",

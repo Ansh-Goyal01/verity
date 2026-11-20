@@ -18,6 +18,15 @@
    "text": "45 percent battery, Sector 18 to IGI Airport Terminal 3. Is that right?",
    "tts_model": "bulbul:v3"
   },
+  "44dfd4b1596354432280f343": {
+   "bytes": 677420,
+   "file": "44dfd4b1596354432280f343.wav",
+   "language": "en-IN",
+   "sha256": "78c621b5f2924115fe2c4c1113e9843db4d6b324598956960a809a1148f73d4b",
+   "source": "dispatch V07 (GO)",
+   "text": "Go. The chance of reaching Agra is 95 percent or more. Divert if the battery falls below 16 percent. GO because planned stop EV charging station (OpenStreetMap) (95 percent or more likely to work, 10 reports) is reachable 95 percent or more of the time.",
+   "tts_model": "bulbul:v3"
+  },
   "53f431fb0ddba28318ff1e96": {
    "bytes": 583340,
    "file": "53f431fb0ddba28318ff1e96.wav",
@@ -34,6 +43,15 @@
    "sha256": "b0087745b19dab3cc02fb2a8e580b61f2bc8dfde56c0c8144cc4a9f5b1928211",
    "source": "voice ride-check read-back (pinned ride)",
    "text": "बैटरी 45 प्रतिशत, सेक्टर 18 से आईजीआई एयरपोर्ट टर्मिनल 3। सही है?",
+   "tts_model": "bulbul:v3"
+  },
+  "682798a55b88b6235f830e08": {
+   "bytes": 775264,
+   "file": "682798a55b88b6235f830e08.wav",
+   "language": "hi-IN",
+   "sha256": "e6c611803bc0f9dd28605470d3572bb0ade7c206c282c0e2ca62e6ec3a66c01d",
+   "source": "dispatch V07 (GO)",
+   "text": "जाइए। Agra तक पहुँचने की संभावना 95 प्रतिशत या उससे अधिक है। बैटरी 16 प्रतिशत से नीचे जाए तो रास्ता बदलें। तय चार्जिंग स्टॉप EV charging station (OpenStreetMap) के काम करने की संभावना 95 प्रतिशत या उससे अधिक है (10 रिपोर्ट), और वहाँ 95 प्रतिशत या उससे अधिक बार पहुँचा जा सकता है।",
    "tts_model": "bulbul:v3"
   },
   "7607d7cb1d8ca83bb021bc7a": {

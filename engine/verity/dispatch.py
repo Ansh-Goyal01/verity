@@ -68,7 +68,17 @@ CRUISE_LEVER_MPS = 80.0 / 3.6
 EXTRA_CHARGE_MIN = 10.0
 BINGO_SUBSAMPLE = 1000
 MIN_CALIBRATED_TRIPS = 1
-PRIOR_ONLY_MARGIN = 0.10  # WP2 option B: a prior-only car's shown confidence must clear the target by this much
+PRIOR_ONLY_MARGIN = 0.05  # WP2 option B, relaxed in WP3b: the class prior's spread is already in the Monte Carlo
+MAX_CHARGE_PCT = 100.0  # a stop may charge to full when the next leg needs it; above CHARGE_CAP it is slower
+ABOVE_CAP_SLOWDOWN = 2.5  # SoC points above CHARGE_CAP take this many times longer (DC taper; approximate - verify)
+PROPOSE_QUANTILE = 0.5  # a candidate leg must fit at its MEDIAN energy; the Monte Carlo then scores the real risk
+DETOUR_ROAD_FACTOR = 1.3  # road km per straight-line km between the route and an off-route charger (approximate - verify)
+CREDIBLE_DRAWS = 24  # Beta draws of the stale chargers' reliability for the evidence check (WP3b)
+CREDIBLE_Q = 0.10  # the check uses this quantile of plan confidence over those draws (a 90 % credible lower bound)
+IF_NEEDED_PP = 1.0  # a stop whose median top-up is below this is an "only if needed" insurance stop (WP3b)
+THIN_ABOVE = 60  # with more candidate chargers than this, proposals use the best few per stretch of road (WP3b)
+THIN_BIN_KM = 5.0
+THIN_PER_BIN = 3
 MIN_STOP_MINUTES = 4.0  # a stop that adds less charging than this is not worth its 6-minute overhead
 DETOUR_SPEED_KMH = 25.0  # speed on the access road between the route and an off-route charger (approximate - verify)
 # Minutes lost when stranded: waiting for a tow or mobile charger plus the rest of the shift. Assumption
@@ -100,6 +110,7 @@ class Node:
     detour_min: float = 0.0  # there and back between the route and the charger
     wait_min: float = 0.0  # expected queue wait from queue evidence
     operator: str = ""  # operator shared with another charger of this route (W2.2); "" = no shared operator
+    detour_km: float = 0.0  # road km there and back between the route and the charger (energy, WP3b)
 
     @property
     def site_id(self) -> str:
@@ -152,6 +163,19 @@ class Ctx:
         kw = min(VEHICLE_MAX_KW[self.vehicle.class_key], node.kw or ASSUMED_CHARGER_KW) * TAPER * heat
         return self.usable_kwh / 100.0 / kw * 60.0
 
+    def charge_minutes(self, node: Node, soc_from: Array | float, gain: Array | float) -> Array:
+        """Minutes to add ``gain`` points from ``soc_from``: points above CHARGE_CAP are ABOVE_CAP_SLOWDOWN times
+        slower (DC charging tapers near full), so charging to 100 % is allowed but costs what it costs."""
+        start = np.asarray(soc_from, dtype=float)
+        g = np.clip(np.asarray(gain, dtype=float), 0.0, None)
+        below = np.clip(np.minimum(start + g, CHARGE_CAP) - start, 0.0, None)
+        return self.min_per_pp(node) * (below + ABOVE_CAP_SLOWDOWN * (g - below))
+
+    @property
+    def pp_per_km(self) -> Array:
+        """Each run's average battery use per km (SoC points): prices a detour's energy."""
+        return self.runs.total_used / max(self.total_km, 1e-6)
+
 
 @dataclass
 class PlanEval:
@@ -167,6 +191,7 @@ class PlanEval:
     ctx: Ctx
     lost_minutes: Array | None = None  # minutes + stranding penalty: the objective plans minimise (F8a)
     charged_at: list[Array] | None = None  # per stop, per run: PLANNED, the backup's index, or NOT_CHARGED (W0.6)
+    charge_min: list[Array] | None = None  # per stop, per run: charging minutes (taper above CHARGE_CAP, WP3b)
 
     @property
     def confidence(self) -> float:
@@ -216,9 +241,10 @@ def make_nodes(route_chargers: Sequence[RouteCharger], trust: dict[str, ChargerT
         else:
             p, lo, hi = prior_p, max(prior_p - 0.3, 0.05), min(prior_p + 0.1, 1.0)
         kw = max((c.kw for c in rc.charger.connectors), default=None)
+        detour_km = 2.0 * rc.offset_km * DETOUR_ROAD_FACTOR
         nodes.append(Node(rc.charger.id, rc.km_along, float(p), float(lo), float(hi), kw, rc.charger, t,
-                          sites[rc.charger.id], 2.0 * rc.offset_km / DETOUR_SPEED_KMH * 60.0,
-                          float(waits.get(rc.charger.id, 0.0)), ops.get(rc.charger.id, "")))
+                          sites[rc.charger.id], detour_km / DETOUR_SPEED_KMH * 60.0,
+                          float(waits.get(rc.charger.id, 0.0)), ops.get(rc.charger.id, ""), detour_km))
     return sorted(nodes, key=lambda n: n.km)
 
 
@@ -275,38 +301,66 @@ def k_shortest_paths(adj: dict[str, dict[str, float]], src: str, dst: str, k: in
     return found
 
 
-def build_leg_graph(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool, graph: ChargerGraph | None = None,
-                    scope: str = "") -> tuple[ChargerGraph, dict[str, Array]]:
-    """LEG edges per battery band between START, chargers and END (only legs that are feasible). They are written
-    to ``graph`` (a fresh in-memory one by default) in ONE batch under ``scope``."""
-    graph = InMemoryGraph() if graph is None else graph
-    legs: list[Leg] = []
-    kms = [0.0] + [n.km for n in nodes] + [ctx.total_km]
+LegRow = tuple[str, str, bool, bool, float, tuple[float, ...]]  # from, to, strict ok, lenient ok, minutes, p_reach/band
+BAND_MIDS = np.arange(5.0, MAX_BAND, 10.0)  # one LEG per 10-point battery band, never one fixed probability
+
+
+def leg_table(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool) -> tuple[dict[str, Array], list[LegRow]]:
+    """Every START/charger/END pair once, vectorised over the pairs leaving each point (WP3b): its energy quantiles,
+    whether the STRICT filter (90th-percentile energy, charging up to CHARGE_CAP: the original rule) and the LENIENT
+    one (median energy, charging up to 100 %) keep it, its edge minutes and its reach probability per battery band."""
     ids = ["START"] + [n.id for n in nodes] + ["END"]
-    used = {i: u for i, u in zip(ids, [np.zeros(ctx.runs.n_runs)] + [ctx.runs.used_at_km(n.km) for n in nodes]
-                                 + [ctx.runs.total_used])}
-    by_id = {n.id: n for n in nodes}
+    kms = np.array([0.0] + [n.km for n in nodes] + [ctx.total_km])
+    u = np.vstack([np.zeros(ctx.runs.n_runs)] + [ctx.runs.used_at_km(n.km) for n in nodes] + [ctx.runs.total_used])
+    used = dict(zip(ids, u))
+    ppk = float(np.median(ctx.pp_per_km))
+    half = np.array([0.0] + [n.detour_km / 2.0 * ppk for n in nodes] + [0.0])
+    mins = np.array([ctx.minutes_at(float(k)) for k in kms])
+    need = np.array([RES_STOP] * (len(ids) - 1) + [RESERVE_PCT])  # what must remain on arriving at each point
+    rows: list[LegRow] = []
     for a in range(len(ids) - 1):
-        for b in range(a + 1, len(ids)):
-            energy = used[ids[b]] - used[ids[a]]
-            end = ids[b] == "END"
-            need_after = (RESERVE_PCT if end else RES_STOP)
-            q90 = float(np.quantile(energy, 0.9))
-            limit = ctx.start_soc if ids[a] == "START" else CHARGE_CAP
-            if q90 + need_after + (0.0 if ids[a] == "START" else SAFETY_PP) > limit:
-                continue
-            drive = ctx.minutes_at(kms[b]) - ctx.minutes_at(kms[a])
-            minutes = drive
-            if ids[a] != "START":
-                node = by_id[ids[a]]
-                charge_pp = max(q90 + need_after + SAFETY_PP - ARRIVE_GUESS_PCT, 0.0)
-                minutes += STOP_OVERHEAD_MIN + charge_pp * ctx.min_per_pp(node)
-                if trust_aware:
-                    minutes += FAILURE_PENALTY_MIN * (1.0 - node.p_works)
-            for lo in range(0, MAX_BAND, 10):  # one LEG per battery band, never one fixed probability
-                mid = lo + 5.0
-                p_reach = float(np.mean(mid - energy >= need_after))
-                legs.append(Leg(ids[a], ids[b], lo, lo + 10, p_reach, float(minutes)))
+        # leaving charger a's access road and driving down the next charger's access road cost battery too (WP3b)
+        energy = u[a + 1:] - u[a] + half[a] + half[a + 1:, None]
+        q_mid, q90 = np.quantile(energy, [PROPOSE_QUANTILE, 0.9], axis=1)
+        nd = need[a + 1:]
+        if a == 0:
+            # Nothing can be added at the start: a first leg reached less often than the target can never meet it,
+            # so both filters ask for the target's quantile (the strict 90th percentile at a 90 % target).
+            q_target = np.quantile(energy, min(max(ctx.target, PROPOSE_QUANTILE), 0.99), axis=1)
+            ok_lenient = q_target + nd <= ctx.start_soc
+            ok_strict = q90 + nd <= ctx.start_soc
+        else:
+            ok_lenient = q_mid + nd <= MAX_CHARGE_PCT
+            ok_strict = q90 + nd + SAFETY_PP <= CHARGE_CAP
+        keep = np.flatnonzero(ok_lenient | ok_strict)
+        if not len(keep):
+            continue
+        minutes = mins[a + 1:][keep] - mins[a]
+        if a > 0:
+            node = nodes[a - 1]
+            charge_to = np.minimum(q90[keep] + nd[keep] + SAFETY_PP, MAX_CHARGE_PCT)
+            minutes = minutes + STOP_OVERHEAD_MIN + node.detour_min + ctx.charge_minutes(
+                node, ARRIVE_GUESS_PCT, np.maximum(charge_to - ARRIVE_GUESS_PCT, 0.0))
+            if trust_aware:
+                minutes = minutes + FAILURE_PENALTY_MIN * (1.0 - node.p_works)
+        p_reach = ((BAND_MIDS[None, :, None] - energy[keep][:, None, :]) >= nd[keep][:, None, None]).mean(axis=2)
+        for j, b in enumerate(keep):
+            rows.append((ids[a], ids[a + 1 + b], bool(ok_strict[b]), bool(ok_lenient[b]), float(minutes[j]),
+                         tuple(float(x) for x in p_reach[j])))
+    return used, rows
+
+
+def build_leg_graph(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool, graph: ChargerGraph | None = None,
+                    scope: str = "", lenient: bool = True,
+                    table: tuple[dict[str, Array], list[LegRow]] | None = None) -> tuple[ChargerGraph, dict[str, Array]]:
+    """LEG edges per battery band between START, chargers and END (only legs the chosen filter keeps), written to
+    ``graph`` (a fresh in-memory one by default) in ONE batch under ``scope``. ``lenient`` (WP3b) drops only clearly
+    impossible legs and leaves the risk to the Monte Carlo; the strict filter is the original rule, kept so that no
+    chain the old planner found is ever lost. ``table`` reuses a ``leg_table`` already computed for this plan."""
+    graph = InMemoryGraph() if graph is None else graph
+    used, rows = table if table is not None else leg_table(ctx, nodes, trust_aware=trust_aware)
+    legs = [Leg(a, b, int(lo), int(lo) + 10, pr, m) for a, b, ok_s, ok_l, m, reach in rows if (ok_l if lenient else ok_s)
+            for lo, pr in zip(BAND_MIDS - 5.0, reach)]
     graph.add_legs(legs, scope)
     return graph, used
 
@@ -324,14 +378,36 @@ def alts_for(node: Node, nodes: Sequence[Node], exclude: set[str]) -> tuple[Node
     return tuple(sorted(ahead, key=lambda n: n.km)[:MAX_ALTS])
 
 
-def make_stops(ctx: Ctx, path: Sequence[Node], all_nodes: Sequence[Node], extra_pp: float = 0.0) -> list[Stop]:
+def _leg_need(ctx: Ctx, path: Sequence[Node], i: int, j: int) -> float:
+    """Charge needed at path[i] to reach path[j] (or END when j == len(path)) at the 90th-percentile energy."""
+    node = path[i]
+    to_km = path[j].km if j < len(path) else ctx.total_km
+    res = RES_STOP if j < len(path) else RESERVE_PCT
+    to_detour = path[j].detour_km / 2.0 if j < len(path) else 0.0
+    energy = (ctx.runs.used_at_km(to_km) - ctx.runs.used_at_km(node.km)
+              + (node.detour_km / 2.0 + to_detour) * ctx.pp_per_km)
+    return float(res + SAFETY_PP + np.quantile(energy, 0.9))
+
+
+def make_stops(ctx: Ctx, path: Sequence[Node], all_nodes: Sequence[Node], extra_pp: float = 0.0,
+               robust: bool = False) -> list[Stop]:
+    """Stops with their charge targets: enough for the next leg. ``robust`` (WP3b) charges each stop, when the battery
+    allows, enough to SKIP the next stop too, the way a driver treats an unreported charger ahead as a bonus top-up
+    rather than a must-work stop."""
     on_path = {n.id for n in path}
     stops = []
     for i, node in enumerate(path):
+        if robust and i + 1 < len(path):  # as close to skipping the next stop as a full battery allows
+            skip = max(_leg_need(ctx, path, i, i + 2), _leg_need(ctx, path, i, i + 1))
+            stops.append(Stop(node, float(np.clip(skip + extra_pp, 0.0, MAX_CHARGE_PCT)),
+                              alts_for(node, all_nodes, on_path)))
+            continue
         nxt_km = path[i + 1].km if i + 1 < len(path) else ctx.total_km
         res = RES_STOP if i + 1 < len(path) else RESERVE_PCT
-        energy = ctx.runs.used_at_km(nxt_km) - ctx.runs.used_at_km(node.km)
-        target = float(np.clip(res + SAFETY_PP + np.quantile(energy, 0.9) + extra_pp, 0.0, 100.0))
+        nxt_detour = path[i + 1].detour_km / 2.0 if i + 1 < len(path) else 0.0
+        energy = (ctx.runs.used_at_km(nxt_km) - ctx.runs.used_at_km(node.km)
+                  + (node.detour_km / 2.0 + nxt_detour) * ctx.pp_per_km)
+        target = float(np.clip(res + SAFETY_PP + np.quantile(energy, 0.9) + extra_pp, 0.0, MAX_CHARGE_PCT))
         stops.append(Stop(node, min(target, 100.0), alts_for(node, all_nodes, on_path)))
     return stops
 
@@ -393,23 +469,44 @@ def graph_chains(graph: ChargerGraph, scope: str, nodes: Sequence[Node], k: int 
     return found
 
 
+def thin_nodes(nodes: Sequence[Node], vehicle_max_kw: float) -> list[Node]:
+    """Candidate STOPS for chain proposals on a dense route (WP3b): per THIN_BIN_KM of road, the THIN_PER_BIN
+    chargers a planner would pick first (most likely to work, then fastest for this car, then the shortest detour).
+    Backups are still chosen from every charger; with THIN_ABOVE or fewer candidates nothing is dropped."""
+    if len(nodes) <= THIN_ABOVE:
+        return list(nodes)
+    bins: dict[int, list[Node]] = {}
+    for n in nodes:
+        bins.setdefault(int(n.km // THIN_BIN_KM), []).append(n)
+    keep = [n for group in bins.values() for n in sorted(
+        group, key=lambda n: (-round(n.p_works, 2), -min(n.kw or ASSUMED_CHARGER_KW, vehicle_max_kw), n.detour_min)
+    )[:THIN_PER_BIN]]
+    return sorted(keep, key=lambda n: n.km)
+
+
 def propose_paths(ctx: Ctx, nodes: Sequence[Node], *, trust_aware: bool, k: int = K_CANDIDATES,
                   graph: ChargerGraph | None = None, diversity: bool = True) -> tuple[list[list[Node]], ChargerGraph]:
     """Candidate charging chains. With an external ``graph`` (Neo4j) the LEGs live there under a fresh scope for
     the duration of this call only and are dropped afterwards, so concurrent plans never see each other's legs."""
-    scope = uuid.uuid4().hex if graph is not None else ""
-    try:
-        leg_graph, _ = build_leg_graph(ctx, nodes, trust_aware=trust_aware, graph=graph, scope=scope)
-        ids = ["START"] + [n.id for n in nodes] + ["END"]
-        by_id = {n.id: n for n in nodes}
-        chains = graph_chains(leg_graph, scope, nodes, k, diversity=diversity) if graph is not None else None
-        if chains is None:  # no graph, or the in-memory fallback: the Python path (Yen) proposes the same chains
-            chains = diverse_paths(_adjacency(leg_graph, ids, scope), nodes, k, diversity=diversity)
-        paths = [[by_id[i] for i in p] for p in chains]
-    finally:
-        if graph is not None:
-            _drop_best_effort(graph, scope)
-    return paths, leg_graph
+    nodes = thin_nodes(nodes, VEHICLE_MAX_KW.get(ctx.vehicle.class_key, max(VEHICLE_MAX_KW.values())))
+    ids = ["START"] + [n.id for n in nodes] + ["END"]
+    by_id = {n.id: n for n in nodes}
+    found: list[list[str]] = []
+    leg_graph: ChargerGraph | None = None
+    table = leg_table(ctx, nodes, trust_aware=trust_aware)  # computed once, filtered twice
+    for lenient in (False, True):  # the strict chains first, then the ones only the lenient filter allows (WP3b)
+        scope = uuid.uuid4().hex if graph is not None else ""
+        try:
+            leg_graph, _ = build_leg_graph(ctx, nodes, trust_aware=trust_aware, graph=graph, scope=scope,
+                                           lenient=lenient, table=table)
+            chains = graph_chains(leg_graph, scope, nodes, k, diversity=diversity) if graph is not None else None
+            if chains is None:  # no graph, or the in-memory fallback: the Python path (Yen) proposes the same chains
+                chains = diverse_paths(_adjacency(leg_graph, ids, scope), nodes, k, diversity=diversity)
+        finally:
+            if graph is not None:
+                _drop_best_effort(graph, scope)
+        found += [c for c in chains if c not in found]
+    return [[by_id[i] for i in p] for p in found], leg_graph
 
 
 # --- Monte Carlo with backups -----------------------------------------------------------------------------
@@ -429,30 +526,36 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
     pos_km, pos_used = np.zeros(n), np.zeros(n)
     alive = np.ones(n, dtype=bool)
     minutes = np.full(n, ctx.minutes_at(ctx.total_km))
-    gains, stop_arrival, alive_in, soc_in, used_in, charged_at = [], [], [], [], [], []
+    gains, stop_arrival, alive_in, soc_in, used_in, charged_at, charge_min = [], [], [], [], [], [], []
+    ppk = ctx.pp_per_km
     for st in stops:
         node = st.node
         soc_in.append(soc.copy()); used_in.append(pos_used.copy()); alive_in.append(alive.copy())
         behind = alive & (pos_km >= node.km - 1e-9)
         active = alive & ~behind
         used_st = runs.used_at_km(node.km)
-        arr = soc - (used_st - pos_used)
+        det = node.detour_km * ppk  # there and back off the route, per run (WP3b)
+        arr = soc - (used_st - pos_used) - det / 2.0
         stop_arrival.append(np.where(active, arr, np.nan))
         works = sampler.works(node.site_id, p_of(node), node.operator)
         tried = active & (arr >= RES_STOP)
         ok = tried & works
+        waste = np.where(tried & ~works, det, 0.0)  # drove to a broken charger and back
         minutes = minutes + np.where(tried, node.detour_min, 0.0) + np.where(tried & ~works, FAILED_STOP_MIN, 0.0)
         cur_km, cur_used, cur_soc = (np.where(ok, v, w) for v, w in ((node.km, pos_km), (used_st, pos_used), (arr, soc)))
+        cur_det = np.where(ok, det, 0.0)
         cur_wait = np.where(ok, node.wait_min, 0.0)
         where = np.where(ok, PLANNED, NOT_CHARGED)
         need = active & ~ok
         if use_alts:
             for j, alt in enumerate(st.alts):
                 used_alt = runs.used_at_km(alt.km)
-                arr_alt = soc - (used_alt - pos_used)
+                det_alt = alt.detour_km * ppk
+                arr_alt = soc - waste - (used_alt - pos_used) - det_alt / 2.0
                 can = need & (arr_alt >= RES_STOP) & sampler.works(alt.site_id, p_of(alt), alt.operator)
                 cur_km, cur_used, cur_soc = (np.where(can, v, w) for v, w in
                                              ((alt.km, cur_km), (used_alt, cur_used), (arr_alt, cur_soc)))
+                cur_det = np.where(can, det_alt, cur_det)
                 cur_wait = np.where(can, alt.wait_min, cur_wait)
                 where = np.where(can, j, where)
                 minutes = minutes + np.where(can, alt.detour_min, 0.0)
@@ -460,10 +563,12 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
                 need &= ~can
         alive = alive & ~(need & (arr < RES_STOP))  # could not even reach the planned charger: stranded
         gain = np.where(ok, np.clip(st.charge_to - cur_soc, 0.0, 100.0 - cur_soc), 0.0)
-        soc = np.where(ok, cur_soc + gain, soc)
+        c_min = np.where(ok, ctx.charge_minutes(node, np.where(ok, cur_soc, 0.0), gain), 0.0)
+        soc = np.where(ok, cur_soc + gain - cur_det / 2.0, soc - waste)  # back to the route after charging
         pos_km, pos_used = np.where(ok, cur_km, pos_km), np.where(ok, cur_used, pos_used)
-        minutes = minutes + np.where(ok, STOP_OVERHEAD_MIN + gain * ctx.min_per_pp(node), 0.0) + cur_wait
+        minutes = minutes + np.where(ok, STOP_OVERHEAD_MIN, 0.0) + c_min + cur_wait
         gains.append(gain)
+        charge_min.append(c_min)
         charged_at.append(where)
     arrival = soc - (runs.total_used - pos_used)
     success = alive & (arrival >= RESERVE_PCT)
@@ -472,7 +577,7 @@ def evaluate_plan(ctx: Ctx, stops: Sequence[Stop], rng: np.random.Generator, *, 
     for st, gain in zip(stops, gains):
         trace = trace + np.where(runs.km_end >= st.node.km, 1.0, 0.0)[None, :] * gain[:, None]
     return PlanEval(success, arrival, minutes, gains, stop_arrival, alive_in, soc_in, used_in, trace, ctx, lost,
-                    charged_at)
+                    charged_at, charge_min)
 
 
 # --- Bingo Line, point of no return -----------------------------------------------------------------------
@@ -600,6 +705,23 @@ def trust_block(node: Node) -> dict:
             "basis": t.basis if t is not None else "prior only"}
 
 
+def credible_confidence(ctx: Ctx, stops: Sequence[Stop], stale: Sequence[Node], seed: int,
+                        draws: int = CREDIBLE_DRAWS, q: float = CREDIBLE_Q) -> float:
+    """A credible LOWER bound on the plan's confidence over what the stale chargers' missing reports could show
+    (WP3b): draw each stale charger's P(works) from its Beta posterior, score the plan for each draw on the same
+    Monte Carlo runs, and take the ``q`` quantile. It replaces "every stale charger at its own 10th percentile at
+    once", a joint event far rarer than 10 % that made almost every plan on a new corridor refuse."""
+    rng = np.random.default_rng(seed + 7)
+    unique = list({n.id: n for n in stale}.values())
+    confs = []
+    for _ in range(draws):
+        over = {n.id: (float(rng.beta(n.trust.a_post, n.trust.b_post))
+                       if n.trust is not None and n.trust.a_post > 0 and n.trust.b_post > 0 else n.p_lo)
+                for n in unique}
+        confs.append(evaluate_plan(ctx, stops, np.random.default_rng(seed + 1), p_override=over).confidence)
+    return float(np.quantile(confs, q))
+
+
 def _stale(node: Node) -> bool:
     return node.trust is None or node.trust.trust_level in ("unknown", "low")
 
@@ -626,6 +748,10 @@ def _choose(ctx: Ctx, nodes: Sequence[Node], rng: np.random.Generator, *, trust_
         stops = make_stops(ctx, path, nodes)
         ev = evaluate_plan(ctx, stops, rng, use_alts=use_alts)
         scored.append((stops, ev))
+        if len(path) >= 2:  # WP3b: the same chain with each stop charging enough to skip the next one
+            robust = make_stops(ctx, path, nodes, robust=True)
+            if [s.charge_to for s in robust] != [s.charge_to for s in stops]:
+                scored.append((robust, evaluate_plan(ctx, robust, rng, use_alts=use_alts)))
         trivial = {s.node.id for s, g in zip(stops, ev.gains) if float(g.mean()) * ctx.min_per_pp(s.node) < MIN_STOP_MINUTES}
         if trivial:  # also score the plan without the pointless top-ups
             kept = [s.node for s in stops if s.node.id not in trivial]
@@ -683,8 +809,9 @@ def dispatch(
 
     # evidence check: would the decision flip if stale/unknown chargers were at their pessimistic value?
     stale = [s.node for s in stops if _stale(s.node)] + [a for s in stops for a in s.alts if _stale(a)]
-    pess = {n.id: n.p_lo for n in stale}
-    conf_pess = evaluate_plan(ctx, stops, np.random.default_rng(seed + 1), p_override=pess).confidence if pess else conf
+    # Only a would-be GO can be withheld for thin evidence, so the bound is computed only then (it costs 24 re-scores).
+    could_withhold = bool(stale) and trust_aware and meets_target(conf, target_confidence)
+    conf_pess = credible_confidence(ctx, stops, stale, seed) if could_withhold else conf
     thin_vehicle = vehicle.trips_calibrated < MIN_CALIBRATED_TRIPS and not vehicle.prior_only
     # The decision follows the DISPLAYED confidence (nearest 5 %, golden rule 5), so the UI never shows
     # "90 % / NO_GO" for a 90 % target; 2.5 points is below the Monte Carlo's own resolution anyway.
@@ -709,11 +836,17 @@ def dispatch(
         decision, charger_refusal = "INSUFFICIENT_EVIDENCE", True
         n_weak = len({n.id for n in stale})
         refusal = (f"The plan only meets the {target_confidence:.0%} target if chargers with stale or missing reports "
-                   f"({weak}) work; with a pessimistic reading of them confidence falls to about {shown_pess:.0%}. "
+                   f"({weak}) work; with a pessimistic reading of them (the worst 10 % of what their missing reports could "
+                   f"show) confidence falls to about {shown_pess:.0%}. "
                    f"Verify {'this charger' if n_weak == 1 else f'these {n_weak} chargers'} and the plan stands at "
                    f"today's estimate of {shown:.0%} (target {target_confidence:.0%}).")
 
     result = _assemble(vehicle, ctx, stops, ev, nodes, decision, refusal, polyline or [], rng)
+    if decision == "GO" and any(p["expected_soc_pct"] < p["bingo_soc_pct"] for p in result.bingo_line):
+        # A release must never contradict its own Bingo Line (W0.1). This happens only at the rounding edge (e.g.
+        # 88.75 % shown as 90 %), where the plan's score and the line's own estimate disagree by Monte Carlo noise:
+        # the borderline plan is then not released as a GO (WP3b).
+        decision = result.decision = "NO_GO"
     if charger_refusal:
         seen: dict[str, dict] = {}
         for n in stale:
@@ -765,8 +898,12 @@ def _assemble(vehicle: VehicleContext, ctx: Ctx, stops: Sequence[Stop], ev: Plan
             "lat": n.charger.lat if n.charger else None, "lon": n.charger.lon if n.charger else None,
             "km_along_route": round(n.km, 1),
             "arrive_soc_p50": int(round(float(np.nanmedian(arr)))) if np.isfinite(arr).any() else 0,
-            "charge_minutes": int(round(float(ev.gains[i].mean()) * ctx.min_per_pp(n) + 0.0)),
+            "charge_minutes": int(round(float(ev.charge_min[i].mean()) if ev.charge_min else
+                                        float(ev.gains[i].mean()) * ctx.min_per_pp(n))),
             "p_works": round_prob(n.p_works), "evidence": _evidence(n), "trust": trust_block(n),
+            # WP3b: an insurance stop: most runs arrive with enough and drive past; it charges only when the battery
+            # came in lower than expected, which is what it adds to the plan's confidence
+            "if_needed": bool(float(np.median(ev.gains[i])) < IF_NEEDED_PP),
             "power_assumed": n.kw is None,
         })
         for alt in st.alts:

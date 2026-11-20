@@ -21,12 +21,12 @@ function load(connected = false) {
 
 test('front door uses the canonical releases for the three fleet vehicles', async () => {
   const { service: s } = load();
-  for (const [id, decision] of Object.entries({ V12: 'GO', V07: 'NO_GO', V19: 'INSUFFICIENT_EVIDENCE' })) {
+  for (const [id, decision] of Object.entries({ V12: 'GO', V07: 'GO', V19: 'INSUFFICIENT_EVIDENCE' })) {
     const { plan } = await s.dispatch(id, s.vehicle(id).soc_pct);
     assert.equal(plan, s.saved.dispatch[id]);
     assert.equal(plan.decision, decision);
   }
-  const low = await s.dispatch('V12',40);
+  const low = await s.dispatch('V07',40);  // WP3b: V12 now GOes from 40 %; the aged V07 still does not
   assert.notEqual(low.plan.decision,'GO');
   await assert.rejects(s.dispatch('V12',63), /saved level/);
   await assert.rejects(s.dispatch('bad',62), /vehicles/);

@@ -154,6 +154,7 @@ class Stop(Resp):
     p_works: float
     evidence: Evidence
     trust: StopTrust  # WP3
+    if_needed: bool = False  # WP3b: insurance stop, charged only when the battery comes in lower than expected
 
 
 class Alternate(Resp):

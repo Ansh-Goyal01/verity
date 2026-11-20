@@ -74,9 +74,12 @@ def test_a_pin_that_no_longer_matches_the_directory_stops_the_service(near: list
 # --- the three outcomes ---------------------------------------------------------------------------------------------
 
 
-def test_v07_aged_battery_is_no_go_with_a_confidence_below_target(plans: dict) -> None:
-    d = plans["V07"]
-    assert d["decision"] == "NO_GO" and d["confidence"] < 0.9 and d["refusal_reason"] is None
+def test_v07_aged_battery_is_rescued_by_charging_longer(plans: dict) -> None:
+    """WP3b: the smarter planner may charge past 80 % (slower, priced in), so the aged battery reaches Agra by
+    charging longer than the healthy V12 does, instead of being a NO_GO."""
+    d, healthy = plans["V07"], plans["V12"]
+    assert d["decision"] == "GO" and d["confidence"] >= 0.9 and d["refusal_reason"] is None
+    assert sum(s["charge_minutes"] for s in d["stops"]) > sum(s["charge_minutes"] for s in healthy["stops"])
 
 
 def test_v12_is_go_at_the_target_confidence(plans: dict) -> None:
