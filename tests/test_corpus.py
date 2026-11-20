@@ -44,12 +44,17 @@ def test_committed_template_header_matches_spec(spec):
     assert header == spec.header
 
 
-def test_seed_trips_are_unverified_drafts_without_errors():
+def test_ai_entered_trips_are_verified_only_by_a_person_and_have_no_errors():
+    # Rows may be typed in by an AI tool (seed:claude-code, claude-chat), but only a
+    # person who re-checked the source may mark them verified (docs/DATA.md step 6).
     header, rows = read_csv(paths.CORPUS_DIR / TRIPS.filename)
     issues = validate_table(TRIPS, header, rows)
     assert len(rows) >= 6
-    seeds = [row for row in rows if row["entered_by"] == "seed:claude-code"]
-    assert all(row["verified"] == "no" for row in seeds)
+    for row in rows:
+        if row["verified"] == "yes":
+            checker = row["verified_by"].strip().lower()
+            assert checker, f"{row['record_id']}: verified without verified_by"
+            assert "claude" not in checker, f"{row['record_id']}: verified by an AI tool"
     assert [i.render() for i in issues if i.level == ERROR] == []
 
 
