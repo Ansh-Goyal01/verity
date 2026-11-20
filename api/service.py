@@ -14,6 +14,7 @@ What is real and what is simulated (every response says ``is_simulated: true``):
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 import logging
@@ -32,7 +33,8 @@ from verity.chargers import RouteCharger, chargers_near_route, load_chargers, so
 from verity.dispatch import ALT_AHEAD_KM, PlanState, VehicleContext, dispatch, live_update_plan
 from verity.forecast import ForecastConfig, confidence_display, round_prob
 from verity.paths import SIM_DIR
-from verity.routing import load_planned_route
+from verity.geocode import geocode, geocode_client, normalise_query
+from verity.routing import CachedClient, NetworkUnavailable, RequestBudgetExceeded, load_planned_route
 from verity.schemas import ChargerRecord, Report
 from verity.sim import generate_dataset, load_manifest
 from verity.trips import haversine_m, load_sim_observation
@@ -54,8 +56,10 @@ from verity.vehicles import get_prior
 from verity.ride_voice import spoken_ride_answer
 from verity.voice_loop import SPEECH_LANGUAGES, spoken_answers
 
+from .data_sources import DEMO_FLEET_LABEL, any_simulated, build_data_sources
 from .graph_endpoints import GraphEndpoints
 from .limits import LruCache
+from .route_resolver import ENDPOINT_TOLERANCE_KM, ResolvedRoute, RouteError, RouteResolver, parse_departure
 from .models import DispatchRequest, RideCheckRequest
 from .ride import (
     AFTER_DROP_RADIUS_KM,
@@ -88,7 +92,7 @@ BOOKING = {"booking_id": "BK-001", "origin": {"name": "Noida", "lat": 28.5355, "
            "destination": {"name": "Agra", "lat": 27.1767, "lon": 78.0081},
            "departure_time": "2026-10-28T14:00:00+05:30", "passengers": 4, "ac_on": True, "target_confidence": 0.9}
 CORRIDOR_KM = 3.0  # chargers within this distance of the route are planning candidates
-ENDPOINT_TOLERANCE_KM = 30.0  # the demo route only serves requests that start/end near Noida and Agra
+# ENDPOINT_TOLERANCE_KM (imported above) now lives in route_resolver.py; still importable from here.
 PIN_KM_TOLERANCE = 1.0  # a pinned charger must still sit this close (km) to where the scenario expects it
 
 
@@ -212,6 +216,18 @@ class StoredPlan:
     state: PlanState
     response: dict
     request: dict
+    poly: np.ndarray | None = None  # the plan's own route (WP1); None = the demo route
+    poly_km: np.ndarray | None = None
+
+
+def plan_key(req: dict) -> str:
+    """sha1 of the canonical request (the plan id prefix and the Monte Carlo seed). A trip end's ``name`` is left out
+    when absent, so every request made before names existed keeps its plan id (and its cached audio)."""
+    body = {k: req[k] for k in sorted(req)}
+    for end in ("origin", "destination"):
+        if isinstance(body.get(end), dict) and body[end].get("name") is None:
+            body[end] = {k: v for k, v in body[end].items() if k != "name"}
+    return hashlib.sha1(json.dumps(body, sort_keys=True).encode()).hexdigest()
 
 
 REPLAN_LIMIT = 2  # plans re-planned after one report: each is a full Monte Carlo (about 2.4 s in memory)
@@ -268,13 +284,20 @@ def canonical_request(model: type, req: dict) -> dict:
 
 class EngineService(GraphEndpoints):
     def __init__(self, n_runs: int | None = None, graph_backend: str | None = None,
-                 clock: Callable[[], datetime] | None = None) -> None:
+                 clock: Callable[[], datetime] | None = None,
+                 route_client: Callable[[], CachedClient] | None = None,
+                 geocoder_client: Callable[[], CachedClient] | None = None) -> None:
+        # One client each for the life of the service (functools.cache of a zero-argument factory): httpx clients are
+        # thread-safe and CachedClient serialises its own cache, so per-request clients would only leak connections.
+        self.geocoder_client: Callable[[], CachedClient] = geocoder_client or functools.cache(geocode_client)
         # Real reports are aged by this clock, simulated ones by reports_sim.NOW (trust/clock.py); injectable for tests.
         self.clock: Callable[[], datetime] = clock or (lambda: datetime.now(timezone.utc))
         self.cfg = ForecastConfig(n_runs=n_runs or int(os.environ.get("VERITY_N_RUNS", "1500")))
         self.route, self.snap = load_planned_route()
         self.poly = np.array(self.snap["polyline"])
         self.poly_km = np.array(self.snap["polyline_km"])
+        # Any other route is fetched per request (WP1); the client factory is injectable so tests replay recordings.
+        self.resolver = RouteResolver(self.route, self.snap, BOOKING, route_client or functools.cache(CachedClient))
         directory, self.directory_meta = load_chargers()
         self.demo_reports = demo_reports_for(chargers_near_route(directory, self.poly, self.poly_km, CORRIDOR_KM))
         self.driver_demo_reports = driver_demo_reports(directory)
@@ -370,11 +393,12 @@ class EngineService(GraphEndpoints):
             graph.sweep_plans(PLAN_KEEP, PLAN_MAX_AGE_S)
             self.graph.mirror.sweep_plans(PLAN_KEEP, PLAN_MAX_AGE_S)  # the mirror holds every plan too
 
-    def _record_plan(self, plan_id: str, response: dict, view: GraphView) -> None:
+    def _record_plan(self, plan_id: str, response: dict, near: Sequence[RouteCharger],
+                     trust: dict[str, ChargerTrust]) -> None:
         """Write the released plan into the graph (STOPS_AT / BACKUP_FOR / AVOIDED). A failure here must never fail the
         dispatch: the plan is already computed and cached, only its audit trail would be missing."""
         try:
-            rec = plan_record(plan_id, response, view.near, view.trust, ALT_AHEAD_KM, time.time())
+            rec = plan_record(plan_id, response, near, trust, ALT_AHEAD_KM, time.time())
             self.graph.mirror.add_plan(rec)
             if self.graph.backend == "neo4j":  # not ``populate``: a rejected audit write must not switch Neo4j off for everyone
                 self.graph.neo4j.add_plan(rec)
@@ -394,13 +418,42 @@ class EngineService(GraphEndpoints):
                     for vid, fv in self.fleet.items()]
         return {"booking": BOOKING, "vehicles": vehicles, "is_simulated": True}
 
-    def _check_endpoints(self, origin: dict, destination: dict) -> None:
-        def far(p: dict, ref: dict) -> bool:
-            d = haversine_m(np.array([p["lat"]]), np.array([p["lon"]]), np.array([ref["lat"]]), np.array([ref["lon"]]))[0]
-            return d / 1000.0 > ENDPOINT_TOLERANCE_KM
-        if far(origin, BOOKING["origin"]) or far(destination, BOOKING["destination"]):
-            raise ApiError(422, "unsupported_route", "This prototype serves the cached Noida to Agra route only "
-                           f"(origin and destination must be within {ENDPOINT_TOLERANCE_KM:.0f} km of them).")
+    def geocode(self, q: str, limit: int = 5, near: tuple[float, float] | None = None) -> dict:
+        """India-only place search (WP1) through Photon, cached; its own request budget (engine/verity/geocode.py)."""
+        try:
+            normalise_query(q)
+        except ValueError as exc:  # only the query check is the caller's fault
+            raise ApiError(422, "invalid_request", str(exc)) from exc
+        try:
+            places = geocode(self.geocoder_client(), q, limit, near)
+        except (NetworkUnavailable, RequestBudgetExceeded, OSError, ValueError, KeyError) as exc:
+            log.warning("geocoder unavailable (%s)", type(exc).__name__)
+            raise ApiError(503, "geocoder_unavailable", "Place search is unavailable right now; try again shortly.") from exc
+        return {"results": [p.as_dict() for p in places], "source": "Photon (komoot), OpenStreetMap data"}
+
+    def _resolve_route(self, req: dict) -> ResolvedRoute:
+        try:
+            return self.resolver.resolve(req["origin"], req["destination"], req["departure_time"])
+        except RouteError as exc:
+            raise ApiError(exc.status, exc.code, exc.message) from exc
+
+    def _route_inputs(self, view: GraphView, resolved: ResolvedRoute) -> tuple[list[RouteCharger], dict, list[Report]]:
+        """(chargers near THIS route, trust, the reports on them). Off the demo route the simulated demo reports are
+        left out of trust, so a plan built only from real inputs can honestly say ``is_simulated: false``."""
+        if resolved.is_demo:
+            near, trust, reports = view.near, view.trust, list(view.reports)
+        else:
+            near = chargers_near_route(view.chargers, resolved.poly, resolved.poly_km, CORRIDOR_KM)
+            reports = [r for r in view.reports if not r.is_simulated]
+            trust = TrustEngine(view.chargers).estimate(reports, NOW).chargers
+        ids = {rc.charger.id for rc in near}
+        return near, trust, [r for r in reports if r.charger_id in ids]
+
+    def _speech_destination(self, req: dict, resolved: ResolvedRoute) -> str | None:
+        name = req["destination"].get("name")
+        if name:
+            return name
+        return BOOKING["destination"]["name"] if resolved.is_demo else None  # no name: say nothing, never guess one
 
     def _plan_id_for(self, key: str, req: dict) -> str:
         """The shortest ``PL-`` prefix of the request hash (4 hex characters or more) that is free or already this
@@ -420,8 +473,8 @@ class EngineService(GraphEndpoints):
         fv = self.fleet.get(req["vehicle_id"])
         if fv is None:
             raise ApiError(404, "unknown_vehicle", f"Unknown vehicle {req['vehicle_id']!r}; known: {sorted(self.fleet)}")
-        self._check_endpoints(req["origin"], req["destination"])
-        key = hashlib.sha1(json.dumps({k: req[k] for k in sorted(req)}, sort_keys=True).encode()).hexdigest()
+        resolved = self._resolve_route(req)
+        key = plan_key(req)
         plan_id = self._plan_id_for(key, req)
         stored = self.plans.get(plan_id)  # one atomic read: the plan may be evicted between a check and a second read
         if stored is not None and not refresh:
@@ -431,14 +484,15 @@ class EngineService(GraphEndpoints):
                   for vid, o in self.fleet.items() if vid != req["vehicle_id"]]
         t0, (q0, s0) = time.perf_counter(), self._graph_queries()
 
-        def plan_on(g: ChargerGraph) -> tuple[GraphView, object]:
+        def plan_on(g: ChargerGraph) -> tuple[GraphView, tuple, object]:
             self._sweep_if_due(g)
             view = self._read_view(g)  # per dispatch, so a graph edited outside the API is picked up
-            return view, dispatch(ctx, self.route, view.near, view.trust, start_soc=req["start_soc_pct"],
-                                  target_confidence=req["target_confidence"], seed=int(key[:8], 16), cfg=self.cfg,
-                                  other_vehicles=others, graph=g)
+            inputs = self._route_inputs(view, resolved)
+            return view, inputs, dispatch(ctx, resolved.route, inputs[0], inputs[1], start_soc=req["start_soc_pct"],
+                                          target_confidence=req["target_confidence"], seed=int(key[:8], 16),
+                                          cfg=self.cfg, other_vehicles=others, graph=g)
 
-        view, result = self.graph.call(plan_on)
+        view, (near, trust, near_reports), result = self.graph.call(plan_on)
         self._adopt(view)
         q1, s1 = self._graph_queries()
         self.last_graph_timing = {"backend": self.graph.backend, "queries": max(q1 - q0, 0),
@@ -446,25 +500,31 @@ class EngineService(GraphEndpoints):
         log.info("dispatch %s: %d graph queries, %.2f s in the graph of %.2f s total (%s)", plan_id,
                  self.last_graph_timing["queries"], self.last_graph_timing["graph_s"],
                  self.last_graph_timing["total_s"], self.graph.backend)
+        destination = self._speech_destination(req, resolved)
+        n_sim = sum(r.is_simulated for r in near_reports)
+        sources = build_data_sources(resolved.snap, parse_departure(req["departure_time"]) or datetime.min,
+                                     vehicle_simulated=True, vehicle_source=DEMO_FLEET_LABEL,
+                                     n_real_reports=len(near_reports) - n_sim, n_simulated_reports=n_sim)
         response = {
             "plan_id": plan_id, "vehicle_id": result.vehicle_id, "decision": result.decision,
             "confidence": result.confidence, "confidence_display": confidence_display(result.confidence),
             "reason": result.reason,
-            "speech": spoken_answers(result.decision, destination=BOOKING["destination"]["name"],
-                                     confidence=result.confidence,
-                                     bingo=result.bingo_line[0]["bingo_soc_pct"] if result.bingo_line else None,
-                                     reason_facts=result.reason_facts),
+            "speech": {} if destination is None else spoken_answers(
+                result.decision, destination=destination, confidence=result.confidence,
+                bingo=result.bingo_line[0]["bingo_soc_pct"] if result.bingo_line else None,
+                reason_facts=result.reason_facts),
             "arrival_soc": result.arrival_soc,
             "route": {"distance_km": result.distance_km, "duration_min": result.duration_min,
-                      "polyline": self.snap["polyline"]},
+                      "polyline": resolved.snap["polyline"]},
             "stops": [{k: v for k, v in s.items() if k != "power_assumed"} for s in result.stops],
             "alternates": result.alternates, "bingo_line": result.bingo_line,
             "point_of_no_return_km": result.point_of_no_return_km, "breakdown": result.breakdown,
             "levers": result.levers, "risk_sources": result.risk_sources, "refusal_reason": result.refusal_reason,
-            "compute_ms": result.compute_ms, "n_runs": self.cfg.n_runs, "is_simulated": True,
+            "compute_ms": result.compute_ms, "n_runs": self.cfg.n_runs, "data_sources": sources,
+            "is_simulated": any_simulated(sources),
         }
-        self.plans[plan_id] = StoredPlan(result.state, response, dict(req))
-        self._record_plan(plan_id, response, view)
+        self.plans[plan_id] = StoredPlan(result.state, response, dict(req), resolved.poly, resolved.poly_km)
+        self._record_plan(plan_id, response, near, trust)
         return response
 
     # -- did a new report move a plan? (W3.3) -----------------------------------------------------------------------
@@ -559,12 +619,13 @@ class EngineService(GraphEndpoints):
 
     def forecast_update(self, req: dict) -> dict:
         sp = self._plan(req["plan_id"])
-        d = haversine_m(np.full(len(self.poly), req["lat"]), np.full(len(self.poly), req["lon"]),
-                        self.poly[:, 0], self.poly[:, 1])
+        poly = self.poly if sp.poly is None else sp.poly  # each plan locates the driver on its own route (WP1)
+        poly_km = self.poly_km if sp.poly_km is None else sp.poly_km
+        d = haversine_m(np.full(len(poly), req["lat"]), np.full(len(poly), req["lon"]), poly[:, 0], poly[:, 1])
         i = int(np.argmin(d))
         if d[i] > 15_000.0:
             raise ApiError(422, "off_route", "The position is more than 15 km from the planned route.")
-        upd = live_update_plan(sp.state, float(self.poly_km[i]), float(req["soc_pct"]))
+        upd = live_update_plan(sp.state, float(poly_km[i]), float(req["soc_pct"]))
         return {"plan_id": req["plan_id"], **upd, "n_runs": sp.state.ctx.runs.n_runs, "is_simulated": True}
 
     def chargers_in_bbox(self, min_lat: float, min_lon: float, max_lat: float, max_lon: float) -> dict:

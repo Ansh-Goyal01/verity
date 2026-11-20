@@ -684,3 +684,16 @@ fits the project. Nothing here is applied unless both sides agree.
 - Old shape: none for the endpoint; `voice_notes` was `{count, status ("NOT_RUN"|"MEASURED"), note}`. New shape: see the last section of API_CONTRACT.md. Additive, apart from one new `status` value.
 - Safety: off unless `VERITY_LAB_MODE=1`; consent required; speaker ids are anonymous labels; no audio, name or address stored.
 - v7 addendum (review of S12): `VERITY_LAB_TOKEN` + `X-Lab-Token` required; `compare=true` costs 5 rate-limit hits; comparison rows gain `success_over_all_calls`; foreign rows are skipped.
+
+### 2026-11-20 - v8: any route on `POST /api/dispatch`, `GET /api/geocode`, `data_sources` (finale WP1)
+
+- Reason: docs/FINALE_BUILD.md WP1. A judge plans their own trip, not only Noida -> Agra.
+- `POST /api/dispatch` request: `origin` and `destination` gain an optional `name` (1-80 characters; spoken in the answer). Absent names are left out of the plan id, so every earlier request keeps its `plan_id` (demo V07/V12/V19 unchanged: `PL-5f72`, `PL-9b91`, `PL-47be`).
+- Any origin and destination in India: within 30 km of Noida and Agra the committed demo route is used exactly as before; anything else is a real route (OSRM, Open-Meteo elevation and forecast) fetched and cached per request.
+- New response field `data_sources`: `{route, elevation, weather, vehicle, charger_reports}`, each `{status: "real"|"simulated", source, n, note}` (`n` = reports on this route's chargers; `weather.note` says when the forecast did not hold the departure hour). `is_simulated` is now derived from it (true when ANY input is simulated) instead of always true. Off the demo route, simulated demo reports are left out of trust.
+- `speech` is `{}` for a non-demo route without `destination.name` (no place name is guessed).
+- New errors: 422 `route_too_long` (over 700 km; `VERITY_MAX_TRIP_KM`), 503 `route_unavailable` (router or forecast unreachable or the request budget spent: never a plan on synthetic geometry), 422 `invalid_request` for an unparseable `departure_time` off the demo route. `unsupported_route` is retired.
+- `POST /api/forecast/update` locates the driver on the plan's own route.
+- New `GET /api/geocode?q=<2-100 chars>&limit=<1-10, default 5>&lat=&lon=` -> `{results: [{name, lat, lon, kind}], source}`. India only (Photon `countrycode=IN`, non-IN results dropped); `lat`/`lon` bias towards a place. Rate limit `VERITY_GEOCODE_RATE_PER_MIN` (default 60 per address); errors 422 `invalid_request`, 429 `rate_limited`, 503 `geocoder_unavailable`. Results are cached; the geocoder has its own lifetime request budget (`VERITY_GEOCODE_MAX_REQUESTS`, default 500).
+- Frontend note: debounce the place box (send after ~300 ms idle and 3+ characters) and pass the chosen result's `name`, `lat`, `lon` straight into `origin`/`destination`.
+- v8 addendum (code review, same day): new 422 `route_too_short` (ends under 1 km apart); 429 `rate_limited` when more than `VERITY_NEW_ROUTES_PER_HOUR` (default 20, server-wide) NEW routes are fetched in an hour (demo and already-fetched routes are never limited); the departure hour is read in IST whatever offset the request uses (02:30Z = the 08:00 forecast).

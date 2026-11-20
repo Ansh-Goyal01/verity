@@ -7396,7 +7396,39 @@
   }
  ],
  "refusal_reason": "The plan only meets the 90% target if chargers with stale or missing reports (GBU- CHARGING STATION, Mansavi SuperCharge Point, Tata) work; with a pessimistic reading of them confidence falls to about 80%. Ask the community to verify them before departure.",
- "compute_ms": 7741,
+ "compute_ms": 6767,
  "n_runs": 1500,
+ "data_sources": {
+  "route": {
+   "status": "real",
+   "source": "OSRM public router (router.project-osrm.org), OpenStreetMap roads",
+   "n": null,
+   "note": null
+  },
+  "elevation": {
+   "status": "real",
+   "source": "open-meteo elevation (Copernicus DEM ~90 m)",
+   "n": null,
+   "note": null
+  },
+  "weather": {
+   "status": "real",
+   "source": "Open-Meteo forecast",
+   "n": null,
+   "note": null
+  },
+  "vehicle": {
+   "status": "simulated",
+   "source": "Demo fleet: simulated trips, calibrated through the real pipeline",
+   "n": null,
+   "note": null
+  },
+  "charger_reports": {
+   "status": "simulated",
+   "source": "Driver and source reports in the trust graph",
+   "n": 14,
+   "note": "0 real, 14 simulated"
+  }
+ },
  "is_simulated": true
 }

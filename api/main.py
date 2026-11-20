@@ -30,6 +30,7 @@ from verity.paths import RESULTS_DIR
 from .ledger import build_ledger
 from .limits import RateLimiter, client_ip, parse_origins, positive_int, rate_key
 from .models import (
+    GeocodeResponse,
     ChargerGraphResponse,
     ChargersResponse,
     DemoScenario,
@@ -151,6 +152,21 @@ def limit_voice(request: Request, limiter: RateLimiter = Depends(get_voice_limit
         raise RateLimited(retry_after)
 
 
+DEFAULT_GEOCODE_RATE_PER_MIN = 60  # autocomplete: about one call a second per address; Photon asks for fair use
+geocode_limiter = RateLimiter(positive_int(env_setting("VERITY_GEOCODE_RATE_PER_MIN"), DEFAULT_GEOCODE_RATE_PER_MIN,
+                                           "VERITY_GEOCODE_RATE_PER_MIN"), VOICE_WINDOW_S)
+
+
+def get_geocode_limiter() -> RateLimiter:
+    return geocode_limiter
+
+
+def limit_geocode(request: Request, limiter: RateLimiter = Depends(get_geocode_limiter)) -> None:
+    retry_after = limiter.hit(rate_key(client_ip(request, TRUST_PROXY)))
+    if retry_after is not None:
+        raise RateLimited(retry_after, "place search")
+
+
 def get_report_limiter() -> RateLimiter:
     return report_limiter
 
@@ -223,6 +239,15 @@ def demo_scenario(svc: EngineService = Depends(get_service)) -> dict:
 @app.post("/api/dispatch", response_model=DispatchResponse)
 def post_dispatch(req: DispatchRequest, svc: EngineService = Depends(get_service)) -> dict:
     return svc.dispatch(req.model_dump())
+
+
+@app.get("/api/geocode", response_model=GeocodeResponse, dependencies=[Depends(limit_geocode)])
+def get_geocode(q: str = Query(min_length=2, max_length=100), limit: int = Query(5, ge=1, le=10),
+                lat: float | None = Query(None, ge=-90, le=90), lon: float | None = Query(None, ge=-180, le=180),
+                svc: EngineService = Depends(get_service)) -> dict:
+    """WP1: India-only place search for the trip form (Photon, cached). ``lat``/``lon`` bias results towards a place."""
+    near = (lat, lon) if lat is not None and lon is not None else None
+    return svc.geocode(q, limit, near)
 
 
 @app.get("/api/evidence/ledger")

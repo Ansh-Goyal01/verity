@@ -17,9 +17,11 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
+import threading
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -48,6 +50,43 @@ AGRA = (27.1767, 78.0081)
 HIGHWAY_MPS, ARTERIAL_MPS = 20.0, 10.0
 
 
+IST = timezone(timedelta(hours=5, minutes=30))  # India has no daylight saving, so a fixed offset is exact
+_DIR_LOCKS: dict[str, threading.Lock] = {}
+_DIR_LOCKS_GUARD = threading.Lock()
+
+
+def ist_hour(departure: datetime) -> str:
+    """The departure's hour in IST as the forecast labels it (requested with timezone=Asia/Kolkata). A naive time is
+    taken to be IST already; an aware one (e.g. ...Z) is converted, so 02:30Z asks for the 08:00 forecast."""
+    local = departure if departure.tzinfo is None else departure.astimezone(IST)
+    return local.strftime("%Y-%m-%dT%H:00")
+
+
+def _dir_lock(cache_dir: Path) -> threading.Lock:
+    """One lock per cache directory: the API serves requests from a thread pool, and the cache files and the request
+    log are read-modify-write. The routing and geocoder caches have different directories, so they don't block each other."""
+    key = str(Path(cache_dir).resolve())
+    with _DIR_LOCKS_GUARD:
+        return _DIR_LOCKS.setdefault(key, threading.Lock())
+
+
+def _write_atomic(path: Path, text: str) -> None:
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)  # readers see the old file or the new one, never a half-written one
+
+
+def max_requests_setting(env: str = "VERITY_MAX_REQUESTS", default: int = MAX_REQUESTS) -> int:
+    """The lifetime request cap (persisted in request_log.json), from ``env`` when set to a positive integer."""
+    raw = os.environ.get(env, "").strip()
+    if not raw:
+        return default
+    value = int(raw)
+    if value < 1:
+        raise ValueError(f"{env} must be a positive integer, got {raw!r}")
+    return value
+
+
 class RequestBudgetExceeded(RuntimeError):
     pass
 
@@ -59,11 +98,11 @@ class NetworkUnavailable(RuntimeError):
 class CachedClient:
     """HTTP client that replays cached responses, counts real requests, and backs off on errors."""
 
-    def __init__(self, cache_dir: Path = CACHE_DIR, max_requests: int = MAX_REQUESTS, timeout: float = 45.0,
+    def __init__(self, cache_dir: Path = CACHE_DIR, max_requests: int | None = None, timeout: float = 45.0,
                  retries: int = 3, client: httpx.Client | None = None,
                  sleep: Callable[[float], None] = time.sleep) -> None:
         self.cache_dir = Path(cache_dir)
-        self.max_requests = max_requests
+        self.max_requests = max_requests if max_requests is not None else max_requests_setting()
         self.retries = retries
         self._sleep = sleep
         self._client = client or httpx.Client(timeout=timeout, headers={"User-Agent": USER_AGENT},
@@ -83,7 +122,7 @@ class CachedClient:
         log = json.loads(self._log_path.read_text(encoding="utf-8")) if self._log_path.exists() else {"count": 0, "log": []}
         log["count"] += 1
         log["log"].append({"t": datetime.now(timezone.utc).isoformat(timespec="seconds"), "url": url, "status": status})
-        self._log_path.write_text(json.dumps(log, indent=1), encoding="utf-8")
+        _write_atomic(self._log_path, json.dumps(log, indent=1))
 
     @staticmethod
     def _key(method: str, url: str, params: dict | None, data: dict | None) -> str:
@@ -92,8 +131,14 @@ class CachedClient:
 
     def request_json(self, method: str, url: str, *, params: dict | None = None, data: dict | None = None,
                      headers: dict | None = None) -> tuple[Any, bool]:
-        """(parsed JSON, served_from_cache). ``headers`` (e.g. an API key) are never cached or logged."""
+        """(parsed JSON, served_from_cache). ``headers`` (e.g. an API key) are never cached or logged. Serialised per
+        cache directory, so concurrent requests never read a half-written file, lose a count, or fetch twice."""
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        with _dir_lock(self.cache_dir):
+            return self._request_json_locked(method, url, params=params, data=data, headers=headers)
+
+    def _request_json_locked(self, method: str, url: str, *, params: dict | None, data: dict | None,
+                             headers: dict | None) -> tuple[Any, bool]:
         path = self.cache_dir / f"{self._key(method, url, params, data)}.json"
         if path.exists():
             return json.loads(path.read_text(encoding="utf-8"))["response"], True
@@ -110,7 +155,7 @@ class CachedClient:
                 payload = resp.json()
                 record = {"request": {"method": method, "url": url, "params": params, "data": data},
                           "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "response": payload}
-                path.write_text(json.dumps(record), encoding="utf-8")
+                _write_atomic(path, json.dumps(record))
                 return payload, False
             except (httpx.TransportError, httpx.HTTPStatusError, ValueError) as exc:
                 last = exc
@@ -188,7 +233,7 @@ def fetch_weather(client: CachedClient, lat: np.ndarray, lon: np.ndarray, depart
         "hourly": "temperature_2m,wind_speed_10m,wind_direction_10m", "wind_speed_unit": "ms",
         "timezone": "Asia/Kolkata", "forecast_days": 5})
     items = payload if isinstance(payload, list) else [payload]
-    hour = departure.strftime("%Y-%m-%dT%H:00")
+    hour = ist_hour(departure)
     out = []
     for item in items:
         times = item["hourly"]["time"]
@@ -248,8 +293,11 @@ def synthetic_route(origin: tuple[float, float] = NOIDA, destination: tuple[floa
 
 def build_route_snapshot(client: CachedClient, departure: datetime, origin: tuple[float, float] = NOIDA,
                          destination: tuple[float, float] = AGRA, via: list[tuple[float, float]] | None = None,
-                         segment_km: float = 1.0) -> dict:
-    """Fetch (or replay from cache) route + elevation + weather and return the processed snapshot dict."""
+                         segment_km: float = 1.0, origin_name: str = "Noida",
+                         destination_name: str = "Agra") -> dict:
+    """Fetch (or replay from cache) route + elevation + weather and return the processed snapshot dict.
+    The names default to the demo booking's; ``weather_hour_matched`` says whether the forecast held the
+    departure hour (when it does not, the nearest available hour was used)."""
     try:
         route = fetch_route(client, origin, destination, via)
         s_samples = np.arange(0.0, route.cum_m[-1] + segment_km * 1000.0, segment_km * 1000.0)
@@ -267,17 +315,20 @@ def build_route_snapshot(client: CachedClient, departure: datetime, origin: tupl
         w_s = np.linspace(0.0, route.cum_m[-1], 5)
         weather = [{"temperature_c": 30.0, "wind_speed_mps": 2.0, "wind_from_deg": 270.0, "hour": "synthetic"}] * 5
         elev_src = f"SYNTHETIC fallback ({type(exc).__name__})"
+    wanted_hour = ist_hour(departure)
+    weather_hour_matched = not simulated and all(w["hour"] == wanted_hour for w in weather)
     planned, detail = plan_segments(route, s_samples, elevation, weather, w_s, segment_km)
     thin = np.unique(np.append(np.arange(0, len(route.coords), max(1, len(route.coords) // 1200)), len(route.coords) - 1))
     return {
         "is_simulated": simulated, "source": route.source, "elevation_source": elev_src,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "origin": {"name": "Noida", "lat": origin[0], "lon": origin[1]},
-        "destination": {"name": "Agra", "lat": destination[0], "lon": destination[1]},
+        "origin": {"name": origin_name, "lat": origin[0], "lon": origin[1]},
+        "destination": {"name": destination_name, "lat": destination[0], "lon": destination[1]},
         "departure_time": departure.isoformat(), "distance_km": round(route.distance_km, 2),
         "duration_min": round(route.duration_s / 60.0, 1),
         "polyline": route.coords[thin].round(5).tolist(), "polyline_km": (route.cum_m[thin] / 1000.0).round(3).tolist(),
         "weather_points": [{**w, "km": round(float(s) / 1000.0, 1)} for w, s in zip(weather, w_s)],
+        "weather_hour_matched": weather_hour_matched,
         "segments": detail, "requests_made_total": client.requests_made(),
     }
 

@@ -120,7 +120,7 @@ def test_errors_use_the_contract_shape(client: TestClient) -> None:
         (client.post("/api/dispatch", json={"vehicle_id": "V07"}), 422, "invalid_request"),
         (client.post("/api/dispatch", json=body("V07", 140)), 422, "invalid_request"),
         (client.post("/api/dispatch", json=body("V99", 50)), 404, "unknown_vehicle"),
-        (client.post("/api/dispatch", json={**body("V07"), "destination": {"lat": 12.97, "lon": 77.59}}), 422, "unsupported_route"),
+        (client.post("/api/dispatch", json={**body("V07"), "destination": {"lat": 12.97, "lon": 77.59}}), 422, "route_too_long"),
         (client.get("/api/demo/replay/PL-nope"), 404, "unknown_plan"),
         (client.post("/api/forecast/update", json={"plan_id": "PL-nope", "t": "x", "lat": 28.0, "lon": 77.5, "soc_pct": 50}), 404, "unknown_plan"),
         (client.get("/api/no/such/path"), 404, "not_found"),

@@ -91,10 +91,16 @@ class LatLon(Req):
     lon: float = Field(ge=-180, le=180)
 
 
+class NamedLatLon(LatLon):
+    """A trip end; ``name`` (optional, WP1) is spoken in the answer. Absent names are left out of the plan id."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=80)
+
+
 class DispatchRequest(Req):
     vehicle_id: str
-    origin: LatLon
-    destination: LatLon
+    origin: NamedLatLon
+    destination: NamedLatLon
     departure_time: str
     start_soc_pct: float = Field(ge=0, le=100)
     passengers: int = Field(ge=0, le=8)
@@ -168,6 +174,21 @@ class RiskSource(Resp):
     label: str
 
 
+class DataSource(Resp):
+    status: Literal["real", "simulated"]
+    source: str
+    n: int | None = None
+    note: str | None = None
+
+
+class DataSources(Resp):
+    route: DataSource
+    elevation: DataSource
+    weather: DataSource
+    vehicle: DataSource
+    charger_reports: DataSource
+
+
 class DispatchResponse(Resp):
     plan_id: str
     vehicle_id: str
@@ -188,7 +209,23 @@ class DispatchResponse(Resp):
     refusal_reason: str | None
     compute_ms: int
     n_runs: int = Field(ge=1)  # Monte Carlo runs behind every probability here (W0.3): never hardcode it
+    data_sources: DataSources  # WP1: where each input came from; is_simulated is derived from it
     is_simulated: bool
+
+
+# --- geocoder (WP1) ---------------------------------------------------------------------------------------------
+
+
+class GeoPlace(Resp):
+    name: str
+    lat: float
+    lon: float
+    kind: str  # OpenStreetMap place kind from Photon, e.g. "city", "suburb"
+
+
+class GeocodeResponse(Resp):
+    results: list[GeoPlace]
+    source: str
 
 
 # --- live update ----------------------------------------------------------------------------------------------
