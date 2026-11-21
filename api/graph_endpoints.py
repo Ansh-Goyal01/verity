@@ -51,7 +51,8 @@ class GraphEndpoints:
             self._record_plan(plan_id, stored.response, self._view)
             view = self.graph.call(lambda g: g.why(plan_id))
         if view is None:
-            raise _api_error(404, "unknown_plan", f"No plan {plan_id!r} in the graph; call POST /api/dispatch first")
+            raise _api_error(404, "unknown_plan", f"No plan {plan_id!r} in the graph (plans are kept for 24 h and the newest 300, "
+                                   "and may live on another instance); plan again with POST /api/plan or /api/dispatch")
         return {"plan_id": plan_id, **view_response(view)}
 
     def graph_charger(self, charger_id: str) -> dict:

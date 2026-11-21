@@ -817,7 +817,9 @@ class EngineService(GraphEndpoints, FleetEndpoints):
     def _plan(self, plan_id: str) -> StoredPlan:
         stored = self.plans.get(plan_id)
         if stored is None:
-            raise ApiError(404, "unknown_plan", f"No plan {plan_id!r}; call POST /api/dispatch first")
+            raise ApiError(404, "unknown_plan", f"No plan {plan_id!r} on this server: plans are kept in memory, "
+                           "expire after a while and may live on another instance. Plan again with POST /api/plan "
+                           "or POST /api/dispatch.")
         return stored
 
     def forecast_update(self, req: dict) -> dict:
