@@ -1,4 +1,4 @@
-import {api} from './client.js';
+import {api, accountApi, hasSession} from './client.js';
 import {esc, facts, idPath, numberInput, onSubmit, statusBox} from './ui.js';
 
 function table(title, headings, rows, expanded = false) {
@@ -29,22 +29,26 @@ export function graph(root) {
     <div class="form-actions"><button class="button button-primary" type="submit" value="inspect" formnovalidate>Inspect neighborhood</button>
       <button class="button button-outline" type="submit" value="run">Run simulation</button>
       <button class="button button-outline" type="submit" formnovalidate value="reset">Reset demo reports</button></div>${statusBox()}</form>
+    <p>Running or resetting simulated reports requires an administrator account. <a href="#account">Account sign-in</a></p>
     <div class="results" aria-live="polite"></div>`;
   const result = root.querySelector('.results');
   onSubmit(root.querySelector('form'), async (data,submit) => {
     const charger = data.get('charger').trim();
     result.replaceChildren();
     if (submit.value !== 'reset' && !charger) throw new Error('Enter the charger ID.');
+    if (submit.value !== 'inspect' && !hasSession()) throw new Error('Sign in as an administrator to use the simulation.');
     if (submit.value === 'run') {
-      const answer = await api('/demo/ring-attack',{method:'POST',body:{charger_id:charger,n_sources:Number(data.get('sources'))}});
+      const answer = await accountApi('/demo/ring-attack',{method:'POST',body:{charger_id:charger,n_sources:Number(data.get('sources'))}});
       result.innerHTML = ringResult(answer);
     } else if (submit.value === 'reset') {
-      const answer = await api('/demo/ring-attack/reset',{method:'POST'});
+      const answer = await accountApi('/demo/ring-attack/reset',{method:'POST'});
       result.innerHTML = `<h2>Demo reset (simulated)</h2>${facts([['Reports removed',answer.reports_removed],['Demo reports left',answer.attack_reports_left],['Demo sources left',answer.attack_sources_left]])}`;
     } else {
       result.innerHTML = neighborhood(await api('/graph/neighborhood/' + idPath(charger) + '?depth=' + encodeURIComponent(data.get('depth'))));
     }
   }, 'Contacting the graph…', (error,status) => {
-    if (error.status === 403) status.textContent = 'The simulation is disabled on this deployment. You can still inspect a charger neighborhood.';
+    if (error.status === 403) status.textContent = error.code === 'demo_disabled' || /switched off/i.test(error.message)
+      ? 'The simulation is switched off on this deployment.' : 'An administrator account is required.';
+    if (error.status === 503) status.textContent = 'The graph or account service is unavailable. Use the deployed site and retry.';
   });
 }

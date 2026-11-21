@@ -2,7 +2,7 @@ import {voice} from './voice.js';
 import {graph} from './graph.js';
 import {planner} from './journey.js';
 import {account, sharedTrip, signOutControl} from './account.js';
-import {hasSession} from './client.js';
+import {hasSession, finishGoogle} from './client.js';
 import {fleet, operators} from './operations.js';
 import {esc, heading} from './ui.js';
 
@@ -44,4 +44,7 @@ async function render() {
   }
 }
 window.addEventListener('hashchange',()=>{render(); window.scrollTo(0,0); host.querySelector('h1')?.focus({preventScroll:true});});
-render();
+finishGoogle().then(render).catch(error=>{
+  host.innerHTML = heading('Sign in',error.message) + '<button class="button button-outline" type="button">Return to sign-in</button>';
+  host.querySelector('button').onclick = render;
+});

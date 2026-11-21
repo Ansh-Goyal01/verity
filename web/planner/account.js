@@ -1,4 +1,4 @@
-import {api, accountApi, keyedWrite, configuration, hasSession, signIn, signOut} from './client.js';
+import {api, accountApi, keyedWrite, configuration, googleAvailable, googleSignIn, hasSession, signIn, signOut} from './client.js';
 import {modelOptions, planner} from './journey.js';
 import {button, dateText, esc, idPath, numberInput, onSubmit, paginate, release, section, setStatus, statusBox, stopsAndThresholds, verdict} from './ui.js';
 
@@ -16,6 +16,13 @@ export async function login(root, description, reopen) {
     return;
   }
   form.querySelector('button').disabled = false;
+  googleAvailable(cfg).then(available => {
+    if (!available || !form.isConnected) return;
+    const google = document.createElement('button');
+    google.type = 'button'; google.className = 'button button-outline'; google.textContent = 'Continue with Google';
+    google.onclick = () => googleSignIn(cfg).catch(error => setStatus(form.querySelector('.status'),error.message,true));
+    form.append(google);
+  });
   onSubmit(form, async data => {
     await signIn(data.get('email').trim(),data.get('password'));
     form.reset();
