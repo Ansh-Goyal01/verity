@@ -21,6 +21,8 @@ async function jsonRequest(url, options = {}) {
     const message = data?.message || data?.msg || data?.error_description || data?.error || data?.detail;
     const error = new Error(typeof message === 'string' ? message : `Request failed (${response.status}).`);
     error.status = response.status;
+    error.code = data?.code || (!data?.id && data?.error);
+    error.cachedTrips = Array.isArray(data?.cached_trips) ? data.cached_trips : [];
     throw error;
   }
   if (data === null) throw new Error('The live API is unavailable on this host.');
@@ -75,11 +77,12 @@ async function accessToken() {
 }
 export async function api(path, {method = 'GET', body, private: authenticated = false} = {}) {
   const headers = {};
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  const multipart = body instanceof FormData;
+  if (body !== undefined && !multipart) headers['Content-Type'] = 'application/json';
   const token = authenticated ? await accessToken() : null;
   if (token) headers.Authorization = 'Bearer ' + token;
   try {
-    return await jsonRequest(base + '/api' + path, {method, headers, body: JSON.stringify(body)});
+    return await jsonRequest(base + '/api' + path, {method, headers, body: multipart ? body : JSON.stringify(body)});
   } catch (error) {
     if (authenticated && error.status === 401 && session?.access_token === token) {
       setSession(null);

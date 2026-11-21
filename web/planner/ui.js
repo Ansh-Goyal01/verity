@@ -13,11 +13,12 @@ export function setStatus(node, message = '', error = false) {
   node.textContent = message;
   node.classList.toggle('error', error);
 }
-export function onSubmit(form, work, pending = 'Working…') {
+export function onSubmit(form, work, pending = 'Working…', onError) {
   form.addEventListener('submit', async event => {
     event.preventDefault();
-    if (form.dataset.busy || !form.reportValidity()) return;
+    if (form.dataset.busy) return;
     const submit = event.submitter || form.querySelector('[type="submit"]');
+    if (!submit.formNoValidate && !form.reportValidity()) return;
     const status = form.querySelector('.status');
     form.dataset.busy = 'true';
     submit.disabled = true;
@@ -27,6 +28,7 @@ export function onSubmit(form, work, pending = 'Working…') {
       setStatus(status, message || '');
     } catch (error) {
       setStatus(status, error.message, true);
+      if (onError) onError(error, status);
     } finally {
       delete form.dataset.busy;
       submit.disabled = false;
@@ -39,6 +41,13 @@ export function facts(items) {
 export function verdict(decision) {
   const cls = {GO:'go',NO_GO:'stop',INSUFFICIENT_EVIDENCE:'warn'}[decision] || 'warn';
   return `<strong class="verdict ${cls}">${esc(window.VerityCore.decisionLabel(decision))}</strong>`;
+}
+export function bandMethod(band) {
+  if (!band) return '';
+  return `<details><summary>Arrival band · ${esc(band.name)}</summary>
+    ${facts([...(band.n == null ? [] : [['Calibration trips',band.n]]),
+      ...(band.k == null ? [] : [['Calibration quantile',band.k]]), ['Applied multiplier',band.k_applied]])}
+    <p>${esc(band.note)}</p>${band.sources?.length ? '<p>' + esc(band.sources.join(', ')) + '</p>' : ''}</details>`;
 }
 function thresholdTable(points) {
   return `<details class="threshold"><summary>Battery thresholds along the route (${points.length})</summary>
@@ -56,9 +65,9 @@ export function release(plan, title) {
   const name = title || (plan.labels || []).map(label=>labels[label] || label).join(' / ') || 'Trip decision';
   return `<article class="release-card"><div class="card-head"><h3>${esc(name)}</h3>${verdict(plan.decision)}</div>
     <p>${esc(plan.reason)}</p>${plan.meets_target === false ? '<p class="warning">Below the requested confidence target.</p>' : ''}
-    ${facts([['Trip confidence',plan.confidence_display],['Trip time',`${plan.route.duration_min} min`],['Distance',`${plan.route.distance_km} km`],['Median arrival battery',`${plan.arrival_soc.p50}%`]])}
+    ${facts([['Trip confidence',window.VerityCore.confidenceText(plan)],['Trip time',`${plan.route.duration_min} min`],['Distance',`${plan.route.distance_km} km`],['Median arrival battery',`${plan.arrival_soc.p50}%`],['Arrival band (p10–p90)',`${plan.arrival_soc.p10}–${plan.arrival_soc.p90}%`]])}
     ${plan.is_simulated ? '<p class="source-note">Includes simulated inputs.</p>' : ''}
-    ${stopsAndThresholds(plan)}</article>`;
+    ${bandMethod(plan.band_method)}${stopsAndThresholds(plan)}</article>`;
 }
 // Keep rows as label/value pairs so long charger IDs and report notes wrap on narrow screens.
 export function records(rows, empty) {

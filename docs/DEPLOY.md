@@ -117,3 +117,8 @@ What does not work, or works worse, on serverless:
 - The voice-lab samples written to `/tmp` are lost when the instance goes; use a database for real collection.
 - Long requests (a 6-car fleet booking with new routes: about 12 s; first fetch of a new route) depend on the plan's
   maximum duration.
+
+To check the deployed production error policy, health and CORS without account credentials,
+run `uv run python scripts/verify_deployed_api.py https://verity-three-pi.vercel.app --public-only`.
+Supply `--frontend-origin` if the UI uses a different origin. The Vercel HTML policy permits
+the same-origin API and the exact HTTPS `SUPABASE_URL` used for browser sign-in.

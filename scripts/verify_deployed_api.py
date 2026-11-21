@@ -16,14 +16,39 @@ def https_origin(value: str) -> str:
     return value.rstrip("/")
 
 
+def verify_public(client: httpx.Client, api_url: str, frontend: str) -> None:
+    health = client.get(f"{api_url}/api/health")
+    health.raise_for_status()
+    if health.json()["status"] != "ok":
+        raise ValueError("API health is not OK.")
+    docs = client.get(f"{api_url}/openapi.json")
+    if docs.status_code != 404 or not docs.json().get("id"):
+        raise ValueError("Expected production error handling and disabled API docs.")
+    url = f"{api_url}/api/health"
+    for origin, allowed in [(frontend, True), ("https://cors-check.invalid", False)]:
+        response = client.options(url, headers={"Origin": origin, "Access-Control-Request-Method": "GET"})
+        if allowed:
+            if response.status_code != 200 or response.headers.get("access-control-allow-origin") != origin:
+                raise ValueError("The frontend origin did not pass CORS preflight.")
+        elif response.headers.get("access-control-allow-origin"):
+            raise ValueError("CORS allowed an unrelated origin.")
+    print("Production error handling, health and frontend CORS verified.")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("api_url", type=https_origin)
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--create-saved-trip", action="store_true", help="Create a car and saved trip in the demo account")
     action.add_argument("--verify-trip", type=UUID, help="Verify the saved trip after a deployment restart")
+    action.add_argument("--public-only", action="store_true", help="Check public production behavior without signing in")
+    parser.add_argument("--frontend-origin", type=https_origin, help="Allowed frontend origin (default: API origin)")
     args = parser.parse_args()
     try:
+        if args.public_only:
+            with httpx.Client(timeout=60, follow_redirects=False) as client:
+                verify_public(client, args.api_url, args.frontend_origin or args.api_url)
+            return 0
         supabase = https_origin(os.environ["SUPABASE_URL"])
         public_key = os.environ["SUPABASE_ANON_KEY"]
         email = os.environ["VERITY_VERIFY_EMAIL"]
@@ -64,7 +89,12 @@ def main() -> int:
               f"Sarvam key present {health['sarvam_key_present']}.")
     except httpx.HTTPStatusError as exc:
         parser.exit(1, f"Deployment check got HTTP {exc.response.status_code}.\n")
-    except (httpx.HTTPError, KeyError, TypeError, ValueError):
+    except KeyError as exc:
+        required = {"SUPABASE_URL", "SUPABASE_ANON_KEY", "VERITY_VERIFY_EMAIL", "VERITY_VERIFY_PASSWORD"}
+        if exc.args[0] in required:
+            parser.exit(1, f"Deployment sign-in check requires {exc.args[0]}.\n")
+        parser.exit(1, "The deployed API response did not contain an expected field.\n")
+    except (httpx.HTTPError, TypeError, ValueError):
         parser.exit(1, "Deployment check failed. Check the HTTPS origins, environment and API configuration.\n")
     return 0
 

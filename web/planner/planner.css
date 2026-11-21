@@ -54,6 +54,9 @@
 .planning .facts dd { font-size: 1.3rem; }
 .planning h4, .planning .stops { margin: 0; }
 .stops { padding-left: 1.4rem; } .stops li span { display: block; }
+.planning pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.planning td { overflow-wrap: anywhere; }
+.planning audio { max-width: 100%; }
 .data-scroll { max-height: 18rem; overflow: auto; }
 .planning table { border-collapse: collapse; width: 100%; text-align: left; font-variant-numeric: tabular-nums; }
 .planning th, .planning td { border-bottom: 1px solid var(--line); padding: .6rem; }

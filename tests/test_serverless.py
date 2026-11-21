@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import re
 from pathlib import Path
 
 import pytest
@@ -66,3 +69,22 @@ def test_vercel_serves_homepage_assets_and_api() -> None:
     assert health.status_code == 200 and health.json()["status"] == "ok"
     assert "default-src 'none'" in health.headers["content-security-policy"]
     assert client.get("/api/missing").status_code == 404
+
+
+def test_html_csp_allows_only_configured_services_and_existing_inline_scripts(monkeypatch) -> None:
+    from app import app
+
+    monkeypatch.setenv("SUPABASE_URL", "https://project.example.org/")
+    client = TestClient(app)
+    for path in ("/web/index.html", "/web/planner.html", "/logger/index.html", "/web/js/check-mocks.html"):
+        page = client.get(path)
+        policy = page.headers["content-security-policy"].split("; ")
+        assert "connect-src 'self' https://project.example.org" in policy
+        scripts = next(part for part in policy if part.startswith("script-src"))
+        assert "'unsafe-inline'" not in scripts
+        for body in re.findall(r"<script>(.*?)</script>", page.text, re.S):
+            digest = hashlib.sha256(body.replace("\r\n", "\n").encode()).digest()
+            assert f"'sha256-{base64.b64encode(digest).decode()}'" in scripts
+
+    monkeypatch.setenv("SUPABASE_URL", "https://untrusted.example; img-src *")
+    assert client.get("/web/home.html").headers["content-security-policy"].endswith("connect-src 'self'")

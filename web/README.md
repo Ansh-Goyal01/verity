@@ -29,7 +29,7 @@ Open `web/index.html` (or the repository root `index.html`, which redirects to i
 5. **Evidence**: E1–E5 charts drawn from the saved `results/*.json`, with sample sizes and confidence intervals, plus the last `run_all` status.
 6. **Engine**: the pipeline, the physics equations, why shared uncertainty matters, and the project's honesty rules.
 
-Data: with no `?api=` the pages load `js/snapshot.js`, which holds the **saved real engine outputs** from `docs/api_examples` and the experiment results. All of it comes from the simulated demo scenario, and the header says so. Regenerate it after new engine runs with `uv run python scripts/export_web_snapshot.py`. `?source=mock` uses the hand-written illustrative mocks instead. `?api=http://127.0.0.1:8000` uses the live engine. Tests: `node --test tests/frontend_app.test.cjs tests/frontend_console.test.cjs tests/frontend_trip.test.cjs` (set `VERITY_TEST_API=http://127.0.0.1:8000` with the API running to include the live contract test).
+Data: with no `?api=` the pages load `js/snapshot.js`, which holds the **saved real engine outputs** from `docs/api_examples` and the experiment results. All of it comes from the simulated demo scenario, and the header says so. Regenerate it after new engine runs with `uv run python scripts/export_web_snapshot.py`. Illustrative fixtures are confined to `js/check-mocks.html`. `?api=http://127.0.0.1:8000` uses the live engine. Tests: `node --test tests/frontend_*.test.cjs` (set `VERITY_TEST_API=http://127.0.0.1:8000` with the API running to include the live contract test).
 
 ## Fleet console
 
