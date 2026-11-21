@@ -36,14 +36,14 @@
   </nav>
   <div class="top-actions">
     <span id="source" class="source" title="Where the data on this page comes from"><b class="dot"></b><span>Loading…</span></span>
-    <button id="cmdk" class="iconbtn" type="button" aria-label="Open command palette (Ctrl K)"><kbd>⌘K</kbd></button>
+    <button id="cmdk" class="iconbtn" type="button" aria-label="⌘K · Open command palette (Ctrl K)"><kbd>⌘K</kbd></button>
     <button id="theme" class="iconbtn" type="button" aria-label="Switch to light theme">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
     </button>
   </div>
 </header>
 
-<div class="ticker" id="ticker" aria-label="Booking">
+<div role="region" class="ticker" id="ticker" aria-label="Booking">
   <span class="tk">BOOKING</span><span id="ticker-body">Loading booking…</span>
 </div>
 
@@ -121,7 +121,7 @@
         </section>
         <section class="panel">
           <header class="panel-head"><h2 class="label">Where the battery goes</h2><span class="hint">Percentage points of battery</span></header>
-          <div id="d-waterfall" class="chart scroll-x"></div>
+          <div id="d-waterfall" class="chart scroll-x" role="region" tabindex="0" aria-label="Energy breakdown"></div>
         </section>
       </div>
 

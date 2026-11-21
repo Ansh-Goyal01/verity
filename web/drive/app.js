@@ -429,7 +429,7 @@
       '<div class="filter-bar"><label>Search chargers<input id="charger-search" type="search" placeholder="Name, operator or ID"></label>' +
       '<label>Trust level<select id="charger-trust"><option value="">All levels</option><option>high</option><option>medium</option>' +
       '<option>low</option><option>unknown</option></select></label></div><p id="charger-count" class="result-count" role="status"></p>' +
-      '<div class="panel table-wrap"><table class="data-table"><thead><tr><th scope="col">Charger</th><th scope="col">Trust</th>' +
+      '<div class="panel table-wrap" role="region" tabindex="0" aria-label="Charger directory"><table class="data-table"><thead><tr><th scope="col">Charger</th><th scope="col">Trust</th>' +
       '<th scope="col">Reports</th><th scope="col">Last report</th></tr></thead><tbody id="charger-rows"></tbody></table></div>';
     $('#charger-search').addEventListener('input', refreshChargers);
     $('#charger-trust').addEventListener('change', refreshChargers);
