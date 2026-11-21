@@ -82,3 +82,17 @@ test('Hindi catalogs preserve each English key and placeholder count', () => {
     }
   }
 });
+
+test('fleet booking sends the entered pickup batteries and leaves depot routing to the API', async () => {
+  const {bookingRequest} = await import('../web/planner/journey.js');
+  const data = new FormData(), journey = {passengers:3,ac_on:false};
+  data.set('fleetMode','pickup');
+  for (const [model,battery] of [['car-a','0'],['car-b','84']]) {
+    data.append('model',model);
+    data.append('battery',battery);
+  }
+  assert.deepEqual(bookingRequest(journey,data),{...journey,vehicles:[
+    {vehicle_id:'car-a',soc_pct:0},{vehicle_id:'car-b',soc_pct:84}]});
+  data.set('fleetMode','demo');
+  assert.deepEqual(bookingRequest(journey,data),journey);
+});

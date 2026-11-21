@@ -9,7 +9,7 @@ function links(base, selected, items) {
 }
 export async function fleet(root, panel, reopen) {
   const mine = ['vehicles','booking'].includes(panel);
-  root.innerHTML = links('fleet',mine ? panel : 'rank',[['rank','Demo ranking'],['vehicles','My fleet'],['booking','Check my booking']]) + '<div class="tool-panel"></div>';
+  root.innerHTML = links('fleet',mine ? panel : 'rank',[['rank','Rank vehicles'],['vehicles','My fleet'],['booking','Check my booking']]) + '<div class="tool-panel"></div>';
   const area = root.querySelector('.tool-panel');
   if (!mine) return fleetBooking(area);
   if (!hasSession()) return login(area,'Use a fleet manager account to manage vehicles and check bookings.',reopen);

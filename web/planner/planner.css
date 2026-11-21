@@ -80,3 +80,6 @@
   .top-row nav a:first-child { display:none; }
   .tool-tabs { display: grid; grid-template-columns: repeat(2,1fr); }
 }
+
+.planning fieldset[hidden] { display: none; }
+.pickup-vehicles { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,230px),1fr)); gap: 1rem; }

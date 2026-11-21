@@ -152,12 +152,53 @@ export function routeError(error, status, results, selectTrip, opensPlanner = fa
     status.textContent = 'Check the route, departure and vehicle inputs, or try a shorter leg.';
   }
 }
-export function fleetBooking(root, managedVehicles = null) {
+function pickupVehicles(form, models) {
+  const host = form.querySelector('.pickup-vehicles');
+  const add = form.querySelector('[data-add-car]');
+  function append() {
+    const row = document.createElement('fieldset');
+    row.className = 'booking-car';
+    row.innerHTML = `<legend>Vehicle</legend><label>Model<select name="model">${modelOptions(models,'tata-nexon-ev-45')}</select></label>
+      ${numberInput('battery','Battery at pickup (%)',75,0,100)}<button type="button" class="button button-outline">Remove vehicle</button>`;
+    row.querySelector('button').onclick = () => { row.remove(); refresh(); };
+    host.append(row);
+    refresh();
+  }
+  function refresh() {
+    const rows = [...host.children];
+    rows.forEach((row,i) => {
+      row.querySelector('legend').textContent = 'Vehicle ' + (i + 1);
+      row.querySelector('button').disabled = rows.length === 1;
+    });
+    add.disabled = rows.length >= 8;
+  }
+  append();
+  add.onclick = append;
+  const mode = form.elements.fleetMode;
+  mode.onchange = () => {
+    const pickup = mode.value === 'pickup';
+    host.parentElement.hidden = !pickup;
+    host.parentElement.disabled = !pickup;
+    form.querySelector('[type="submit"]').textContent = pickup ? 'Rank vehicles' : 'Rank demo vehicles';
+  };
+  mode.onchange();
+}
+export function bookingRequest(journey, data) {
+  if (data.get('fleetMode') !== 'pickup') return journey;
+  const battery = data.getAll('battery');
+  return {...journey,vehicles:data.getAll('model').map((vehicle_id,i)=>({vehicle_id,soc_pct:Number(battery[i])}))};
+}
+export async function fleetBooking(root, managedVehicles = null) {
   const privateFleet = managedVehicles !== null;
+  const models = privateFleet ? [] : (await api('/vehicles')).vehicles;
   root.innerHTML = `<form><div class="form-columns">${routeInputs()}<fieldset><legend>Booking conditions</legend>${conditions()}
-    <p class="muted">${privateFleet ? 'Check acceptance using the vehicles and battery health saved to your fleet.' : 'Rank the demo fleet using its simulated starting locations and battery levels.'}</p></fieldset></div>
+    <p class="muted">${privateFleet ? 'Check acceptance using the vehicles and battery health saved to your fleet.' : 'Choose vehicles at the pickup, or rank the simulated demo fleet from its depots.'}</p></fieldset></div>
+    ${privateFleet ? '' : `<label>Fleet to rank<select name="fleetMode"><option value="pickup">Vehicles at pickup</option><option value="demo">Demo vehicles at depots (simulated)</option></select></label>
+      <fieldset><legend>Vehicles at pickup</legend><div class="pickup-vehicles"></div>
+      <button type="button" class="button button-outline" data-add-car>Add vehicle</button></fieldset>`}
     <div class="form-actions">${button(privateFleet ? 'Check my fleet' : 'Rank demo vehicles',true)}${statusBox()}</div></form><div class="results"></div>`;
   const form = root.querySelector('form'), results = root.querySelector('.results'), journey = journeyInputs(form);
+  if (!privateFleet) pickupVehicles(form,models);
   onSubmit(form, async data => {
     results.replaceChildren();
     if (privateFleet) {
@@ -171,15 +212,15 @@ export function fleetBooking(root, managedVehicles = null) {
       results.innerHTML = `<h2 tabindex="-1">Booking decisions</h2>${rows.map(r=>section(names.get(r.vehicle_id) || r.vehicle_id,
         `${verdict(r.decision)}<p>${esc(r.reason)}</p>`)).join('')}`;
     } else {
-      const result = await api('/fleet/booking',{method:'POST',body:journey.body(data,true)});
+      const result = await api('/fleet/booking',{method:'POST',body:bookingRequest(journey.body(data,true),data)});
       results.innerHTML = `<h2 tabindex="-1">Fleet ranking${result.is_simulated ? ' (simulated)' : ''}</h2>${result.recommended_plan_id ? '' : '<p>No vehicle is recommended for this booking.</p>'}
         ${result.rows.map(r=>`<article class="release-card"><div class="card-head"><h3>${esc(r.rank)}. ${esc(r.label)}</h3>${verdict(r.decision)}</div>
         ${r.recommended ? '<p class="recommend">Recommended by the engine</p>' : ''}${r.why_not ? `<p>${esc(r.why_not)}</p>` : ''}
-        ${facts([['Confidence',window.VerityCore.confidenceText(r)],['Starting battery',`${r.soc_pct}%`],['Distance to pickup',`${r.deadhead_km} km`],['Trip time',`${r.total_minutes} min`],['Charging',`${r.charging_minutes} min`],['Median arrival battery',`${r.arrival_soc.p50}%`]])}</article>`).join('')}`;
+        ${facts([['Confidence',window.VerityCore.confidenceText(r)],['Starting battery',`${r.soc_pct}%`],['Distance to pickup',r.start == null ? 'At pickup' : r.deadhead_km == null ? null : `${r.deadhead_km} km`],['Trip time',`${r.total_minutes} min`],['Charging',`${r.charging_minutes} min`],['Median arrival battery',`${r.arrival_soc.p50}%`]])}</article>`).join('')}`;
     }
     results.querySelector('h2')?.focus();
   },'Checking the booking…', (error,status) => {
-    if (privateFleet) return routeError(error,status,results,journey.selectTrip);
+    if (privateFleet || form.elements.fleetMode.value === 'pickup') return routeError(error,status,results,journey.selectTrip);
     routeError(error,status,results,trip => openCachedPlan(trip,{
       passengers:form.elements.passengers.value, confidence:form.elements.confidence.value, ac:form.elements.ac.checked
     }),true);
