@@ -30,6 +30,7 @@ class Site(FastAPI):
         async def send_with_headers(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
+                headers.setdefault("Permissions-Policy", "microphone=(self), camera=(), geolocation=(self)")
                 headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
                 headers.setdefault("X-Content-Type-Options", "nosniff")
                 headers.setdefault("X-Frame-Options", "DENY")

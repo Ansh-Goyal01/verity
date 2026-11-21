@@ -98,6 +98,7 @@ def test_site_headers(path: str) -> None:
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+    assert response.headers["Permissions-Policy"] == "microphone=(self), camera=(), geolocation=(self)"
     assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]
 
 
