@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from api import main
 from api.demo_ring import ATTACK_PREFIX, ring_attack, ring_reset, slow_ring_limit
 from api.service import ApiError, EngineService
+from test_auth import issue  # noqa: F401 - shares the ephemeral Supabase JWKS fixture
 
 
 @pytest.fixture(scope="module")
@@ -53,18 +54,42 @@ def test_unknown_target_is_404(svc: EngineService) -> None:
     assert err.value.status == 404
 
 
-def test_the_demo_endpoints_are_off_unless_verity_demo(svc: EngineService, monkeypatch: pytest.MonkeyPatch) -> None:
+def bearer(issue, role: str) -> dict:
+    return {"Authorization": "Bearer " + issue(app_metadata={"role": role})}
+
+
+def test_the_demo_endpoints_are_off_unless_verity_demo(svc: EngineService, monkeypatch: pytest.MonkeyPatch,
+                                                       issue) -> None:
     main.app.dependency_overrides[main.get_service] = lambda: svc
     try:
         client = TestClient(main.app)
+        admin = bearer(issue, "admin")
         monkeypatch.delenv("VERITY_DEMO", raising=False)
-        assert client.post("/api/demo/ring-attack", json={}).status_code == 403
+        assert client.post("/api/demo/ring-attack", json={}, headers=admin).status_code == 403
         monkeypatch.setenv("VERITY_DEMO", "1")
-        hit = client.post("/api/demo/ring-attack", json={"n_sources": 4})
+        hit = client.post("/api/demo/ring-attack", json={"n_sources": 4}, headers=admin)
         assert hit.status_code == 200 and hit.json()["ring"]["found"]
-        assert client.post("/api/demo/ring-attack/reset").json()["attack_reports_left"] == 0
+        assert client.post("/api/demo/ring-attack/reset", headers=admin).json()["attack_reports_left"] == 0
         hood = client.get("/api/graph/neighborhood/CH-0003", params={"depth": 2})
         assert hood.status_code == 200 and hood.json()["depth"] == 2
         assert client.get("/api/graph/neighborhood/CH-NOPE").status_code == 404
+    finally:
+        main.app.dependency_overrides.clear()
+
+
+def test_ring_attack_endpoints_need_an_admin_sign_in(svc: EngineService, monkeypatch: pytest.MonkeyPatch, issue) -> None:
+    monkeypatch.setenv("VERITY_DEMO", "1")
+    main.app.dependency_overrides[main.get_service] = lambda: svc
+    try:
+        client = TestClient(main.app)
+        for path in ("/api/demo/ring-attack", "/api/demo/ring-attack/reset"):
+            assert client.post(path, json={}).status_code == 401  # no token
+            for role in ("owner", "driver", "fleet_manager", "cpo"):
+                assert client.post(path, json={}, headers=bearer(issue, role)).status_code == 403
+        admin = bearer(issue, "admin")
+        assert client.post("/api/demo/ring-attack", json={"n_sources": 4}, headers=admin).status_code == 200
+        reset = client.post("/api/demo/ring-attack/reset", headers=admin)
+        assert reset.status_code == 200 and reset.json()["attack_reports_left"] == 0
+        assert not any(r.source_id.startswith(ATTACK_PREFIX) for r in svc.graph.mirror.reports())
     finally:
         main.app.dependency_overrides.clear()

@@ -547,6 +547,14 @@ the public machine-readable `code` (`route_unavailable` or `route_too_long`), as
 already does for `offline`. Currently 503 and 422 have other causes, so the frontend
 can only offer general retry or input guidance when the code is absent.
 
+### 2026-11-22 — v18: ring-attack demo endpoints need an admin sign-in (CC-3)
+
+`POST /api/demo/ring-attack` and `POST /api/demo/ring-attack/reset` now require a signed-in account with the
+`admin` role, in addition to the existing `VERITY_DEMO=1` switch. Request and response bodies are unchanged.
+New errors: 401 with no valid token, 403 for any other role (and still 403 `demo_disabled` when the server has
+the demo off, checked first). Without `SUPABASE_URL` the endpoints answer 503, so the attack cannot run in a
+local or offline demo. Frontend: send the bearer token and show a clear 401/403 message.
+
 ### 2026-11-21 — v17: WP10 offline routes and health
 
 - **Health** adds `offline`, `cached_route_count` and `charger_count`. Existing
