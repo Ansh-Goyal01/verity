@@ -21,7 +21,7 @@ from verity.trust.graph_build import (
 
 IST = timezone(timedelta(hours=5, minutes=30))
 T0 = datetime(2026, 10, 27, 10, 0, tzinfo=IST)
-N_SYNC_QUERIES = 24  # 11 constraints + name index, chargers, sites (read + 2 deletes), reports, prune, aliases (write + await),
+N_SYNC_QUERIES = 25  # 12 constraints + name index, chargers, sites (read + 2 deletes), reports, prune, aliases (write + await),
 #                      sweep legs, sweep plans (2), then one read of the live reports to seed the mirror
 
 
@@ -35,7 +35,7 @@ REPORTS = [Report(charger_id="C1", source_id="s1", status="working", t=T0, is_si
 
 
 def fake_neo4j(monkeypatch: pytest.MonkeyPatch, **driver_kwargs) -> FakeDriver:
-    canned = ([[]] * 16 + [[{"n": len(REPORTS)}]] + [[]] + [[{"n": 2}]] + [[]] * 4)  # ..., the report count, the alias count, ...
+    canned = ([[]] * 17 + [[{"n": len(REPORTS)}]] + [[]] + [[{"n": 2}]] + [[]] * 4)  # ..., the report count, the alias count, ...
     drv = FakeDriver(canned, **driver_kwargs)
     monkeypatch.setattr(Neo4jGraph, "from_env", classmethod(lambda cls, env_path=None, connection_timeout=10.0:
                                                             Neo4jGraph(driver=drv)))

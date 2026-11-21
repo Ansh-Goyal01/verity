@@ -25,6 +25,9 @@ BETA_SITE = 0.5  # share of a charger's failure probability that is Site-wide (a
 # below the Site share: two chargers of one operator in different places fail together less than two on one plot.
 # No outage data exists to estimate it (W2.2: estimate it from same-operator same-day failures once R2/R3 give rows).
 BETA_OPERATOR = 0.2  # (assumption, approximate - verify)
+# WP8c: share that is common to chargers with the same NEAREST substation (proximity only, never known to feed them).
+# The weakest tier: a local grid fault is one plausible shared cause among many. No outage data exists to estimate it.
+BETA_SUBSTATION = 0.1  # (assumption, approximate - verify; Ansh approved putting it in the Monte Carlo, 2026-11-21)
 
 
 def operators_from_pairs(pairs: Sequence[tuple[str, str]]) -> dict[str, str]:
@@ -73,12 +76,16 @@ class WorksSampler:
     """
 
     def __init__(self, rng: np.random.Generator, n_runs: int, beta: float = BETA_SITE,
-                 beta_operator: float = BETA_OPERATOR) -> None:
-        if not 0.0 <= beta <= 1.0 or not 0.0 <= beta_operator <= 1.0 or beta + beta_operator > 1.0:
-            raise ValueError("beta + beta_operator must lie in [0, 1], or a marginal would need a negative probability")
+                 beta_operator: float = BETA_OPERATOR, beta_substation: float = BETA_SUBSTATION) -> None:
+        betas = (beta, beta_operator, beta_substation)
+        if not all(0.0 <= b <= 1.0 for b in betas) or sum(betas) > 1.0:
+            raise ValueError("the betas must each lie in [0, 1] and sum to at most 1, or a marginal would need a "
+                             "negative probability")
         self._rng, self._n, self._beta, self._beta_op = rng, n_runs, float(beta), float(beta_operator)
+        self._beta_sub = float(beta_substation)
         self._site_u: dict[str, Array] = {}
         self._op_u: dict[str, Array] = {}
+        self._sub_u: dict[str, Array] = {}
 
     def _shared(self, cache: dict[str, Array], key: str) -> Array:
         u = cache.get(key)
@@ -87,22 +94,34 @@ class WorksSampler:
             cache[key] = u
         return u
 
-    def works(self, site: str, p_works: float, operator: str = "") -> Array:
+    def works(self, site: str, p_works: float, operator: str = "", substation: str = "") -> Array:
+        """``substation`` (WP8c, "" = none shared) adds a third shared uniform per substation and run, the same way
+        as the operator; a charger without one draws exactly what it drew before (same random stream)."""
         f = float(np.clip(1.0 - p_works, 0.0, 1.0))
         common = self._beta * f
         u = self._shared(self._site_u, site)
-        if not operator or self._beta_op == 0.0:
+        has_op = bool(operator) and self._beta_op > 0.0
+        has_sub = bool(substation) and self._beta_sub > 0.0
+        if not has_op and not has_sub:
             indep = 0.0 if common >= 1.0 else (f - common) / (1.0 - common)
             return ~((u < common) | (self._rng.random(self._n) < indep))
-        common_op = self._beta_op * f
-        u_op = self._shared(self._op_u, operator)
-        keep = (1.0 - common) * (1.0 - common_op)
+        fail = u < common
+        keep = 1.0 - common
+        if has_op:
+            common_op = self._beta_op * f
+            fail = fail | (self._shared(self._op_u, operator) < common_op)
+            keep *= 1.0 - common_op
+        if has_sub:
+            common_sub = self._beta_sub * f
+            fail = fail | (self._shared(self._sub_u, substation) < common_sub)
+            keep *= 1.0 - common_sub
         indep = 0.0 if keep <= 0.0 else max(1.0 - (1.0 - f) / keep, 0.0)
-        return ~((u < common) | (u_op < common_op) | (self._rng.random(self._n) < indep))
+        return ~(fail | (self._rng.random(self._n) < indep))
 
 
 def p_all_fail(p_works: Sequence[float], sites: Sequence[str], reach: Array, beta: float = BETA_SITE,
-               operators: Sequence[str] | None = None, beta_operator: float = BETA_OPERATOR) -> Array:
+               operators: Sequence[str] | None = None, beta_operator: float = BETA_OPERATOR,
+               substations: Sequence[str] | None = None, beta_substation: float = BETA_SUBSTATION) -> Array:
     """P(every REACHABLE candidate fails), for a boolean ``reach`` of shape (C, ...) over the C candidates.
 
     Sites are independent of each other. Inside a Site the most reliable reachable charger fails with its own f;
@@ -112,11 +131,14 @@ def p_all_fail(p_works: Sequence[float], sites: Sequence[str], reach: Array, bet
     ``operators`` (W2.2, "" = none shared) adds the same rule one level up: a reachable charger that has no earlier
     reachable charger on its Site but one of the same operator fails with beta_operator + (1 - beta_operator) * f.
     The Site link wins when both apply. Without operators this is exactly the Site-only computation.
+    ``substations`` (WP8c) is a third, weakest level the same way (Site > operator > substation).
     """
     reach = np.asarray(reach, dtype=bool)
     fails = np.clip(1.0 - np.asarray(p_works, dtype=float), 0.0, 1.0)
-    if operators is not None and any(operators):
-        return _p_all_fail_linked(fails, sites, operators, reach, beta, beta_operator)
+    linked_subs = substations is not None and any(substations)
+    if (operators is not None and any(operators)) or linked_subs:
+        return _p_all_fail_linked(fails, sites, operators or [""] * len(sites), reach, beta, beta_operator,
+                                  substations if linked_subs else None, beta_substation)
     out = np.ones(reach.shape[1:])
     for site in dict.fromkeys(sites):
         idx = sorted((i for i, s in enumerate(sites) if s == site), key=lambda i: fails[i])
@@ -129,15 +151,20 @@ def p_all_fail(p_works: Sequence[float], sites: Sequence[str], reach: Array, bet
 
 
 def _p_all_fail_linked(fails: Array, sites: Sequence[str], operators: Sequence[str], reach: Array, beta: float,
-                       beta_operator: float) -> Array:
-    """``p_all_fail`` with an operator level: candidates in global reliability order (most reliable first), each
-    conditioned on the earlier reachable ones through its Site, else through its operator, else not at all."""
+                       beta_operator: float, substations: Sequence[str] | None = None,
+                       beta_substation: float = BETA_SUBSTATION) -> Array:
+    """``p_all_fail`` with operator (and substation) levels: candidates in global reliability order (most reliable
+    first), each conditioned on the earlier reachable ones through its Site, else its operator, else its substation."""
     out = np.ones(reach.shape[1:])
     found_site: dict[str, Array] = {}
     found_op: dict[str, Array] = {}
+    found_sub: dict[str, Array] = {}
     for i in sorted(range(len(sites)), key=lambda k: (fails[k], k)):
         f_i = np.full(reach.shape[1:], fails[i])
         op = operators[i]
+        sub = substations[i] if substations is not None else ""
+        if sub in found_sub:
+            f_i = np.where(found_sub[sub], beta_substation + (1.0 - beta_substation) * fails[i], f_i)
         if op in found_op:
             f_i = np.where(found_op[op], beta_operator + (1.0 - beta_operator) * fails[i], f_i)
         if sites[i] in found_site:
@@ -146,4 +173,6 @@ def _p_all_fail_linked(fails: Array, sites: Sequence[str], operators: Sequence[s
         found_site[sites[i]] = found_site.get(sites[i], np.zeros(reach.shape[1:], dtype=bool)) | reach[i]
         if op:
             found_op[op] = found_op.get(op, np.zeros(reach.shape[1:], dtype=bool)) | reach[i]
+        if sub:
+            found_sub[sub] = found_sub.get(sub, np.zeros(reach.shape[1:], dtype=bool)) | reach[i]
     return out

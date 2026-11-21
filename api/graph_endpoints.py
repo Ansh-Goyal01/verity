@@ -60,6 +60,45 @@ class GraphEndpoints:
             raise _api_error(404, "unknown_charger", f"No charger {charger_id!r}")
         return {"charger_id": charger_id, "trust": trust_block(self.trust.get(charger_id)), **view_response(view)}
 
+    def graph_neighbourhood(self, charger_id: str, depth: int = 2) -> dict:
+        """WP8b: nodes + edges a browser graph library can draw. Depth 1 is the charger audit view (site, operator,
+        same-site chargers, reports and their sources, plans, aliases); depth 2 adds each source's ring and the
+        charger's NEAREST substation (proximity only) with the other chargers that share it."""
+        def read(g: ChargerGraph) -> tuple:
+            view = g.charger_neighbourhood(charger_id)
+            if view is None or depth < 2:
+                return view, {}, {}
+            return view, g.ring_ids(), g.substation_links()
+
+        view, rings, links = self.graph.call(read)
+        if view is None:
+            raise _api_error(404, "unknown_charger", f"No charger {charger_id!r}")
+        out = view_response(view)
+        nodes = {n["id"]: n for n in out["nodes"]}
+        edges = list(out["edges"])
+        queries = [view.cypher]
+        if depth >= 2:
+            for nid, node in list(nodes.items()):
+                ring = rings.get(nid.split(":", 1)[1]) if node["label"] == "Source" else None
+                if ring:
+                    nodes.setdefault(f"Ring:{ring}", {"id": f"Ring:{ring}", "label": "Ring", "props": {}})
+                    edges.append({"from": nid, "to": f"Ring:{ring}", "type": "MEMBER_OF", "props": {}})
+            link = links.get(charger_id)
+            if link is not None:
+                sid = link[0]
+                nodes[f"Substation:{sid}"] = {"id": f"Substation:{sid}", "label": "Substation",
+                                              "props": {"note": "nearest substation; not known to feed it"}}
+                for cid, (other, d) in sorted(links.items()):
+                    if other != sid:
+                        continue
+                    nodes.setdefault(f"Charger:{cid}", {"id": f"Charger:{cid}", "label": "Charger", "props": {}})
+                    edges.append({"from": f"Charger:{cid}", "to": f"Substation:{sid}", "type": "NEAREST_SUBSTATION",
+                                  "props": {"distance_km": d}})
+            queries += ["MATCH (s:Source) WHERE s.ring_id IS NOT NULL RETURN s.id, s.ring_id",
+                        "MATCH (c:Charger)-[r:NEAREST_SUBSTATION]->(s:Substation) RETURN c.id, s.id, r.distance_km"]
+        return {**out, "charger_id": charger_id, "depth": depth,
+                "nodes": sorted(nodes.values(), key=lambda n: n["id"]), "edges": edges, "cypher": "\n;\n".join(queries)}
+
     def add_report(self, req: dict, now: datetime | None = None, *, is_simulated: bool = False) -> dict:
         """One REPORTED edge, with the charger's trust before and after. Trust is evaluated the way dispatch does it:
         simulated reports on the frozen simulation clock, real ones aged by real time (``trust/clock.py``).

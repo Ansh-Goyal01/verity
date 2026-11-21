@@ -1,0 +1,203 @@
+{
+ "experiment": "G2 chargers a corridor can't lose",
+ "is_simulated": false,
+ "label": "REAL routes and charger positions; the range is a MODEL output (Monte Carlo p50)",
+ "computed_at": "2026-11-21T12:47:32+00:00",
+ "cars": {
+  "mid_size": {
+   "vehicle_id": "maruti-suzuki-e-vitara-61",
+   "name": "Maruti Suzuki e Vitara (61 kWh (Zeta/Alpha FWD))",
+   "battery_kwh": 61.0,
+   "why": "median battery size of the catalog",
+   "calibration_basis": "class prior"
+  },
+  "small": {
+   "vehicle_id": "mg-comet-ev-17.4",
+   "name": "MG Comet EV (17.4 kWh)",
+   "battery_kwh": 17.4,
+   "why": "smallest battery of the catalog: where the gaps start to bind",
+   "calibration_basis": "class prior"
+  }
+ },
+ "n_runs": 1500,
+ "method": "critical = removing it opens a gap longer than the range while the full set has none",
+ "simplification": "every stop is assumed to charge back to 100 %; the reserve is kept at each gap's end",
+ "aura_graph_analytics": "not used (computed in Python on the planner's candidate chargers)",
+ "coverage_note": "gaps are gaps in OUR directory (OpenStreetMap + Open Charge Map, chargers within the planner's corridor of the route), not proof that no charger exists on the ground",
+ "corridors": [
+  {
+   "corridor": "Noida-Agra",
+   "ends": [
+    "Noida",
+    "Agra"
+   ],
+   "distance_km": 190.8,
+   "candidate_chargers": 10,
+   "route_source": "osrm",
+   "demo_route": true,
+   "by_car": {
+    "mid_size": {
+     "range_km_p50": 318.7,
+     "longest_gap_km": 84.6,
+     "passable_with_every_charger": true,
+     "critical": []
+    },
+    "small": {
+     "range_km_p50": 120.1,
+     "longest_gap_km": 84.6,
+     "passable_with_every_charger": true,
+     "critical": []
+    }
+   },
+   "longest_gap_at": {
+    "from_km": 33.9,
+    "to_km": 118.6
+   }
+  },
+  {
+   "corridor": "Delhi-Jaipur",
+   "ends": [
+    "Connaught Place, New Delhi, Delhi",
+    "Jaipur, Jaipur Municipal Corporation, Rajasthan"
+   ],
+   "distance_km": 298.4,
+   "candidate_chargers": 152,
+   "route_source": "osrm",
+   "demo_route": false,
+   "by_car": {
+    "mid_size": {
+     "range_km_p50": 287.7,
+     "longest_gap_km": 119.1,
+     "passable_with_every_charger": true,
+     "critical": []
+    },
+    "small": {
+     "range_km_p50": 107.9,
+     "longest_gap_km": 119.1,
+     "passable_with_every_charger": false,
+     "critical": []
+    }
+   },
+   "longest_gap_at": {
+    "from_km": 176.0,
+    "to_km": 295.2
+   }
+  },
+  {
+   "corridor": "Delhi-Chandigarh",
+   "ends": [
+    "Connaught Place, New Delhi, Delhi",
+    "Chandigarh, Chandigarh"
+   ],
+   "distance_km": 265.4,
+   "candidate_chargers": 147,
+   "route_source": "osrm",
+   "demo_route": false,
+   "by_car": {
+    "mid_size": {
+     "range_km_p50": 289.1,
+     "longest_gap_km": 66.1,
+     "passable_with_every_charger": true,
+     "critical": []
+    },
+    "small": {
+     "range_km_p50": 108.2,
+     "longest_gap_km": 66.1,
+     "passable_with_every_charger": true,
+     "critical": []
+    }
+   },
+   "longest_gap_at": {
+    "from_km": 174.5,
+    "to_km": 240.6
+   }
+  },
+  {
+   "corridor": "Delhi-Dehradun",
+   "ends": [
+    "Connaught Place, New Delhi, Delhi",
+    "Dehradun, Uttarakhand"
+   ],
+   "distance_km": 229.3,
+   "candidate_chargers": 138,
+   "route_source": "osrm",
+   "demo_route": false,
+   "by_car": {
+    "mid_size": {
+     "range_km_p50": 283.9,
+     "longest_gap_km": 210.2,
+     "passable_with_every_charger": true,
+     "critical": []
+    },
+    "small": {
+     "range_km_p50": 107.9,
+     "longest_gap_km": 210.2,
+     "passable_with_every_charger": false,
+     "critical": []
+    }
+   },
+   "longest_gap_at": {
+    "from_km": 19.1,
+    "to_km": 229.3
+   }
+  },
+  {
+   "corridor": "Pune-Mumbai",
+   "ends": [
+    "Pune, Maharashtra",
+    "Mumbai, Maharashtra"
+   ],
+   "distance_km": 148.7,
+   "candidate_chargers": 63,
+   "route_source": "osrm",
+   "demo_route": false,
+   "by_car": {
+    "mid_size": {
+     "range_km_p50": 386.3,
+     "longest_gap_km": 83.0,
+     "passable_with_every_charger": true,
+     "critical": []
+    },
+    "small": {
+     "range_km_p50": 144.0,
+     "longest_gap_km": 83.0,
+     "passable_with_every_charger": true,
+     "critical": []
+    }
+   },
+   "longest_gap_at": {
+    "from_km": 21.7,
+    "to_km": 104.7
+   }
+  },
+  {
+   "corridor": "Bengaluru-Mysuru",
+   "ends": [
+    "Bengaluru, Karnataka",
+    "Mysuru, Karnataka"
+   ],
+   "distance_km": 141.5,
+   "candidate_chargers": 137,
+   "route_source": "osrm",
+   "demo_route": false,
+   "by_car": {
+    "mid_size": {
+     "range_km_p50": 354.5,
+     "longest_gap_km": 38.8,
+     "passable_with_every_charger": true,
+     "critical": []
+    },
+    "small": {
+     "range_km_p50": 132.5,
+     "longest_gap_km": 38.8,
+     "passable_with_every_charger": true,
+     "critical": []
+    }
+   },
+   "longest_gap_at": {
+    "from_km": 68.5,
+    "to_km": 107.3
+   }
+  }
+ ]
+}

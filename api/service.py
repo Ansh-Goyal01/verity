@@ -40,6 +40,7 @@ from verity.routing import CachedClient, NetworkUnavailable, RequestBudgetExceed
 from verity.schemas import ChargerRecord, Report
 from verity.sim import generate_dataset, load_manifest
 from verity.trips import haversine_m, load_sim_observation
+from verity.substations import load_substations, nearest_substations
 from verity.trust.engine import ChargerTrust, TrustEngine
 from verity.trust.graph import TEST_PREFIX, ChargerGraph, GraphCounts
 from verity.trust.graph_build import (
@@ -334,6 +335,10 @@ class EngineService(GraphEndpoints, FleetEndpoints):
         self.graph: GraphHandle = open_graph(directory, self.demo_reports + self.driver_demo_reports
                                              + self.real_evidence.reports,
                                              prefer=graph_backend or os.environ.get("VERITY_GRAPH", "auto"))
+        # WP8c: each charger's NEAREST substation within 5 km (OpenStreetMap, proximity only, never "feeds it").
+        substations = load_substations()
+        self.substation_links = nearest_substations(directory, substations)
+        self.graph.populate(lambda g: g.add_substation_links(substations, self.substation_links))
         self._adopt(self.graph.call(self._read_view))
         self.graph.populate(lambda g: populate_road_network(g, self.near, self.trust, float(self.poly_km[-1]),
                                                             ALT_AHEAD_KM))
@@ -737,7 +742,8 @@ class EngineService(GraphEndpoints, FleetEndpoints):
         self._adopt(view)
         bundle = self._ride_bundle(req, cur, pick, drop, view)
         signals = report_signals(view.reports, NOW)
-        opts, notes = options_from_bundle(bundle, view.chargers, view.trust, signals)
+        opts, notes = options_from_bundle(bundle, view.chargers, view.trust, signals,
+                                          substation_of={c: s for c, (s, _) in self.substation_links.items()})
         rate = req.get("earning_rs_per_hour")
         is_example = rate is None
         rate = EXAMPLE_EARNING_RS_PER_HOUR if is_example else float(rate)

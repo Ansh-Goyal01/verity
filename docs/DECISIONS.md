@@ -469,3 +469,17 @@ One line per decision (library, assumption, threshold). Newest at the bottom.
 - Devanagari place names ("जयपुर") are passed to the geocoder as heard; if it finds nothing, the model is asked for English letters, as in the ride-check.
 - The demo trip's read-back and answer are listed by `scripts/build_audio_cache.py` (made by the engine itself; recording them is paid). The answer clip only matches while the engine's answer is unchanged, and "kal" moves with the date, so rebuild on the demo day. On 2026-11-21 the answer was INSUFFICIENT_EVIDENCE (Nexon 45 kWh has no trip history; class prior only).
 - The new Hindi read-back and clarify templates need Ansh's check (native speaker) before the demo.
+
+**WP8 Neo4j showpieces (2026-11-21, Ansh approved the plan: 5 km radius, the substation tier in the Monte Carlo everywhere).**
+- 8a ring attack: the target is CH-0003 (the demo's well-evidenced pin) plus its 4 nearest chargers, so the ring has the overlap the rule needs (>= 4 shared, Jaccard >= 0.5, agreement >= 0.9, <= 12 h). In memory, 6 sources: the graph finds all 6 (Jaccard 1.0), and CH-0003's trust stays at 0.95 against 0.80 with ring detection off. The same on Aura was checked by hand. The response quotes E5's limit from its file: a ring of 12 spread over 10 days has recall 0 % (SIMULATED).
+- Found live on Aura: a mid-attack Aura timeout made the handle fall back to memory and left 30 attack reports in Aura. Startup already prunes simulated reports outside the seed set. The Neo4j prune now also DETACH DELETEs simulated Sources with no REPORTED edge (their VIA edge used to keep them), so a reset or the next start leaves no attack node behind.
+- 8c substations: OpenStreetMap `power=substation` around the directory, imported by `scripts/import_substations.py`. The query covers 0.25-degree cells holding chargers, padded 0.05 degrees, in batches of 30 that split in half on an Overpass timeout or 502. Result: 7018 substations in 563 cells. 2,034 of 2,349 chargers have one within 5 km (median 1.5 km).
+- Graph size after the import: +1,179 Substation nodes and +2,034 NEAREST_SUBSTATION relationships. That is about 6,076 nodes and 10,060 relationships against Aura Free's 200,000 / 400,000 (3.0 % / 2.5 %).
+- `BETA_SUBSTATION = 0.1`, an assumption, below the operator (0.2) and Site (0.5) shares. Precedence is Site > operator > substation. Marginals stay exact, and a charger without a shared substation draws the same random stream as before (tested).
+- Effect on the demo: the V07 / V12 / V19 decisions, the stops and the ride-check GO are unchanged. The ride-check answer sentence changed, so its 2 audio clips need the paid rebuild (Ansh). Examples and snapshots are regenerated.
+- G1 (1500 runs, car Maruti Suzuki e Vitara (61 kWh (Zeta/Alpha FWD)) at 90 %): across 6 corridors, 958 of 37431 candidate primary-backup pairs (within 60 km) share a nearest substation; in the releases, 1 of 6 stop-backup pairs do.
+- G2: 0 single critical chargers for both Maruti Suzuki e Vitara (61 kWh (Zeta/Alpha FWD)) (median battery) and MG Comet EV (17.4 kWh) (smallest).
+  - The small car cannot pass Delhi-Jaipur, Delhi-Dehradun even with every charger, because a gap is longer than its p50 range.
+  - Delhi-Dehradun has no candidate charger from km 19.1 to km 229.3: only one directory charger lies within 50 km of Dehradun. That is a gap in OUR directory, not proof of none on the ground.
+  - The simplification is stated in the file: every stop charges back to 100 %.
+  - Computed in Python; Aura Graph Analytics was not used.

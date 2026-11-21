@@ -41,7 +41,7 @@ from .ring_edges import AgreementEdge, agreement_edges, verdicts_of
 log = logging.getLogger(__name__)
 
 NODE_LABELS = ("Charger", "Operator", "Site", "SiteType", "HardwareModel", "VehicleModel", "Source", "Channel",
-               "RoadSegment", "Plan", "Alias")
+               "RoadSegment", "Plan", "Alias", "Substation")
 TEST_PREFIX = "TEST-"
 RING_WINDOW_HOURS = 72.0  # reports this close in time can belong to one burst (approximate - verify)
 STALE_LEG_SECONDS = 3600.0  # scoped LEGs older than this were left behind by a crashed request
@@ -235,6 +235,8 @@ class ChargerGraph(Protocol):
     def chains(self, scope: str, k: int, *, fail: Mapping[str, float] | None = None, weight: float = 0.0,
                banned: Collection[str] = (), max_legs: int = MAX_CHAIN_LEGS) -> list[tuple[float, list[str]]] | None: ...
     def shared_causes(self, ids: Sequence[str]) -> list[SharedCause]: ...
+    def add_substation_links(self, substations: Sequence[dict], links: dict[str, tuple[str, float]]) -> None: ...
+    def substation_links(self) -> dict[str, tuple[str, float]]: ...
     def add_alternate(self, segment_id: str, charger_id: str, p_works: float) -> None: ...
     def add_alternates(self, edges: Sequence[Alternate]) -> None: ...
     def alternates(self, segment_id: str) -> list[tuple[str, float]]: ...
@@ -593,7 +595,8 @@ class Neo4jGraph(Neo4jStructure):
         # only simulated sources left without any report are removed.
         self._run("MATCH (s:Source)-[r:REPORTED]->() WHERE r.is_simulated = true AND NOT r.key IN $keep "
                   "AND NOT s.id STARTS WITH $test_prefix DELETE r WITH count(*) AS _ "
-                  "MATCH (o:Source) WHERE o.is_simulated = true AND NOT (o)--() DELETE o",
+                  # a source with no report left goes, with its VIA edge to the Channel (WP8a: a reset leaves no node)
+                  "MATCH (o:Source) WHERE o.is_simulated = true AND NOT (o)-[:REPORTED]->() DETACH DELETE o",
                   keep=sorted(keep), test_prefix=TEST_PREFIX)
 
     # -- legs (one scope per dispatch) ---------------------------------------------------------------------

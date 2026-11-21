@@ -1,0 +1,96 @@
+{
+ "experiment": "G1 likely shared grid cause",
+ "is_simulated": false,
+ "label": "REAL charger and substation positions (OpenStreetMap); the effect on plans rests on an ASSUMED beta",
+ "computed_at": "2026-11-21T12:47:58+00:00",
+ "link_radius_km": 5.0,
+ "alt_ahead_km": 60.0,
+ "beta_substation": 0.1,
+ "car": {
+  "vehicle_id": "maruti-suzuki-e-vitara-61",
+  "name": "Maruti Suzuki e Vitara (61 kWh (Zeta/Alpha FWD))",
+  "start_soc_pct": 90.0
+ },
+ "n_runs": 1500,
+ "note": "nearest substation within the radius, by straight-line distance; NOT known to feed the charger",
+ "corridors": [
+  {
+   "corridor": "Noida-Agra",
+   "candidate_chargers": 10,
+   "linked_to_a_substation": 7,
+   "candidate_pairs_within_alt_km": 21,
+   "candidate_pairs_sharing_substation": 1,
+   "release": {
+    "plan_id": "PL-f2cc",
+    "decision": "GO",
+    "stop_backup_pairs": 0,
+    "sharing_substation": 0
+   }
+  },
+  {
+   "corridor": "Delhi-Jaipur",
+   "candidate_chargers": 152,
+   "linked_to_a_substation": 151,
+   "candidate_pairs_within_alt_km": 10837,
+   "candidate_pairs_sharing_substation": 240,
+   "release": {
+    "plan_id": "PL-117a",
+    "decision": "GO",
+    "stop_backup_pairs": 2,
+    "sharing_substation": 0
+   }
+  },
+  {
+   "corridor": "Delhi-Chandigarh",
+   "candidate_chargers": 147,
+   "linked_to_a_substation": 147,
+   "candidate_pairs_within_alt_km": 9553,
+   "candidate_pairs_sharing_substation": 235,
+   "release": {
+    "plan_id": "PL-f85a",
+    "decision": "INSUFFICIENT_EVIDENCE",
+    "stop_backup_pairs": 1,
+    "sharing_substation": 1
+   }
+  },
+  {
+   "corridor": "Delhi-Dehradun",
+   "candidate_chargers": 138,
+   "linked_to_a_substation": 138,
+   "candidate_pairs_within_alt_km": 9316,
+   "candidate_pairs_sharing_substation": 233,
+   "release": {
+    "plan_id": "PL-3e84",
+    "decision": "NO_GO",
+    "stop_backup_pairs": 3,
+    "sharing_substation": 0
+   }
+  },
+  {
+   "corridor": "Pune-Mumbai",
+   "candidate_chargers": 63,
+   "linked_to_a_substation": 63,
+   "candidate_pairs_within_alt_km": 1381,
+   "candidate_pairs_sharing_substation": 130,
+   "release": {
+    "plan_id": "PL-0f58",
+    "decision": "GO",
+    "stop_backup_pairs": 0,
+    "sharing_substation": 0
+   }
+  },
+  {
+   "corridor": "Bengaluru-Mysuru",
+   "candidate_chargers": 137,
+   "linked_to_a_substation": 137,
+   "candidate_pairs_within_alt_km": 6323,
+   "candidate_pairs_sharing_substation": 119,
+   "release": {
+    "plan_id": "PL-4ce9",
+    "decision": "GO",
+    "stop_backup_pairs": 0,
+    "sharing_substation": 0
+   }
+  }
+ ]
+}

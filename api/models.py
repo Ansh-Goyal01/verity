@@ -414,6 +414,67 @@ class ShareResponse(Resp):
     is_simulated: bool
 
 
+# --- Neo4j showpieces (WP8) ----------------------------------------------------------------------------------------
+
+
+class RingAttackRequest(Req):
+    charger_id: str | None = Field(default=None, max_length=40)
+    n_sources: int = Field(default=6, ge=3, le=12)
+
+
+class RingFound(Resp):
+    found: bool
+    members: list[str]
+    attack_sources_caught: int
+    shared: int
+    jaccard_min: float | None
+    cypher: str
+    query_ms: float
+    backend: Literal["neo4j", "memory"]
+    executed: bool
+
+
+class RingLimit(Resp):
+    text: str
+    recall: float | None
+    source: str | None
+
+
+class RingAttackResponse(Resp):
+    charger_id: str
+    charger_name: str
+    co_targets: list[str]
+    n_sources: int
+    reports_added: int
+    ring: RingFound
+    trust_before: TrustBlock
+    trust_after: TrustBlock
+    trust_without_ring_detection: TrustBlock
+    plans: dict
+    limit: RingLimit
+    is_simulated: bool
+
+
+class RingResetResponse(Resp):
+    reports_removed: int
+    attack_reports_left: int
+    attack_sources_left: int
+    backend: Literal["neo4j", "memory"]
+    is_simulated: bool
+
+
+class NeighbourhoodResponse(Resp):
+    charger_id: str
+    depth: int
+    nodes: list[dict]
+    edges: list[dict]
+    cypher: str
+    query_ms: float
+    backend: str
+    executed: bool
+    is_simulated: bool
+
+
 # --- spoken trip planner (WP7) -----------------------------------------------------------------------------------
 
 

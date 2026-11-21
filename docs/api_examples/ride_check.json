@@ -32,7 +32,7 @@
    },
    "recent_failure_days": null,
    "confidence_as_primary": 0.95,
-   "expected_lost_min": 79,
+   "expected_lost_min": 81,
    "expected_lost_rs": 80,
    "chosen": true,
    "note": "Chosen: fewest expected lost minutes at the target confidence."
@@ -49,7 +49,7 @@
     "same_site_as_primary": false
    }
   ],
-  "expected_lost_min": 79,
+  "expected_lost_min": 81,
   "expected_lost_rs": 80,
   "minutes": [
    {
@@ -65,7 +65,7 @@
    {
     "part": "failed_stops",
     "label": "Stops at broken chargers",
-    "minutes": 5.7
+    "minutes": 6.1
    },
    {
     "part": "waiting",
@@ -75,12 +75,12 @@
    {
     "part": "charging",
     "label": "Charging to 80 %",
-    "minutes": 57.5
+    "minutes": 56.7
    },
    {
     "part": "stranding",
     "label": "Stranding risk (penalty x probability)",
-    "minutes": 8.0
+    "minutes": 11.0
    }
   ]
  },
@@ -100,8 +100,8 @@
     "trust_level": "medium"
    },
    "recent_failure_days": 1,
-   "confidence_as_primary": 0.95,
-   "expected_lost_min": 98,
+   "confidence_as_primary": 0.9,
+   "expected_lost_min": 99,
    "expected_lost_rs": 100,
    "chosen": false,
    "note": "Avoided: a failure was reported 1 day ago."
@@ -121,9 +121,9 @@
     "trust_level": "unknown"
    },
    "recent_failure_days": null,
-   "confidence_as_primary": 0.95,
-   "expected_lost_min": 93,
-   "expected_lost_rs": 90,
+   "confidence_as_primary": 0.9,
+   "expected_lost_min": 98,
+   "expected_lost_rs": 100,
    "chosen": false,
    "note": "Not chosen: few or no recent reports."
   },
@@ -142,8 +142,8 @@
     "trust_level": "medium"
    },
    "recent_failure_days": null,
-   "confidence_as_primary": 0.95,
-   "expected_lost_min": 95,
+   "confidence_as_primary": 0.9,
+   "expected_lost_min": 100,
    "expected_lost_rs": 100,
    "chosen": false,
    "note": "Not chosen: more expected lost minutes."
@@ -164,7 +164,7 @@
    },
    "recent_failure_days": null,
    "confidence_as_primary": 0.95,
-   "expected_lost_min": 79,
+   "expected_lost_min": 81,
    "expected_lost_rs": 80,
    "chosen": true,
    "note": "Chosen: fewest expected lost minutes at the target confidence."
@@ -184,9 +184,9 @@
     "trust_level": "unknown"
    },
    "recent_failure_days": null,
-   "confidence_as_primary": 0.95,
-   "expected_lost_min": 92,
-   "expected_lost_rs": 90,
+   "confidence_as_primary": 0.9,
+   "expected_lost_min": 97,
+   "expected_lost_rs": 100,
    "chosen": false,
    "note": "Not chosen: few or no recent reports."
   },
@@ -206,7 +206,7 @@
    },
    "recent_failure_days": null,
    "confidence_as_primary": 0.95,
-   "expected_lost_min": 108,
+   "expected_lost_min": 109,
    "expected_lost_rs": 110,
    "chosen": false,
    "note": "Not chosen: few or no recent reports."
@@ -227,7 +227,7 @@
    },
    "recent_failure_days": null,
    "confidence_as_primary": 0.95,
-   "expected_lost_min": 102,
+   "expected_lost_min": 101,
    "expected_lost_rs": 100,
    "chosen": false,
    "note": "Not chosen: few or no recent reports."
@@ -452,11 +452,11 @@
  ],
  "levers": [],
  "earning_rs_per_hour": 60.0,
- "compute_ms": 1352,
+ "compute_ms": 961,
  "n_runs": 1500,
  "speech": {
-  "en-IN": "Take the ride. The chance of completing it and reaching a working charger is 95 percent or more. After the drop, charge at Radisson Blu Plaza Delhi Airport: about 79 minutes, roughly 80 rupees at an example earning rate.",
-  "hi-IN": "राइड ले लीजिए। राइड पूरी करके चालू चार्जर तक पहुँचने की संभावना 95 प्रतिशत या उससे अधिक है। ड्रॉप के बाद Radisson Blu Plaza Delhi Airport पर चार्ज करें: लगभग 79 मिनट, करीब 80 रुपये (उदाहरण कमाई दर पर)।"
+  "en-IN": "Take the ride. The chance of completing it and reaching a working charger is 95 percent or more. After the drop, charge at Radisson Blu Plaza Delhi Airport: about 81 minutes, roughly 80 rupees at an example earning rate.",
+  "hi-IN": "राइड ले लीजिए। राइड पूरी करके चालू चार्जर तक पहुँचने की संभावना 95 प्रतिशत या उससे अधिक है। ड्रॉप के बाद Radisson Blu Plaza Delhi Airport पर चार्ज करें: लगभग 81 मिनट, करीब 80 रुपये (उदाहरण कमाई दर पर)।"
  },
  "route": {
   "polyline": [

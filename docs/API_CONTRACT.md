@@ -698,6 +698,19 @@ fits the project. Nothing here is applied unless both sides agree.
 - Frontend note: debounce the place box (send after ~300 ms idle and 3+ characters) and pass the chosen result's `name`, `lat`, `lon` straight into `origin`/`destination`.
 - v8 addendum (code review, same day): new 422 `route_too_short` (ends under 1 km apart); 429 `rate_limited` when more than `VERITY_NEW_ROUTES_PER_HOUR` (default 20, server-wide) NEW routes are fetched in an hour (demo and already-fetched routes are never limited); the departure hour is read in IST whatever offset the request uses (02:30Z = the 08:00 forecast).
 
+### 2026-11-21 - v16: Neo4j showpieces (finale WP8)
+
+- New `POST /api/demo/ring-attack` `{charger_id? (default CH-0003), n_sources (3-12, default 6)}`, only with `VERITY_DEMO=1` (else 403 `demo_disabled`).
+  - It adds N SIMULATED sources, each reporting the charger and its 4 nearest chargers `broken` within minutes.
+  - Response: `{charger_id, charger_name, co_targets, n_sources, reports_added, ring {found, members, attack_sources_caught, shared, jaccard_min, cypher, query_ms, backend, executed}, trust_before, trust_after, trust_without_ring_detection, plans {changes, pending}, limit {text, recall, source}, is_simulated: true}`.
+  - `limit` quotes E5's slow ring from `results/e5_trust_recovery_simulated.json`.
+- New `POST /api/demo/ring-attack/reset` (same switch): `{reports_removed, attack_reports_left, attack_sources_left, backend, is_simulated}`. It removes every attack report and, on Neo4j, the attack's Source nodes.
+- New `GET /api/graph/neighborhood/{charger_id}?depth=1|2` (default 2): `{charger_id, depth, nodes [{id, label, props}], edges [{from, to, type, props}], cypher, query_ms, backend, executed, is_simulated}`.
+  - Depth 1 = the charger audit view.
+  - Depth 2 adds `Ring` nodes (MEMBER_OF) and the charger's `Substation` with the other chargers on it (NEAREST_SUBSTATION {distance_km}). 404 `unknown_charger`.
+- Graph schema: `(:Substation)` and `(:Charger)-[:NEAREST_SUBSTATION {distance_km}]->(:Substation)`, within 5 km. This is proximity only, never "feeds".
+- Releases: no field changes. Their numbers now include the weakest common-cause tier (chargers with the same nearest substation, `BETA_SUBSTATION` 0.1, an assumption). The demo decisions are unchanged.
+
 ### 2026-11-21 - v15: `POST /api/voice/plan` spoken trip planner (finale WP7)
 
 - New `POST /api/voice/plan`, two calls like `/api/voice/ride-check`. Rate-limited with the voice budget.

@@ -5,8 +5,8 @@
  "is_simulated": true,
  "graph": {
   "backend": "memory",
-  "nodes": 4897,
-  "relationships": 8026
+  "nodes": 6076,
+  "relationships": 10060
  },
  "bands": {
   "method": "split conformal",

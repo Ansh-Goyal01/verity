@@ -34,7 +34,7 @@ from .dispatch import (
     _build_ctx,
     _choose,
     _release,
-    graph_operators,
+    graph_links,
     make_nodes,
     meets_target,
 )
@@ -142,8 +142,9 @@ def plan_options(vehicle: VehicleContext, route: PlannedRoute, route_chargers: S
     t0 = time.perf_counter()
     rng = np.random.default_rng(seed)
     ctx = _build_ctx(vehicle, route, start_soc, target_confidence, rng, cfg, reserve_pct=prefs.arrival_buffer_pct)
-    nodes = make_nodes(route_chargers, trust, trust_aware=True, queue_wait_min=queue_wait_min,
-                       operators=graph_operators(graph, route_chargers) if graph is not None else None)
+    ops, subs = graph_links(graph, route_chargers) if graph is not None else (None, None)
+    nodes = make_nodes(route_chargers, trust, trust_aware=True, queue_wait_min=queue_wait_min, operators=ops,
+                       substations=subs)
     nodes, stop_nodes, unsupported, n_avoided = filter_nodes(nodes, prefs)
     _, _, scored = _choose(ctx, nodes, rng, trust_aware=True, graph=graph, stop_nodes=stop_nodes)
     pool = scored

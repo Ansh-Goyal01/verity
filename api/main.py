@@ -31,6 +31,7 @@ from verity.paths import RESULTS_DIR
 from .ledger import build_ledger
 from .limits import RateLimiter, client_ip, parse_origins, positive_int, rate_key
 from .voice_plan import decide_plan_stage, hear_plan_stage
+from .demo_ring import ring_attack, ring_reset
 from .models import (
     GeocodeResponse,
     VehiclesResponse,
@@ -46,6 +47,10 @@ from .models import (
     FleetBookingResponse,
     ShareResponse,
     VoicePlanConfirm,
+    RingAttackRequest,
+    RingAttackResponse,
+    RingResetResponse,
+    NeighbourhoodResponse,
     VoicePlanDecided,
     VoicePlanHeard,
     VoicePlanText,
@@ -329,6 +334,34 @@ def get_chargers(min_lat: float = Query(ge=-90, le=90), min_lon: float = Query(g
 @app.get("/api/graph/why/{plan_id}", response_model=WhyResponse)
 def get_graph_why(plan_id: str, svc: EngineService = Depends(get_service)) -> dict:
     return svc.graph_why(plan_id)
+
+
+@app.get("/api/graph/neighborhood/{charger_id}", response_model=NeighbourhoodResponse)
+def get_graph_neighbourhood(charger_id: str, depth: int = Query(2, ge=1, le=2),
+                            svc: EngineService = Depends(get_service)) -> dict:
+    """WP8b: a charger's graph neighbourhood as nodes + edges (depth 2 adds rings and the nearest substation)."""
+    return svc.graph_neighbourhood(charger_id, depth)
+
+
+def demo_enabled() -> bool:
+    return os.environ.get("VERITY_DEMO", "").strip().lower() in {"1", "true", "yes"}
+
+
+def require_demo() -> None:
+    if not demo_enabled():
+        raise ApiError(403, "demo_disabled", "The ring-attack demo is switched off on this server (VERITY_DEMO=1).")
+
+
+@app.post("/api/demo/ring-attack", response_model=RingAttackResponse, dependencies=[Depends(require_demo)])
+def post_ring_attack(req: RingAttackRequest, svc: EngineService = Depends(get_service)) -> dict:
+    """WP8a: N SIMULATED sources report one charger broken within minutes; the graph finds the ring, trust holds."""
+    return ring_attack(svc, req.charger_id, req.n_sources)
+
+
+@app.post("/api/demo/ring-attack/reset", response_model=RingResetResponse, dependencies=[Depends(require_demo)])
+def post_ring_reset(svc: EngineService = Depends(get_service)) -> dict:
+    """WP8a: remove every report (and source) the attack added."""
+    return ring_reset(svc)
 
 
 @app.get("/api/graph/charger/{charger_id}", response_model=ChargerGraphResponse)

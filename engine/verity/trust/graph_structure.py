@@ -83,8 +83,10 @@ MATCH (b:Charger) WHERE b.id IN $ids AND b.id > p.id
 OPTIONAL MATCH (p)-[:AT]->(s:Site)<-[:AT]-(b)
 OPTIONAL MATCH (p)-[:RUN_BY]->(o:Operator)<-[:RUN_BY]-(b)
 OPTIONAL MATCH (p)-[:IS]->(h:HardwareModel)<-[:IS]-(b)
-WITH p, b, s, o, h WHERE s IS NOT NULL OR o IS NOT NULL OR h IS NOT NULL
-RETURN p.id AS a, b.id AS b, s.id AS shared_site, o.id AS shared_operator, h.id AS shared_hardware
+OPTIONAL MATCH (p)-[:NEAREST_SUBSTATION]->(ss:Substation)<-[:NEAREST_SUBSTATION]-(b)
+WITH p, b, s, o, h, ss WHERE s IS NOT NULL OR o IS NOT NULL OR h IS NOT NULL OR ss IS NOT NULL
+RETURN p.id AS a, b.id AS b, s.id AS shared_site, o.id AS shared_operator, h.id AS shared_hardware,
+       ss.id AS shared_substation
 ORDER BY a, b"""
 
 SEARCH_CYPHER = (
@@ -215,6 +217,17 @@ class MemoryStructure:
     def _init_structure(self) -> None:
         self._plans: dict[str, PlanRec] = {}
         self._aliases: dict[tuple[str, str], AliasRec] = {}
+        self._substations: dict[str, dict] = {}  # WP8c: id -> {id, lat, lon, name, voltage, operator}
+        self._substation_of: dict[str, tuple[str, float]] = {}  # charger id -> (nearest substation id, km)
+
+    def add_substation_links(self, substations: Sequence[dict], links: dict[str, tuple[str, float]]) -> None:
+        """Replace the NEAREST_SUBSTATION links (derived data: the last import is the truth)."""
+        used = {sid for sid, _ in links.values()}
+        self._substations = {s["id"]: dict(s) for s in substations if s["id"] in used}
+        self._substation_of = {cid: link for cid, link in links.items() if cid in self._chargers}
+
+    def substation_links(self) -> dict[str, tuple[str, float]]:
+        return dict(self._substation_of)
 
     def sync_sites(self) -> None:
         return None  # sites are derived from the chargers on every read
@@ -232,8 +245,10 @@ class MemoryStructure:
                 site = site_of.get(a) if site_of.get(a) is not None and site_of.get(a) == site_of.get(b) else None
                 op = self._chargers[a].operator
                 op = op if op and op == self._chargers[b].operator else None
-                if site or op:
-                    out.append(SharedCause(a, b, site, op, None))
+                sa, sb = self._substation_of.get(a), self._substation_of.get(b)
+                sub = sa[0] if sa is not None and sb is not None and sa[0] == sb[0] else None
+                if site or op or sub:
+                    out.append(SharedCause(a, b, site, op, None, sub))
         return out
 
     def add_plan(self, plan: PlanRec) -> None:
@@ -322,9 +337,10 @@ class MemoryStructure:
         plans = list(self._plans.values())
         aliases = list(self._aliases.values())
         nodes = (len(sites) + len({s.site_type for s in sites}) + len({channel_of(s) for s in sources}) + len(plans)
-                 + len({alias_id(a.text) for a in aliases}))
+                 + len({alias_id(a.text) for a in aliases}) + len(self._substations))
         rels = (sum(len(s.charger_ids) for s in sites) + len(sites) + len(sources)
-                + sum(len(p.stops) + len(p.backups) + len(p.avoided) for p in plans) + len(aliases))
+                + sum(len(p.stops) + len(p.backups) + len(p.avoided) for p in plans) + len(aliases)
+                + len(self._substation_of))
         return nodes, rels
 
 
@@ -356,7 +372,26 @@ class Neo4jStructure:
 
     def shared_causes(self, ids: Sequence[str]) -> list[SharedCause]:
         rows = self._run(SHARED_CAUSES_CYPHER, ids=sorted(set(ids)))
-        return [SharedCause(r["a"], r["b"], r["shared_site"], r["shared_operator"], r["shared_hardware"]) for r in rows]
+        return [SharedCause(r["a"], r["b"], r["shared_site"], r["shared_operator"], r["shared_hardware"],
+                            r.get("shared_substation")) for r in rows]
+
+    def add_substation_links(self, substations: Sequence[dict], links: dict[str, tuple[str, float]]) -> None:
+        """Replace every NEAREST_SUBSTATION link and the Substation nodes no charger links to any more."""
+        used = {sid for sid, _ in links.values()}
+        subs = [{"id": s["id"], "lat": s["lat"], "lon": s["lon"], "name": s.get("name"), "voltage": s.get("voltage"),
+                 "operator": s.get("operator")} for s in substations if s["id"] in used]
+        rows = [{"cid": cid, "sid": sid, "km": km} for cid, (sid, km) in sorted(links.items())]
+        self._run("MATCH (:Charger)-[r:NEAREST_SUBSTATION]->() DELETE r")
+        self._run("UNWIND $subs AS s MERGE (n:Substation {id: s.id}) SET n.lat = s.lat, n.lon = s.lon, "
+                  "n.name = s.name, n.voltage = s.voltage, n.operator = s.operator", subs=subs)
+        self._run("UNWIND $rows AS row MATCH (c:Charger {id: row.cid}) MATCH (s:Substation {id: row.sid}) "
+                  "MERGE (c)-[r:NEAREST_SUBSTATION]->(s) SET r.distance_km = row.km", rows=rows)
+        self._run("MATCH (s:Substation) WHERE NOT ()-[:NEAREST_SUBSTATION]->(s) DELETE s")
+
+    def substation_links(self) -> dict[str, tuple[str, float]]:
+        rows = self._run("MATCH (c:Charger)-[r:NEAREST_SUBSTATION]->(s:Substation) "
+                         "RETURN c.id AS cid, s.id AS sid, r.distance_km AS km ORDER BY cid")
+        return {r["cid"]: (r["sid"], float(r["km"])) for r in rows}
 
     def add_plan(self, plan: PlanRec) -> None:
         self._run(

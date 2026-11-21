@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 
 from verity.chargers import RouteCharger, chargers_near_point
+from verity.substations import shared_only
 from verity.dispatch import Node, make_nodes
 from verity.paths import PROCESSED_DIR
 from verity.ridecheck import AfterDropOption
@@ -95,7 +96,8 @@ def report_signals(reports: tuple[Report, ...], now: datetime) -> Signals:
 
 
 def options_from_bundle(bundle: dict, chargers: list[ChargerRecord], trust: dict[str, ChargerTrust],
-                        signals: Signals, make: str = "") -> tuple[list[AfterDropOption], list[str]]:
+                        signals: Signals, make: str = "", substation_of: dict[str, str] | None = None,
+                        ) -> tuple[list[AfterDropOption], list[str]]:
     """After-drop options from the bundle's legs. A leg whose charger id now belongs to another charger (directory
     renumbered) is skipped and noted, never attached to the wrong charger."""
     by_id = {c.id: c for c in chargers}
@@ -108,7 +110,8 @@ def options_from_bundle(bundle: dict, chargers: list[ChargerRecord], trust: dict
         if compatible(c, make):
             legs.append((c, leg))
     nodes: list[Node] = make_nodes([RouteCharger(c, 0.0, 0.0) for c, _ in legs], trust,
-                                   queue_wait_min=signals.queue_wait_min)
+                                   queue_wait_min=signals.queue_wait_min,
+                                   substations=shared_only(substation_of or {}, [c.id for c, _ in legs]))
     by_node = {n.id: n for n in nodes}
     opts = [AfterDropOption(by_node[c.id], float(leg["km"]), float(leg["minutes"]),
                             signals.recent_failure_days.get(c.id)) for c, leg in legs]

@@ -136,7 +136,7 @@ def test_constraints_cover_every_node_label_from_claude_md() -> None:
     drv = FakeDriver()
     Neo4jGraph(driver=drv).ensure_constraints()
     text = " ".join(q for q, _ in drv.log)
-    assert len(drv.log) == len(NODE_LABELS) + 1 == 12  # one constraint per label, plus the full-text name index
+    assert len(drv.log) == len(NODE_LABELS) + 1 == 13  # one constraint per label, plus the full-text name index
     assert all(f"(n:{label})" in text for label in NODE_LABELS) and "IF NOT EXISTS" in text
     assert "FULLTEXT INDEX charger_names" in text
 

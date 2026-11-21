@@ -31,6 +31,7 @@ class SharedCause(NamedTuple):
     shared_site: str | None
     shared_operator: str | None
     shared_hardware: str | None
+    shared_substation: str | None = None  # WP8c: the same NEAREST substation (proximity only; never "feeds")
 
 
 class PlanStopRec(NamedTuple):
