@@ -96,4 +96,5 @@ def test_site_headers(path: str) -> None:
 
     response = TestClient(app, follow_redirects=False).get(path)
     assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]
