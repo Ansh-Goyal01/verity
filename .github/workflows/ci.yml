@@ -30,3 +30,33 @@ jobs:
       - run: uv run pytest -q
       # Frontend checks (plain JS, no install): Node is preinstalled on the runner.
       - run: node --test tests/frontend_app.test.cjs tests/frontend_console.test.cjs tests/frontend_trip.test.cjs
+
+  docker:
+    name: Build and smoke-test the offline API image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - run: docker build --tag verity-ci .
+      - name: Check the container with networking disabled
+        run: |
+          docker run --detach --name verity-ci --network none --env VERITY_OFFLINE=1 verity-ci
+          for attempt in $(seq 1 40); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' verity-ci)
+            if [ "$status" = healthy ]; then break; fi
+            if [ "$status" = unhealthy ]; then docker logs verity-ci; exit 1; fi
+            sleep 3
+          done
+          if [ "$status" != healthy ]; then docker logs verity-ci; exit 1; fi
+          docker exec verity-ci /app/.venv/bin/python -c '
+          import httpx
+          base = "http://127.0.0.1:8000"
+          with httpx.Client(base_url=base, timeout=90) as client:
+              health = client.get("/api/health").json()
+              assert health["offline"] and health["graph"]["backend"] == "memory"
+              assert client.get("/docs").status_code == 404
+              sample = client.get("/api/sample-trip").json()
+              response = client.post("/api/dispatch", json={**sample["request"], "vehicle_id": sample["model_id"]})
+              response.raise_for_status()
+              assert response.json()["decision"] in {"GO", "NO_GO", "INSUFFICIENT_EVIDENCE"}
+          '

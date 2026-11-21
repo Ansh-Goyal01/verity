@@ -95,6 +95,10 @@ class NetworkUnavailable(RuntimeError):
     pass
 
 
+class CacheMiss(NetworkUnavailable):
+    """The requested response has no local recording."""
+
+
 class CachedClient:
     """HTTP client that replays cached responses, counts real requests, and backs off on errors."""
 
@@ -167,6 +171,13 @@ class CachedClient:
 
     def get_json(self, url: str, params: dict | None = None, headers: dict | None = None) -> tuple[Any, bool]:
         return self.request_json("GET", url, params=params, headers=headers)
+
+    def cached_json(self, url: str, params: dict | None = None) -> Any:
+        path = self.cache_dir / f"{self._key('GET', url, params, None)}.json"
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))["response"]
+        except FileNotFoundError:
+            raise CacheMiss("No cached response.") from None
 
     def post_json(self, url: str, data: dict) -> tuple[Any, bool]:
         return self.request_json("POST", url, data=data)

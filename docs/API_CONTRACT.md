@@ -540,6 +540,21 @@ lower end of that interval. Rows in the samples file that are not consented, non
 
 ## Changelog: contract change proposals and version notes
 
+### 2026-11-21 — v17: WP10 offline routes and health
+
+- **Health** adds `offline`, `cached_route_count` and `charger_count`. Existing
+  `graph.backend`, `bands.k`, `bands.n` and `sarvam_key_present` retain their shapes.
+- **Offline misses** return HTTP 503. Both environments add `code: "offline"` and
+  `cached_trips`, an array of `{slug, origin, destination, departure_time}`. Development
+  keeps `error: "offline"` and a message. Production keeps its plain `error` message
+  and request `id`. An app can fill its planner from the listed `origin`,
+  `destination` and `departure_time` plus the user's vehicle and battery.
+- Set `VERITY_OFFLINE=1` before starting the API. Planning uses the packaged route
+  snapshots and the committed demo ride. Geocoding uses packaged suggestions or an
+  exact local cache entry. Neo4j and live Sarvam requests are disabled in that mode.
+  An exact cached audio clip can play. A changed release keeps its current text.
+  Cached weather retains its original forecast hour and the existing mismatch disclosure.
+
 ### 2026-11-21 — CX-1 authenticated route dependencies
 
 Account routes can use `Depends(current_user)` or `Depends(require_role("admin"))` from

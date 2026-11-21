@@ -73,6 +73,7 @@ from .models import (
     WhyResponse,
 )
 from .service import ApiError, EngineService
+from .demo_cache import offline_enabled
 from . import routes_cpo, routes_fleet, routes_me, routes_share, routes_trips
 from .speech import VOICE_MESSAGE, synthesise
 from .voice_lab import capture_stage, lab_enabled, token_ok, validate as validate_lab_form
@@ -129,7 +130,7 @@ def get_service() -> EngineService:
 
 
 def get_voice_client() -> SarvamClient | None:
-    return SarvamClient.from_env()
+    return None if offline_enabled() else SarvamClient.from_env()
 
 
 def scripted_reports_allowed() -> bool:
@@ -219,6 +220,9 @@ app.include_router(routes_cpo.router)
 
 @app.exception_handler(ApiError)
 async def _api_error(request: Request, exc: ApiError) -> JSONResponse:
+    if exc.code == "offline":
+        return error_response(request, exc.status, exc.code, exc.message,
+                              extra={"code": "offline", "cached_trips": exc.cached_trips or []})
     return error_response(request, exc.status, exc.code, exc.message)
 
 

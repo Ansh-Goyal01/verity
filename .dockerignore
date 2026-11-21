@@ -11,6 +11,9 @@ __pycache__
 .env
 .env.*
 !.env.example
+**/*.env.local
+**/.env
+**/.env.*
 
 # The stray nested clone, the frontend (served separately), tests and tooling
 verity/
@@ -30,5 +33,5 @@ data/private
 data/sim/dev
 results/dev
 results/logs
-docs/*.pdf
+docs/
 data/lab

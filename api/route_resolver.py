@@ -11,9 +11,11 @@
 from __future__ import annotations
 
 import os
+import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 
@@ -21,6 +23,7 @@ from verity.forecast import PlannedRoute
 from verity.routing import CachedClient, build_route_snapshot, ist_hour, snapshot_to_route
 from verity.trips import haversine_m
 
+from .demo_cache import ROUTES_DIR, trip_info
 from .limits import LruCache, RateLimiter, positive_int
 
 ENDPOINT_TOLERANCE_KM = 30.0  # the demo route serves requests that start/end this close to Noida and Agra
@@ -81,14 +84,27 @@ def _too_long(km: float, limit: float) -> RouteError:
 class RouteResolver:
     def __init__(self, demo_route: PlannedRoute, demo_snap: dict, booking: dict,
                  client_factory: Callable[[], CachedClient] = CachedClient, max_trip_km: float | None = None,
-                 new_routes_per_hour: int | None = None) -> None:
+                 new_routes_per_hour: int | None = None, *, offline: bool = False,
+                 routes_dir: Path = ROUTES_DIR) -> None:
         self.demo = ResolvedRoute(demo_route, demo_snap, np.array(demo_snap["polyline"]),
                                   np.array(demo_snap["polyline_km"]), True)
         self.booking = booking
+        self.offline = offline
         self.client_factory = client_factory
         self.max_trip_km = max_trip_km if max_trip_km is not None else max_trip_km_setting()
         self._cache: LruCache[tuple, ResolvedRoute] = LruCache(ROUTE_CACHE_SIZE)
         self.new_routes = RateLimiter(new_routes_per_hour or new_routes_setting(), 3600.0)
+        self.packaged = {}
+        for file in sorted(routes_dir.glob("*.json")):
+            snap = json.loads(file.read_text(encoding="utf-8"))
+            if snap["is_simulated"] or snap["distance_km"] > self.max_trip_km:
+                continue
+            self.packaged[file.stem] = ResolvedRoute(snapshot_to_route(snap), snap, np.array(snap["polyline"]),
+                                                     np.array(snap["polyline_km"]), False)
+
+    def cached_trips(self) -> list[dict]:
+        return [trip_info("noida-agra", self.demo.snap),
+                *(trip_info(slug, r.snap) for slug, r in self.packaged.items())]
 
     def is_demo(self, origin: dict, destination: dict) -> bool:
         return (straight_km(origin, self.booking["origin"]) <= ENDPOINT_TOLERANCE_KM
@@ -117,6 +133,19 @@ class RouteResolver:
         cached = self._cache.get(key)
         if cached is not None:
             return cached
+        if via is None:
+            # Match coordinates, since a user-entered label does not establish where the road starts.
+            for packaged in self.packaged.values():
+                matches_endpoints = all(
+                    round(point[axis], COORD_DP) == round(packaged.snap[end][axis], COORD_DP)
+                    for end, point in (("origin", origin), ("destination", destination))
+                    for axis in ("lat", "lon")
+                )
+                packaged_departure = datetime.fromisoformat(packaged.snap["departure_time"])
+                if matches_endpoints and (self.offline or ist_hour(packaged_departure) == ist_hour(departure)):
+                    return packaged
+        if self.offline:
+            raise RouteError(503, "offline", "This trip is unavailable in offline mode. Choose a cached trip.")
         retry_after = self.new_routes.hit("new-route")
         if retry_after is not None:  # protects the lifetime request budget from a loop of distinct routes
             raise RouteError(429, "rate_limited", f"Too many new routes this hour; try again in "

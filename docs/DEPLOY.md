@@ -1,7 +1,7 @@
 # Deploying the API (guide W5.3)
 
-Status on 2026-11-18: **nothing is deployed.** The `Dockerfile` and `.dockerignore` exist but the image has **not been
-built or run** (no Docker is used on this machine). The first build is a step for Ansh, below.
+The CI container job builds the Dockerfile and checks the API with container networking disabled.
+A public deployment URL is needed for the hosted smoke checks below.
 
 The FastAPI service is the only thing that needs a public address. The pages in `web/` are static and do not run
 on it. A phone's microphone only works on an **HTTPS** page, and an HTTPS page may only call an **HTTPS** API
@@ -16,6 +16,8 @@ on it. A phone's microphone only works on an **HTTPS** page, and an HTTPS page m
 | `VERITY_CORS_ORIGINS` | comma-separated browser origins that may call the API. Setting it REPLACES the built-in list (file://, localhost:5500, `https://ansh-goyal01.github.io`) |
 | `VERITY_TRUST_PROXY=1` | only behind exactly one proxy that appends `X-Forwarded-For`; otherwise every visitor shares one voice rate limit |
 | `PORT` | set by most hosts; the container listens on it, default 8000 |
+| `VERITY_OFFLINE=1` | optional; uses packaged route/geocode caches, the memory graph, and cached speech |
+| `SUPABASE_URL`, `DATABASE_URL` | hosted Auth project URL and TLS-verified database connection for accounts |
 
 `/api/health` shows the graph backend, node and relationship counts, and `sarvam_key_present` (a boolean, never the key),
 so one request tells you whether the deploy picked up its secrets.
@@ -35,14 +37,35 @@ backup. Neither was run here, so none of the cold-start or cost figures above is
 ## Steps for Ansh
 
 1. Pick the host. Set the environment variables above in the host's dashboard (never in the repo).
-2. Let the host build from the repo's `Dockerfile`, or build and run it yourself (`docker build -t verity .`).
-   Expect the first build to need a fix: it has not been tested.
+2. Let the host build from the repo's `Dockerfile`, or build it locally with `docker build -t verity .`.
 3. Open `https://<host>/api/health`: `status` ok, the graph backend you expect, `sarvam_key_present: true`.
 4. Run the six demo beats against the URL. Open Mission Control with `?api=https://<host>` from an HTTPS page,
    and add that page's origin to `VERITY_CORS_ORIGINS` if it is not `https://ansh-goyal01.github.io`.
 5. Neo4j Aura Free pauses when idle. The keep-alive (`scripts/aura_keepalive.py`) is a Windows task on the laptop, scheduled until 23 Nov, so it
    only runs while that laptop is on. For the demo, check `/api/health` shows `connected`, or let the API run on the in-memory graph (same answers).
 6. Generate the QR code for the final URL, add it and the GIF to the README, and put the QR on the first and last slide.
+
+Run `sh scripts/warmup.sh https://<host>` two minutes before the pitch. It checks
+health, then warms the existing Noida–Agra dispatch plan.
+
+## Account migration and restart check
+
+Use a private env file with a direct, TLS-verified `DATABASE_URL`. The runner
+locks migration execution and records each applied file's SHA-256. For a database
+where the initial SQL was already applied manually, reconcile the migration history
+before running the command.
+
+```sh
+uv run --env-file <private-env-file> python scripts/migrate.py
+uv run --env-file <private-env-file> python scripts/verify_deployed_api.py https://<host> --create-saved-trip
+# Restart or redeploy the same API environment, then check the ID printed by the previous command.
+uv run --env-file <private-env-file> python scripts/verify_deployed_api.py https://<host> --verify-trip <trip-id>
+```
+
+The verifier needs `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `VERITY_VERIFY_EMAIL` and
+`VERITY_VERIFY_PASSWORD` for a dedicated demo account. It signs in on each run and
+checks the authenticated profile. The creation phase leaves a demo car and saved trip
+for the restart check.
 
 ## Hotspot and tunnel (the fallback)
 
