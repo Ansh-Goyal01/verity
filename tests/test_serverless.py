@@ -88,3 +88,40 @@ def test_html_csp_allows_only_configured_services_and_existing_inline_scripts(mo
 
     monkeypatch.setenv("SUPABASE_URL", "https://untrusted.example; img-src *")
     assert client.get("/web/home.html").headers["content-security-policy"].endswith("connect-src 'self'")
+
+
+@pytest.mark.parametrize("path", ["/", "/web/home.html", "/web/drive/styles.css", "/missing", "/api/health"])
+def test_site_headers(path: str) -> None:
+    from app import app
+
+    response = TestClient(app, follow_redirects=False).get(path)
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+    assert response.headers["Permissions-Policy"] == "microphone=(self), camera=(), geolocation=(self)"
+    assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]
+
+
+def test_share_keeps_referrer_private() -> None:
+    from app import app
+
+    response = TestClient(app).get("/api/share/invalid")
+    assert response.headers["Referrer-Policy"] == "no-referrer"
+
+
+def test_public_search_metadata() -> None:
+    from xml.etree.ElementTree import fromstring
+    from urllib.parse import urlsplit
+    from app import app
+
+    client = TestClient(app)
+    robots = client.get("/robots.txt").text
+    assert all(f"Disallow: /{prefix}/" in robots for prefix in ("api", "share", "private"))
+    sitemap = client.get("/sitemap.xml")
+    assert sitemap.status_code == 200
+    urls = [node.text for node in fromstring(sitemap.text).findall(".//{*}loc")]
+    assert len(urls) == len(set(urls)) == 6
+    for url in urls:
+        page = client.get(urlsplit(url).path)
+        assert page.status_code == 200 and f'<link rel="canonical" href="{url}">' in page.text
+        assert all(f'property="og:{key}"' in page.text for key in ("title", "description", "image"))

@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /api/
+Disallow: /share/
+Disallow: /private/
+Disallow: /web/js/check-mocks.html
+Sitemap: https://verity-three-pi.vercel.app/sitemap.xml

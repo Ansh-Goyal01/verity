@@ -2,6 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#0e131d"><title>Verity · Trip logger</title>
+<meta name="description" content="Record EV trip distance, battery readings and charging stops on your device.">
+<link rel="canonical" href="https://verity-three-pi.vercel.app/logger/index.html">
+<meta property="og:url" content="https://verity-three-pi.vercel.app/logger/index.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Verity · Trip logger">
+<meta property="og:description" content="Record EV trip distance, battery readings and charging stops on your device.">
+<meta property="og:image" content="https://verity-three-pi.vercel.app/web/drive/assets/arrival.webp">
+<meta property="og:image:alt" content="An EV on the Verity trip planner cover">
 <link rel="icon" href="../web/drive/assets/verity.png">
 <link rel="stylesheet" href="../design/tokens.css">
 <link rel="stylesheet" href="../web/css/operations.css">
@@ -21,7 +29,7 @@
 <section id="battery" class="card hidden"><div class="eyebrow">Battery check</div><h2 id="batteryTitle">Enter battery %</h2><p id="batteryHelp" class="sub">Use the keypad while safely stopped.</p><div id="reminder" class="status reminder hidden" role="alert">Battery check due. Please enter the current percentage when safely stopped.</div><div class="battery-display" id="batteryDisplay" aria-live="polite">— %</div><div class="keypad" id="keypad"><button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button><button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button><button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button><button type="button" data-key="clear" aria-label="Clear">Clear</button><button type="button" data-key="0">0</button><button type="button" data-key="back" aria-label="Delete last digit">⌫</button></div><p id="batteryError" class="small" role="alert"></p><div class="row" style="margin-top:12px"><button id="voice" class="hidden" type="button">🎙 Speak %</button><button id="saveBattery" class="primary" type="button">Save battery %</button></div><button id="cancelStart" type="button" class="wide hidden">Back to setup</button></section>
 <section id="finish" class="card hidden"><div class="eyebrow">Close trip</div><h2>End and save</h2><p class="sub">Enter the final battery percentage above, then end the trip. Two accurate GPS points and two battery readings are required.</p><label style="margin-top:14px">Notes (optional)<textarea id="notes" placeholder="Anything the team should know?"></textarea></label><button id="endTrip" type="button" class="primary wide">End trip</button></section>
 <section class="card"><div class="eyebrow">On this phone</div><h2>Saved trips</h2><p class="sub">Export and send each trip to your team. Deleting browser data can remove these trips.</p><div id="savedList"></div></section>
-</main><div class="safety">Only enter battery % when safely stopped, or let a passenger do it.</div>
+</main><footer class="safety">Only enter battery % when safely stopped, or let a passenger do it.</footer>
 <script>
 'use strict';
 const $=id=>document.getElementById(id), K={active:'verity.logger.active.v1',trips:'verity.logger.trips.v1',vehicle:'verity.logger.vehicle.v1',theme:'verity.logger.theme.v1'};

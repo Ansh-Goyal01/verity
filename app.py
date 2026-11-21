@@ -13,7 +13,8 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
-from starlette.types import Scope
+from starlette.datastructures import MutableHeaders
+from starlette.types import Message, Receive, Scope, Send
 
 ROOT = Path(__file__).resolve().parent
 for entry in (ROOT / "engine", ROOT):
@@ -22,8 +23,25 @@ for entry in (ROOT / "engine", ROOT):
 
 from api.main import app as api, lifespan  # noqa: E402
 
+class Site(FastAPI):
+    """Apply site policy to the first response frame, including redirects and error pages."""
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        async def send_with_headers(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                headers.setdefault("Permissions-Policy", "microphone=(self), camera=(), geolocation=(self)")
+                headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+                headers.setdefault("X-Content-Type-Options", "nosniff")
+                headers.setdefault("X-Frame-Options", "DENY")
+                headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+            await send(message)
+
+        await super().__call__(scope, receive, send_with_headers)
+
+
 # Keep the API's startup and shutdown hooks when serving it as a mounted app.
-app = FastAPI(openapi_url=None, lifespan=lifespan)
+app = Site(openapi_url=None, lifespan=lifespan)
 mimetypes.add_type("image/webp", ".webp")
 mimetypes.add_type("font/woff2", ".woff2")
 
@@ -50,6 +68,10 @@ class FrontendFiles(StaticFiles):
         response = await super().get_response(path, scope)
         if response.headers.get("content-type", "").startswith("text/html"):
             response.headers["Content-Security-Policy"] = frontend_csp()
+        elif response.status_code in (200, 304):
+            # Asset filenames are stable across deployments. Revalidate code on each visit.
+            lifetime = 86400 if Path(path).suffix.lower() in {".woff2", ".webp", ".png"} else 0
+            response.headers["Cache-Control"] = f"public, max-age={lifetime}, must-revalidate"
         return response
 
 
@@ -67,6 +89,16 @@ async def browser_config() -> Response:
     # Standalone copies of web/ keep their offline default.
     return Response("window.VERITY_CONFIG = { apiBaseUrl: window.location.origin };\n",
                     media_type="application/javascript")
+
+
+@app.api_route("/robots.txt", methods=["GET", "HEAD"])
+async def robots() -> FileResponse:
+    return FileResponse(ROOT / "web" / "robots.txt", media_type="text/plain")
+
+
+@app.api_route("/sitemap.xml", methods=["GET", "HEAD"])
+async def sitemap() -> FileResponse:
+    return FileResponse(ROOT / "web" / "sitemap.xml", media_type="application/xml")
 
 
 @app.api_route("/design/tokens.css", methods=["GET", "HEAD"])

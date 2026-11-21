@@ -429,7 +429,7 @@
       '<div class="filter-bar"><label>Search chargers<input id="charger-search" type="search" placeholder="Name, operator or ID"></label>' +
       '<label>Trust level<select id="charger-trust"><option value="">All levels</option><option>high</option><option>medium</option>' +
       '<option>low</option><option>unknown</option></select></label></div><p id="charger-count" class="result-count" role="status"></p>' +
-      '<div class="panel table-wrap"><table class="data-table"><thead><tr><th scope="col">Charger</th><th scope="col">Trust</th>' +
+      '<div class="panel table-wrap" role="region" tabindex="0" aria-label="Charger directory"><table class="data-table"><thead><tr><th scope="col">Charger</th><th scope="col">Trust</th>' +
       '<th scope="col">Reports</th><th scope="col">Last report</th></tr></thead><tbody id="charger-rows"></tbody></table></div>';
     $('#charger-search').addEventListener('input', refreshChargers);
     $('#charger-trust').addEventListener('change', refreshChargers);
@@ -565,7 +565,23 @@
     if (state.mode === 'workspace' && state.tab === 'replay') refreshReplay();
   }
 
-  function route() {
+  // The large recorded trip fixtures are only needed when a tool opens.
+  const loaded = new Map();
+  function loadTool(name) {
+    if (!loaded.has(name)) {
+      const pending = new Promise((resolve,reject) => {
+        const script = document.createElement('script');
+        script.src = 'drive/' + name + '.js';
+        script.onload = resolve;
+        script.onerror = () => { loaded.delete(name); script.remove(); reject(new Error('Tool unavailable')); };
+        document.head.append(script);
+      });
+      loaded.set(name,pending);
+    }
+    return loaded.get(name);
+  }
+
+  async function route() {
     const hash = location.hash;
     if (hasRouted && hash && !hash.startsWith('#/')) return;
     const [, requestedMode, requestedTab, requestedVehicle] = hash.split('/');
@@ -576,7 +592,23 @@
     const focusVehicle = hasRouted && mode === 'workspace' && state.mode === mode && tab === 'dispatch' && state.tab === tab && vehicle !== state.vehicle;
     const viewTransition = hasRouted && !focusVehicle;
     haltReplay();
-    window.VerityTripView.leave();
+    window.VerityTripView?.leave();
+    if (mode !== 'home') {
+      try {
+        await loadTool('cases');
+        await loadTool('trip-service');
+        if (mode === 'trip') { await loadTool('ride-voice'); await loadTool('trip'); }
+        if (mode === 'workspace' && ['evidence','engine','chargers'].includes(tab)) await loadTool('evidence');
+      } catch {
+        if (location.hash !== hash) return;
+        for (const section of modes) $('#' + section).hidden = section !== mode;
+        const target = mode === 'workspace' ? work : $('#' + mode);
+        target.innerHTML = '<p role="alert">This view could not load. <button type="button">Retry</button></p>';
+        target.querySelector('button').onclick = () => location.reload();
+        return;
+      }
+      if (location.hash !== hash) return;
+    }
     state.workPlan = null;
     state.mode = mode;
     state.tab = tab;

@@ -23,6 +23,7 @@ body[data-mode="home"] .site-header { background: #0b1018f0; border-color: #b8ca
 }
 .hero-inner { flex: 1; display: flex; align-items: center; padding-block: clamp(42px, 6.5vw, 105px) 37px; }
 .hero-copy { width: min(100%, 660px); animation: rise-in .77s var(--ease) both; }
+.home-evidence .eyebrow { color: #34465e; }
 .hero-copy .eyebrow { color: #d7e1f7; margin-bottom: clamp(14px, 2.4vw, 30px); }
 .hero-copy h1 {
   font: 700 clamp(79px, 9.4vw, 151px)/.83 "Barlow Condensed", "Inter Tight", sans-serif;

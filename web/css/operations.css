@@ -104,3 +104,6 @@
 @media (prefers-reduced-motion: reduce) {
   .ops-mission .tab-ink, .ops-mission .view, .ops-driver .alert, .ops-map .vehicle { animation: none !important; transition: none !important; }
 }
+
+html[data-theme="light"] .ops-driver .entryrow button { background: #edf2f9; color: #172333; }
+.ops-driver .entryrow button:focus-visible, .ops-map a:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }

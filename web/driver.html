@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Verity · Driver</title>
+<meta name="description" content="Review your EV dispatch decision, battery margin and diversion alerts during a trip.">
+<link rel="canonical" href="https://verity-three-pi.vercel.app/web/driver.html">
+<meta property="og:url" content="https://verity-three-pi.vercel.app/web/driver.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Verity · Driver">
+<meta property="og:description" content="Review your EV dispatch decision, battery margin and diversion alerts during a trip.">
+<meta property="og:image" content="https://verity-three-pi.vercel.app/web/drive/assets/arrival.webp">
+<meta property="og:image:alt" content="An EV on the Verity trip planner cover">
 <link rel="stylesheet" href="../design/tokens.css">
 <link rel="icon" href="drive/assets/verity.png">
 <link rel="stylesheet" href="css/driver.css">
@@ -13,7 +21,7 @@
 <header class="driverbar ops-bar">
   <div class="ops-identity"><a class="wordmark" data-app-link href="home.html" aria-label="Verity overview"><span class="mark" aria-hidden="true"></span>verity<span class="brand-period">.</span></a><span class="tool-name" data-i18n="consoleTitle">Driver console</span></div>
   <nav class="product-nav" aria-label="Product navigation"><a data-app-link data-i18n="navTrip" href="home.html#/trip">Trip Check</a><a data-app-link data-i18n="navWorkspace" href="home.html#/workspace/dispatch/V12">Workspace</a><a data-app-link data-i18n="navDriver" href="home.html#/driver" aria-current="location">Driver</a></nav>
-  <button id="theme" type="button" aria-label="Toggle theme">Dark</button>
+  <button id="theme" type="button">Dark</button>
 </header>
 <main id="driver-main">
 <div class="driver-heading">
@@ -47,7 +55,7 @@
 <h2 class="section-header" data-i18n="report">REPORT BATTERY</h2>
 <button id="language" class="langtoggle" type="button">हिन्दी</button></div>
 <div class="entryrow">
-<button id="mic" data-i18n="voice" aria-label="Record battery percentage">VOICE</button>
+<button id="mic" data-i18n="voice" aria-label="Voice: record battery percentage">VOICE</button>
 <input id="manual" inputmode="numeric" type="number" min="0" max="100" placeholder="%" aria-label="Battery percentage">
 <button id="submit" data-i18n="update">Update</button></div>
 <div class="keypad" aria-label="Number keypad">

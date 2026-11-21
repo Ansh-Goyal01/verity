@@ -23,7 +23,7 @@
     document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=message(el.dataset.i18n));
     $('#language').textContent=language==='en'?'हिन्दी':'English';
     $('#theme').textContent=message(document.documentElement.dataset.theme==='light'?'dark':'light');
-    $('#manual').setAttribute('aria-label',message('batteryLabel'));$('#mic').setAttribute('aria-label',message('micLabel'));
+    $('#manual').setAttribute('aria-label',message('batteryLabel'));$('#mic').setAttribute('aria-label',message('voice') + ' · ' + message('micLabel'));
     $('#driverDot').title=message('position');$('#bingoDot').title=message('ponr');
     renderStatus();if(entryMessage)$('#entrymsg').textContent=message(entryMessage.key,entryMessage.args);
     if(plan){drawStopMarkers();renderMetrics();}if(currentAlert)renderAlert();
