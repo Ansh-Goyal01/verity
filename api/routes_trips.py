@@ -10,6 +10,7 @@ from pydantic import Field, AwareDatetime
 
 from verity.calibrate import calibrate
 from verity.dispatch import VehicleContext
+from verity.observations import screen_session
 from verity.vehicles import get_prior
 
 from .db import expire_trips, owned, transaction
@@ -36,6 +37,30 @@ class TripInput(Journey):
 
 class Arrival(Req):
     arrival_pct: float = Field(ge=0, le=100)
+
+
+class SocReading(Req):
+    t_s: float = Field(ge=0, le=259_200)  # seconds since the trip started
+    pct: float = Field(ge=0, le=100)
+
+
+class MeasuredSegment(Req):
+    """One measured stretch of the drive, in the units the energy model uses."""
+
+    length_m: float = Field(gt=0, le=200_000)
+    v_mps: float = Field(ge=0, le=60)
+    accel_mps2: float = Field(ge=-10, le=10)
+    grade_rad: float = Field(ge=-0.5, le=0.5)
+    dt_s: float = Field(gt=0, le=7_200)
+    temp_c: float = Field(ge=-40, le=60)
+    surface: float = Field(default=1.0, ge=1, le=3)
+    headwind_mps: float = Field(default=0.0, ge=-40, le=40)
+
+
+class Observation(Req):
+    soc: list[SocReading] = Field(min_length=2, max_length=500)
+    segments: list[MeasuredSegment] = Field(min_length=1, max_length=5_000)
+    charged_during_trip: bool
 
 
 class QuickReport(Req):
@@ -116,6 +141,33 @@ def build_router(get_service: Callable[[], EngineService]) -> APIRouter:
                                 WHERE user_id = %s AND id = %s RETURNING id, arrival_pct""",
                              (req.arrival_pct, user.id, trip_id)).fetchone()
         return {**owned(row), "calibration_applied": False}
+
+    @router.post("/trips/{trip_id}/observation", status_code=201)
+    def observation(trip_id: UUID, req: Observation, user: Account) -> dict:
+        """Record measured segments and the SoC window; a session with intermediate charging is kept but ineligible.
+
+        Nothing here changes an estimate: learned battery estimates stay off. The first record for a trip wins,
+        so a retry after an uncertain write returns the stored result and cannot add a second observation.
+        """
+        screening = screen_session([(r.t_s, r.pct) for r in req.soc], req.charged_during_trip)
+        with transaction() as db:
+            expire_trips(db, user.id)
+            db.execute("""
+                INSERT INTO verity_private.trip_observations
+                    (trip_id, user_id, soc, segments, declared_charging, intermediate_charging, eligible, reason,
+                     delta_soc_pct)
+                SELECT id, user_id, %s, %s, %s, %s, %s, %s, %s FROM verity_private.trips
+                WHERE user_id = %s AND id = %s
+                ON CONFLICT (trip_id) DO NOTHING
+            """, (Jsonb([r.model_dump() for r in req.soc]), Jsonb([s.model_dump() for s in req.segments]),
+                  req.charged_during_trip, screening.intermediate_charging, screening.eligible, screening.reason,
+                  screening.delta_soc_pct, user.id, trip_id))
+            row = owned(db.execute("""
+                SELECT trip_id, eligible, intermediate_charging, reason, delta_soc_pct, created_at
+                FROM verity_private.trip_observations WHERE user_id = %s AND trip_id = %s
+            """, (user.id, trip_id)).fetchone())
+        eligible = row.pop("eligible")
+        return {**row, "eligible_for_calibration": eligible, "calibration_applied": False}
 
     @router.get("/reports/{report_id}")
     def get_report(report_id: UUID, user: Account) -> dict:

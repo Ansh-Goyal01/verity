@@ -547,6 +547,19 @@ the public machine-readable `code` (`route_unavailable` or `route_too_long`), as
 already does for `offline`. Currently 503 and 422 have other causes, so the frontend
 can only offer general retry or input guidance when the code is absent.
 
+### 2026-11-22 — v19: `POST /api/trips/{trip_id}/observation` calibration capture (additive)
+
+Signed-in owner of the trip records what a drive measured so it can later feed battery calibration. Request:
+`soc` (2 to 500 readings `{t_s, pct}`, seconds since start and SoC %), `segments` (1 to 5000 measured stretches
+`{length_m, v_mps, accel_mps2, grade_rad, dt_s, temp_c, surface?=1, headwind_mps?=0}`), `charged_during_trip`
+(bool, the driver's own statement). 201 response: `{trip_id, eligible_for_calibration, intermediate_charging,
+reason, delta_soc_pct, created_at, calibration_applied: false}`. A session is ineligible, but still stored, when
+the driver says they charged, when SoC rises by 2 points or more between readings, when the net drop is under
+3 points, or with fewer than two readings. The first record for a trip wins (a retry returns it, nothing is
+added); a trip that is not the caller's is 404; invalid input is 422. Nothing is fed to calibration yet:
+learned battery estimates stay off and `POST /api/trips/{id}/arrival` still returns `calibration_applied: false`.
+Needs migration `002_trip_observations.sql` (new table `verity_private.trip_observations`, RLS on, no browser grants).
+
 ### 2026-11-22 — v18: ring-attack demo endpoints need an admin sign-in (CC-3)
 
 `POST /api/demo/ring-attack` and `POST /api/demo/ring-attack/reset` now require a signed-in account with the
