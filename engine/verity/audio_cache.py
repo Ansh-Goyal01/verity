@@ -18,7 +18,7 @@ import logging
 from collections.abc import Iterable
 from pathlib import Path
 
-from .paths import DATA_DIR
+from .paths import DATA_DIR, writable_dir
 
 log = logging.getLogger(__name__)
 
@@ -35,23 +35,37 @@ def audio_key(language: str, text: str) -> str:
 
 class AudioCache:
     def __init__(self, directory: Path | None = None) -> None:
-        self.directory = AUDIO_CACHE_DIR if directory is None else directory
+        self.directory = AUDIO_CACHE_DIR if directory is None else directory  # the committed clips are read from here
+        self.write_directory = writable_dir(self.directory)  # new clips go here (/tmp/verity/... on Vercel)
 
-    def _manifest(self) -> dict:
-        path = self.directory / MANIFEST
+    def _dirs(self) -> list[Path]:
+        return [self.directory] if self.write_directory == self.directory else [self.directory, self.write_directory]
+
+    def _manifest(self, directory: Path | None = None) -> dict:
+        path = (self.directory if directory is None else directory) / MANIFEST
         if not path.is_file():
             return {"is_simulated": True, "note": NOTE, "entries": {}}
         return json.loads(path.read_text(encoding="utf-8"))
 
     def entries(self) -> list[dict]:
-        return list(self._manifest()["entries"].values())
+        merged: dict = {}
+        for directory in self._dirs():
+            merged.update(self._manifest(directory)["entries"])
+        return list(merged.values())
 
     def lookup(self, text: str, language: str) -> bytes | None:
-        entry = self._manifest()["entries"].get(audio_key(language, text))
+        for directory in self._dirs():
+            wav = self._lookup_in(directory, text, language)
+            if wav is not None:
+                return wav
+        return None
+
+    def _lookup_in(self, directory: Path, text: str, language: str) -> bytes | None:
+        entry = self._manifest(directory)["entries"].get(audio_key(language, text))
         if entry is None:
             return None
         try:
-            wav = (self.directory / entry["file"]).read_bytes()
+            wav = (directory / entry["file"]).read_bytes()
         except OSError:
             log.warning("audio cache: %s is listed but cannot be read", entry["file"])
             return None
@@ -71,12 +85,13 @@ class AudioCache:
         if not wav.startswith(b"RIFF"):
             raise ValueError("not a WAV file (an error body must never be stored as audio)")
         key = audio_key(language, text)
-        self.directory.mkdir(parents=True, exist_ok=True)
-        (self.directory / f"{key}.wav").write_bytes(wav)
-        manifest = self._manifest()
+        out = self.write_directory
+        out.mkdir(parents=True, exist_ok=True)
+        (out / f"{key}.wav").write_bytes(wav)
+        manifest = self._manifest(out)
         manifest["entries"][key] = {"language": language, "text": text, "file": f"{key}.wav", "bytes": len(wav),
                                     "sha256": hashlib.sha256(wav).hexdigest(), "tts_model": tts_model, "source": source}
         body = json.dumps(manifest, indent=1, ensure_ascii=False, sort_keys=True) + "\n"
-        with (self.directory / MANIFEST).open("w", encoding="utf-8", newline="\n") as handle:  # LF on every machine
+        with (out / MANIFEST).open("w", encoding="utf-8", newline="\n") as handle:  # LF on every machine
             handle.write(body)
         return key

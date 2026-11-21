@@ -53,3 +53,35 @@ cloudflared tunnel --url http://localhost:8000      # prints https://<random>.tr
 
 Use the printed URL as `?api=` and in `VERITY_CORS_ORIGINS` if the page is not on GitHub Pages. Start it before the
 judges arrive: the address is different every time, so a QR code printed earlier will not work for it.
+
+## Vercel (serverless, added 2026-11-21)
+
+Checked against Vercel's FastAPI and Python runtime docs on 2026-11-21 (vercel.com/docs/frameworks/backend/fastapi,
+/functions/runtimes/python).
+
+- Entrypoint: root `app.py` re-exports `app` from `api/main.py`. Vercel accepts `app.py` at the root, and once the
+  FastAPI preset is detected it does NOT turn the other `api/*.py` files into separate functions ("A Python framework
+  preset takes precedence over file-based functions").
+- `vercel.json` keeps `tests/`, `results/`, `experiments/`, `design/`, `logger/`, `web/`, `docs/`, `scripts/`, the raw
+  data, the HTTP cache and the BMW held-out split (`data/splits/bmw_i3_split.json`) out of the function bundle
+  (`functions["app.py"].excludeFiles`). `.vercelignore` is an extra guard for CLI uploads.
+- With `VERCEL` set (Vercel sets it), every write goes under `/tmp/verity/...`: the route, elevation, weather and
+  geocoder cache (`CachedClient`), new audio clips (committed clips are still read from `data/audio_cache/`), and
+  voice-lab samples. Read-only data (`data/processed`, `corpus`, `sim`, `gazetteer`, `fleet`) is read from the repo.
+- Python: Vercel's default is 3.12 (the code needs 3.11+). Dependencies come from `pyproject.toml` / `uv.lock`.
+- Environment (project settings, never the repo): `NEO4J_*` or `VERITY_GRAPH=memory`, `SARVAM_API_KEY`,
+  `VERITY_CORS_ORIGINS` (the frontend's exact origin), `VERITY_ENV=production`, `SUPABASE_URL`, `DATABASE_URL`.
+- Frontend: deploy `web/` as a separate static site and set `apiBaseUrl` in `web/js/config.js` to the API's URL.
+
+What does not work, or works worse, on serverless:
+- Cold starts build the whole engine (demo fleet calibration, trust, Neo4j sync: 48 s against
+  Aura on 2026-11-21; the in-memory time was not measured). That may exceed the function timeout; use `VERITY_GRAPH=memory` and a warm-up call.
+- Every instance has its own memory: plan ids, WP4 option sets, fleet rankings, the ring attack and the rate limiters
+  are per instance. A `plan_id` made on one instance can 404 on another (`/api/forecast/update`, `/api/release/...`,
+  replay, graph "why"), and the rate limits are not global.
+- `/tmp` is per instance and temporary: the HTTP cache and the lifetime request budget (`VERITY_MAX_REQUESTS`) reset
+  on every new instance, so the public router / Open-Meteo / Photon budgets are no longer enforced across instances.
+- `results/` is not deployed: `/api/evidence/ledger` returns nulls and the ring attack cannot quote E5's limit.
+- The voice-lab samples written to `/tmp` are lost when the instance goes; use a database for real collection.
+- Long requests (a 6-car fleet booking with new routes: about 12 s; first fetch of a new route) depend on the plan's
+  maximum duration.

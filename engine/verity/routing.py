@@ -29,7 +29,7 @@ import httpx
 import numpy as np
 
 from .forecast import PlannedRoute
-from .paths import CACHE_DIR, PROCESSED_DIR
+from .paths import CACHE_DIR, PROCESSED_DIR, writable_dir
 from .trips import bearing_deg, haversine_m
 
 OSRM_URL = "https://router.project-osrm.org/route/v1/driving/{coords}"
@@ -101,7 +101,7 @@ class CachedClient:
     def __init__(self, cache_dir: Path = CACHE_DIR, max_requests: int | None = None, timeout: float = 45.0,
                  retries: int = 3, client: httpx.Client | None = None,
                  sleep: Callable[[float], None] = time.sleep) -> None:
-        self.cache_dir = Path(cache_dir)
+        self.cache_dir = writable_dir(Path(cache_dir))  # /tmp/verity/... on Vercel (read-only deployment files)
         self.max_requests = max_requests if max_requests is not None else max_requests_setting()
         self.retries = retries
         self._sleep = sleep

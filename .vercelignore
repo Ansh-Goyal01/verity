@@ -1,0 +1,10 @@
+# Extra guard for `vercel deploy` from a local checkout (vercel.json's excludeFiles is the documented bundle filter).
+.env
+.env.*
+.venv/
+data/raw/
+data/cache/
+data/lab/
+data/private/
+graphify-out/
+image.png

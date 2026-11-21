@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from verity.names import decide
-from verity.paths import DATA_DIR
+from verity.paths import DATA_DIR, writable_dir
 from verity.report_voice import name_query
 from verity.voice import SarvamClient, parse_soc_percent
 from verity.voice_lab import SAMPLE_SCHEMA, SPOKEN_LANGUAGES, SampleStore, compare_configs
@@ -42,7 +42,7 @@ def token_ok(supplied: str | None) -> bool:
 
 def lab_store() -> SampleStore:
     """One store (one write lock) per file; ``VERITY_LAB_DIR`` moves it (default ``data/lab``, which is gitignored)."""
-    path = Path(os.environ.get("VERITY_LAB_DIR") or DATA_DIR / "lab") / "voice_samples.jsonl"
+    path = writable_dir(Path(os.environ.get("VERITY_LAB_DIR") or DATA_DIR / "lab")) / "voice_samples.jsonl"
     return _stores.setdefault(path, SampleStore(path))
 
 

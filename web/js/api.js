@@ -1,4 +1,4 @@
-const API_URL = (typeof location !== "undefined" && new URLSearchParams(location.search).get("api")) || ""; // Empty means offline mode. Open a page as console.html?api=http://127.0.0.1:8000 to use the real engine.
+const API_URL = (((typeof location !== "undefined" && new URLSearchParams(location.search).get("api")) || (typeof window !== "undefined" && window.VERITY_CONFIG && window.VERITY_CONFIG.apiBaseUrl) || "").replace(/\/+$/, "")); // ?api=URL wins, else js/config.js apiBaseUrl; empty means offline mode (saved snapshot).
 /* Data sources, in order of preference:
    1. Live engine (?api=URL).
    2. Engine snapshot: saved real engine outputs from docs/api_examples, bundled in js/snapshot.js
