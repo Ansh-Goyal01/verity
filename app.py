@@ -30,6 +30,7 @@ class Site(FastAPI):
         async def send_with_headers(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
+                headers.setdefault("X-Frame-Options", "DENY")
                 headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
             await send(message)
 
