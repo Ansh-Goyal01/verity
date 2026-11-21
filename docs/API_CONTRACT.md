@@ -698,6 +698,19 @@ fits the project. Nothing here is applied unless both sides agree.
 - Frontend note: debounce the place box (send after ~300 ms idle and 3+ characters) and pass the chosen result's `name`, `lat`, `lon` straight into `origin`/`destination`.
 - v8 addendum (code review, same day): new 422 `route_too_short` (ends under 1 km apart); 429 `rate_limited` when more than `VERITY_NEW_ROUTES_PER_HOUR` (default 20, server-wide) NEW routes are fetched in an hour (demo and already-fetched routes are never limited); the departure hour is read in IST whatever offset the request uses (02:30Z = the 08:00 forecast).
 
+### 2026-11-21 - v15: `POST /api/voice/plan` spoken trip planner (finale WP7)
+
+- New `POST /api/voice/plan`, two calls like `/api/voice/ride-check`. Rate-limited with the voice budget.
+- Call 1, either multipart `audio` (+ `language`, `speak`, `lat`, `lon`, `vehicle_id`) or JSON `{transcript, language ("unknown"|"hi-IN"…), speak, lat?, lon?, vehicle_id?}`.
+  - JSON lets the app send its own transcript, and still works when Sarvam STT is down.
+  - Response: `{stage: "confirm"|"clarify", transcript, language_code, reply_language, needs_confirmation, prompt, prompt_audio, slots, timings_ms {hear, parse, llm, geocode, decide, speak, total}, is_simulated}`.
+  - `slots`: `{destination {name, lat, lon}|null, origin {name|null, lat, lon}|null, vehicle_id, vehicle_name, soc_pct, departure_time (ISO, IST), departure_said, time_problem, ac_on, ac_said, passengers, passengers_said, missing [], choices [[name, name]], parsed_by}`.
+  - It never plans. `origin.name: null` = the phone's position.
+- Call 2, JSON `{confirmed, language, speak, origin, destination, vehicle_id, soc_pct, departure_time, ac_on, passengers, target_confidence?}`, the slots as read back.
+  - Response: `{stage: "decided"|"not_confirmed", reply_language, release (a POST /api/plan safest option, with its plan_id) | null, speech, audio, timings_ms, is_simulated}`.
+- Rules first; the model (`sarvam-105b`, 4 s) only fills missing slots. Places go through the WP1 geocoder, and two far-apart places of the same name are asked back. Several car variants are asked back. An unparsed or past time is asked back.
+- AC on, 1 person and "now" are stated defaults: the read-back says them aloud. `speech` is the release's own template; the model never writes the answer.
+
 ### 2026-11-21 - v14: fleet booking, release by id, share (finale WP6)
 
 - New `POST /api/fleet/booking`. Request: `{origin, destination, departure_time, passengers, ac_on, target_confidence, vehicles?: [{vehicle_id, soc_pct, location?: {lat, lon}, label?}]}` (1-8 cars; without `vehicles`, the demo fleet `data/fleet/demo_fleet.json`).

@@ -414,6 +414,67 @@ class ShareResponse(Resp):
     is_simulated: bool
 
 
+# --- spoken trip planner (WP7) -----------------------------------------------------------------------------------
+
+
+class VoicePlanText(Req):
+    """Call 1 with a transcript the app already has (browser speech, or Sarvam STT down)."""
+    transcript: str = Field(min_length=1, max_length=500)
+    language: str = Field(default="unknown", pattern=r"^(unknown|[a-z]{2}-[A-Z]{2})$")
+    speak: bool = True
+    lat: float | None = Field(default=None, ge=-90, le=90)  # the phone's position: the default origin, biases places
+    lon: float | None = Field(default=None, ge=-180, le=180)
+    vehicle_id: str | None = Field(default=None, max_length=80)  # the app's own car: used when no car is spoken
+
+
+class VoicePlanConfirm(Req):
+    """Call 2: the slots exactly as read back, and the driver's answer."""
+    confirmed: bool
+    language: Literal["en-IN", "hi-IN"] = "en-IN"
+    speak: bool = True
+    origin: NamedLatLon
+    destination: NamedLatLon
+    vehicle_id: str
+    soc_pct: float = Field(ge=0, le=100)
+    departure_time: str
+    ac_on: bool
+    passengers: int = Field(ge=1, le=8)
+    target_confidence: float = Field(default=0.9, gt=0.5, le=0.99)
+
+
+class VoicePlanTimings(Resp):
+    hear: int | None
+    parse: int | None
+    llm: int | None
+    geocode: int | None
+    decide: int | None
+    speak: int | None
+    total: int
+
+
+class VoicePlanHeard(Resp):
+    stage: Literal["confirm", "clarify"]
+    transcript: str
+    language_code: str | None
+    reply_language: Literal["en-IN", "hi-IN"]
+    needs_confirmation: bool
+    prompt: str
+    prompt_audio: ShareAudio | None
+    slots: dict
+    timings_ms: VoicePlanTimings
+    is_simulated: bool
+
+
+class VoicePlanDecided(Resp):
+    stage: Literal["decided", "not_confirmed"]
+    reply_language: Literal["en-IN", "hi-IN"]
+    release: PlanOption | None
+    speech: str | None
+    audio: ShareAudio | None
+    timings_ms: VoicePlanTimings
+    is_simulated: bool
+
+
 # --- geocoder (WP1) ---------------------------------------------------------------------------------------------
 
 

@@ -19,6 +19,7 @@ import sys
 from datetime import datetime, timezone
 
 from api.service import FLEET_META, EngineService, demo_dispatch_request
+from api.voice_plan import demo_trip_sentences
 from api.voice_ride import pinned_ride_sentences
 from verity.audio_cache import AudioCache
 from verity.paths import RESULTS_DIR
@@ -34,7 +35,12 @@ def demo_sentences(svc: EngineService) -> list[tuple[str, str, str]]:
         response = svc.dispatch(demo_dispatch_request(vehicle))
         for language, text in response["speech"].items():
             out.append((language, text, f"dispatch {vehicle} ({response['decision']})"))
-    return out + pinned_ride_sentences(svc)  # W3.2: the spoken ride-check's read-back and answer
+    out += pinned_ride_sentences(svc)  # W3.2: the spoken ride-check's read-back and answer
+    try:  # WP7: needs the geocoder and the route (cached after the first run); never stops the rest of the cache
+        out += demo_trip_sentences(svc)
+    except Exception as exc:  # noqa: BLE001 - reported, the other sentences are still built
+        print(f"voice plan demo trip skipped: {type(exc).__name__}: {exc}")
+    return out
 
 
 def main(argv: list[str]) -> int:

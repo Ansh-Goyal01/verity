@@ -8,6 +8,7 @@ contract). Errors always have the shape ``{"error": code, "message": text}``.
 
 from __future__ import annotations
 
+import json
 import math
 import os
 import re
@@ -29,6 +30,7 @@ from verity.paths import RESULTS_DIR
 
 from .ledger import build_ledger
 from .limits import RateLimiter, client_ip, parse_origins, positive_int, rate_key
+from .voice_plan import decide_plan_stage, hear_plan_stage
 from .models import (
     GeocodeResponse,
     VehiclesResponse,
@@ -43,6 +45,10 @@ from .models import (
     FleetBookingRequest,
     FleetBookingResponse,
     ShareResponse,
+    VoicePlanConfirm,
+    VoicePlanDecided,
+    VoicePlanHeard,
+    VoicePlanText,
     DriverDemo,
     ForecastUpdateRequest,
     ForecastUpdateResponse,
@@ -433,6 +439,64 @@ async def voice_ride_check(request: Request, svc: EngineService = Depends(get_se
     speak = fields.get("speak", "1").strip().lower() not in {"0", "false", "no"}
     try:
         return await run_in_threadpool(hear_stage, voice, cache, audio, filename, audio_type, language, speak)
+    except VoiceUnavailable as exc:
+        return _error(503, "voice_unavailable", str(exc))
+
+
+@app.post("/api/voice/plan", response_model=VoicePlanHeard | VoicePlanDecided, dependencies=[Depends(limit_voice)])
+async def voice_plan(request: Request, svc: EngineService = Depends(get_service),
+                     voice: SarvamClient | None = Depends(get_voice_client),
+                     cache: AudioCache = Depends(get_audio_cache)):
+    """The spoken trip planner (WP7) in two calls. Call 1: multipart audio (+ ``language``, ``speak``, ``lat``, ``lon``,
+    ``vehicle_id``) or JSON ``VoicePlanText`` -> read-back or question; it never plans. Call 2: JSON ``VoicePlanConfirm``
+    -> on ``confirmed`` the WP4 safest option, its own spoken sentence. Nothing runs on an unconfirmed parse."""
+    content_type = request.headers.get("content-type", "")
+    is_json = content_type.startswith("application/json")
+    body = await read_body_limited(request, MAX_CONFIRM_JSON_BYTES if is_json else MAX_RECORDING_BYTES + MULTIPART_OVERHEAD_BYTES)
+    if body is None:
+        return _error(413, "payload_too_large", f"the request is larger than this endpoint accepts "
+                                                f"({MAX_RECORDING_BYTES} bytes of audio, one sentence under 30 s)")
+    if is_json:
+        try:
+            data = json.loads(body)
+            if isinstance(data, dict) and "confirmed" in data:
+                confirm = VoicePlanConfirm.model_validate(data)
+                return await run_in_threadpool(decide_plan_stage, svc, voice, cache, confirm.model_dump())
+            text = VoicePlanText.model_validate(data)
+        except ValidationError as exc:
+            return _error(422, "invalid_request", _validation_detail(exc))
+        except ValueError:
+            return _error(422, "invalid_request", "the body is not valid JSON")
+        position = {"lat": text.lat, "lon": text.lon} if text.lat is not None and text.lon is not None else None
+        return await run_in_threadpool(lambda: hear_plan_stage(
+            svc, voice, cache, transcript=text.transcript, language=text.language, speak=text.speak,
+            position=position, vehicle_hint=text.vehicle_id))
+    if voice is None:
+        return _error(503, "voice_unavailable", VOICE_MESSAGE)
+    try:
+        fields, files = await run_in_threadpool(parse_multipart, content_type, body)
+    except ValueError as exc:
+        return _error(422, "invalid_request", str(exc))
+    upload = files.get("audio") or files.get("file")
+    if upload is None:
+        return _error(422, "invalid_request", "multipart field 'audio' (the recording) is required")
+    filename, audio_type, audio = upload
+    if not audio or len(audio) > MAX_RECORDING_BYTES:
+        return _error(422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
+    language = fields.get("language", "unknown")
+    if not LANGUAGE_FIELD.fullmatch(language):
+        return _error(422, "invalid_request", "language must be 'unknown' or a code like hi-IN")
+    speak = fields.get("speak", "1").strip().lower() not in {"0", "false", "no"}
+    try:
+        lat, lon = float(fields["lat"]), float(fields["lon"])
+        position = {"lat": lat, "lon": lon} if -90 <= lat <= 90 and -180 <= lon <= 180 else None
+    except (KeyError, ValueError):
+        position = None
+    hint = (fields.get("vehicle_id") or "").strip()[:80] or None
+    try:
+        return await run_in_threadpool(lambda: hear_plan_stage(
+            svc, voice, cache, transcript=None, language=language, speak=speak, position=position, vehicle_hint=hint,
+            audio=audio, filename=filename, content_type=audio_type))
     except VoiceUnavailable as exc:
         return _error(503, "voice_unavailable", str(exc))
 
