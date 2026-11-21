@@ -68,6 +68,10 @@ class FrontendFiles(StaticFiles):
         response = await super().get_response(path, scope)
         if response.headers.get("content-type", "").startswith("text/html"):
             response.headers["Content-Security-Policy"] = frontend_csp()
+        elif response.status_code in (200, 304):
+            # Asset filenames are stable across deployments. Revalidate code on each visit.
+            lifetime = 86400 if Path(path).suffix.lower() in {".woff2", ".webp", ".png"} else 0
+            response.headers["Cache-Control"] = f"public, max-age={lifetime}, must-revalidate"
         return response
 
 

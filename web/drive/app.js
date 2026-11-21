@@ -565,7 +565,23 @@
     if (state.mode === 'workspace' && state.tab === 'replay') refreshReplay();
   }
 
-  function route() {
+  // The large recorded trip fixtures are only needed when a tool opens.
+  const loaded = new Map();
+  function loadTool(name) {
+    if (!loaded.has(name)) {
+      const pending = new Promise((resolve,reject) => {
+        const script = document.createElement('script');
+        script.src = 'drive/' + name + '.js';
+        script.onload = resolve;
+        script.onerror = () => { loaded.delete(name); script.remove(); reject(new Error('Tool unavailable')); };
+        document.head.append(script);
+      });
+      loaded.set(name,pending);
+    }
+    return loaded.get(name);
+  }
+
+  async function route() {
     const hash = location.hash;
     if (hasRouted && hash && !hash.startsWith('#/')) return;
     const [, requestedMode, requestedTab, requestedVehicle] = hash.split('/');
@@ -576,7 +592,23 @@
     const focusVehicle = hasRouted && mode === 'workspace' && state.mode === mode && tab === 'dispatch' && state.tab === tab && vehicle !== state.vehicle;
     const viewTransition = hasRouted && !focusVehicle;
     haltReplay();
-    window.VerityTripView.leave();
+    window.VerityTripView?.leave();
+    if (mode !== 'home') {
+      try {
+        await loadTool('cases');
+        await loadTool('trip-service');
+        if (mode === 'trip') { await loadTool('ride-voice'); await loadTool('trip'); }
+        if (mode === 'workspace' && ['evidence','engine','chargers'].includes(tab)) await loadTool('evidence');
+      } catch {
+        if (location.hash !== hash) return;
+        for (const section of modes) $('#' + section).hidden = section !== mode;
+        const target = mode === 'workspace' ? work : $('#' + mode);
+        target.innerHTML = '<p role="alert">This view could not load. <button type="button">Retry</button></p>';
+        target.querySelector('button').onclick = () => location.reload();
+        return;
+      }
+      if (location.hash !== hash) return;
+    }
     state.workPlan = null;
     state.mode = mode;
     state.tab = tab;
