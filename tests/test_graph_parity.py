@@ -16,6 +16,7 @@ from verity.chargers import load_chargers
 from verity.schemas import ChargerRecord, Report
 from verity.trust.graph import Alternate, InMemoryGraph, Leg, Neo4jGraph, Ring, RoadSegmentRec
 from verity.trust.graph_build import GraphUnavailable, open_graph
+from verity.trust.graph_structure import alias_id
 
 N_RUNS = 500  # parity does not depend on the run count; fewer runs keep the live tests quick
 DEMO_SOC = {"V07": 70, "V12": 62, "V19": 40}  # the demo scenario's starting charge (api/service.py FLEET_META)
@@ -181,7 +182,11 @@ def views_equal(a: dict, b: dict) -> bool:
 def test_physical_sites_and_aliases_are_the_same_in_both_graphs_and_no_legacy_type_sites_remain(services) -> None:
     memory, neo4j = services
     assert memory.graph.mirror.sites() == neo4j.graph.neo4j.sites() and len(neo4j.graph.neo4j.sites()) > 100
-    assert memory.graph.mirror.aliases() == neo4j.graph.neo4j.aliases()
+    # An Alias node is keyed by its normalised text, so chargers that spell an operator differently ("Ather Energy" /
+    # "Ather energy") share one Neo4j node whose text is the last spelling written; memory keeps each spelling.
+    # Compare node identity (normalised text), not the cosmetic spelling.
+    identity = lambda rows: [(alias_id(a.text), a.charger_id, a.origin) for a in rows]  # noqa: E731
+    assert identity(memory.graph.mirror.aliases()) == identity(neo4j.graph.neo4j.aliases())
     run = neo4j.graph.neo4j._run
     ids = {c.id for c in neo4j.chargers}
     assert {r["id"] for r in run("MATCH (s:Site) RETURN s.id AS id")} <= ids  # keyed by a charger id, never by a type
