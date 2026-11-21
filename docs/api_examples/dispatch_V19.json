@@ -7429,7 +7429,7 @@
    }
   }
  ],
- "compute_ms": 3681,
+ "compute_ms": 12914,
  "n_runs": 1500,
  "data_sources": {
   "route": {
@@ -7461,7 +7461,8 @@
    "source": "Driver and source reports in the trust graph",
    "n": 14,
    "note": "0 real, 14 simulated"
-  }
+  },
+  "vehicle_state": null
  },
  "vehicle": {
   "id": "V19",

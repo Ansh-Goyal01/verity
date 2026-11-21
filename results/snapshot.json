@@ -17,7 +17,7 @@
     "n": 71,
     "k": 0.951,
     "k_applied": 1.0,
-    "calibrated_at": "2026-11-20T20:37:50+00:00"
+    "calibrated_at": "2026-11-20T20:45:32+00:00"
    },
    "sarvam_key_present": true
   },
@@ -7495,7 +7495,7 @@
     ],
     "refusal_reason": null,
     "verify_chargers": [],
-    "compute_ms": 4299,
+    "compute_ms": 16359,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -7527,7 +7527,8 @@
       "source": "Driver and source reports in the trust graph",
       "n": 14,
       "note": "0 real, 14 simulated"
-     }
+     },
+     "vehicle_state": null
     },
     "vehicle": {
      "id": "V07",
@@ -14946,7 +14947,7 @@
     ],
     "refusal_reason": null,
     "verify_chargers": [],
-    "compute_ms": 4118,
+    "compute_ms": 13981,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -14978,7 +14979,8 @@
       "source": "Driver and source reports in the trust graph",
       "n": 14,
       "note": "0 real, 14 simulated"
-     }
+     },
+     "vehicle_state": null
     },
     "vehicle": {
      "id": "V12",
@@ -22435,7 +22437,7 @@
       }
      }
     ],
-    "compute_ms": 3681,
+    "compute_ms": 12914,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -22467,7 +22469,8 @@
       "source": "Driver and source reports in the trust graph",
       "n": 14,
       "note": "0 real, 14 simulated"
-     }
+     },
+     "vehicle_state": null
     },
     "vehicle": {
      "id": "V19",
@@ -26271,7 +26274,7 @@
    ],
    "levers": [],
    "earning_rs_per_hour": 60.0,
-   "compute_ms": 400,
+   "compute_ms": 1352,
    "n_runs": 1500,
    "speech": {
     "en-IN": "Take the ride. The chance of completing it and reaching a working charger is 95 percent or more. After the drop, charge at Radisson Blu Plaza Delhi Airport: about 79 minutes, roughly 80 rupees at an example earning rate.",

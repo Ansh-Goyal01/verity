@@ -698,6 +698,25 @@ fits the project. Nothing here is applied unless both sides agree.
 - Frontend note: debounce the place box (send after ~300 ms idle and 3+ characters) and pass the chosen result's `name`, `lat`, `lon` straight into `origin`/`destination`.
 - v8 addendum (code review, same day): new 422 `route_too_short` (ends under 1 km apart); 429 `rate_limited` when more than `VERITY_NEW_ROUTES_PER_HOUR` (default 20, server-wide) NEW routes are fetched in an hour (demo and already-fetched routes are never limited); the departure hour is read in IST whatever offset the request uses (02:30Z = the 08:00 forecast).
 
+### 2026-11-21 - v14: fleet booking, release by id, share (finale WP6)
+
+- New `POST /api/fleet/booking`. Request: `{origin, destination, departure_time, passengers, ac_on, target_confidence, vehicles?: [{vehicle_id, soc_pct, location?: {lat, lon}, label?}]}` (1-8 cars; without `vehicles`, the demo fleet `data/fleet/demo_fleet.json`).
+- Response: `{booking, rows: [{rank, fleet_id, label, vehicle (release vehicle block), start ({name, lat, lon} or null = at the pickup), soc_pct, deadhead_km, decision, confidence, confidence_display, arrival_soc, charging_minutes, total_minutes, plan_id, n_runs, why_not, recommended}], recommended_plan_id, n_runs_rank, n_runs_full, full_reruns, fleet_source, compute_ms, is_simulated}`.
+  - Each car is planned with the WP4 safest option, from its `location` through the pickup (`origin`) to the `destination`, as one route.
+  - Rows are ranked GO first, then confidence, then `total_minutes` (door to door from the car, charging included).
+  - Rows use `VERITY_FLEET_RANK_RUNS` Monte Carlo runs (default 400). Only a GO re-run at the full count is `recommended`; the full-count re-run replaces its row, and at most 3 re-runs are made.
+  - At most one row is recommended, and none when no car is GO at the full count.
+  - Errors: 404 `unknown_vehicle` (before any planning), 503 `fleet_unavailable`, and the `POST /api/plan` route errors.
+- `POST /api/plan` gains optional `start: {lat, lon}` (plan start -> origin -> destination) and `state_source: "entered"|"demo_fleet"`. Both are left out of the plan id at their defaults, so earlier plan ids are unchanged.
+- Releases' `data_sources` gain an optional `vehicle_state` entry, present (simulated) when the battery % and position come from the demo fleet file. `is_simulated` is then true even on a real car, a real route and real reports.
+- New `GET /api/release/{plan_id}`: any stored release (dispatch, plan option, fleet row), 404 `unknown_plan`.
+- New `GET /api/release/{plan_id}/share?audio=true`: `{plan_id, text: {en-IN, hi-IN?}, link, audio: {en-IN, hi-IN: {audio_base64, format, cached} or null}, audio_note, is_simulated}`.
+  - The English text is filled from the release's own fields; the Hindi text is the release's `speech["hi-IN"]`.
+  - Audio speaks the release's `speech` sentences: live Sarvam, else the pre-made clip (`cached: true`), else null with `audio_note`.
+  - `link` = `VERITY_PUBLIC_URL` + `/api/release/{plan_id}`.
+  - Rate-limited with the voice budget (two paid TTS calls); `audio=false` makes none.
+- Frontend note: the release and live-drive views need a way to open a `plan_id` (for example `?plan=`), loaded with `GET /api/release/{plan_id}`.
+
 ### 2026-11-21 - v13: `band_method` on releases, `bands` on `/api/health` (finale WP5)
 
 - Every release (`POST /api/dispatch` and each `POST /api/plan` option) gains `band_method: {name ("split conformal"|"model only"), n (real calibration trips or null), k (conformal quantile or null), k_applied (>= 1), sources [], note}`. Real cars: split conformal from `data/processed/conformal.json` (built from the India TRAINING split by `experiments/e7_honest_bands.py`); simulated demo vehicles: "model only" (their bands come from the simulator). The note always says coverage holds on average over trips like the calibration set, never for one trip.

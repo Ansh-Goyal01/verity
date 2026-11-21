@@ -14,6 +14,7 @@ from verity.routing import ist_hour
 REAL, SIMULATED = "real", "simulated"
 ROUTER_LABEL = {"osrm": "OSRM public router (router.project-osrm.org), OpenStreetMap roads"}
 DEMO_FLEET_LABEL = "Demo fleet: simulated trips, calibrated through the real pipeline"
+DEMO_STATE_LABEL = "Demo fleet file data/fleet/demo_fleet.json: battery % and position are scenario inputs, chosen by us"
 
 
 def _entry(simulated: bool, source: str, *, n: int | None = None, note: str | None = None) -> dict:
@@ -28,13 +29,15 @@ def weather_hour_matched(snap: dict, departure: datetime) -> bool:
 
 
 def build_data_sources(snap: dict, departure: datetime, *, vehicle_simulated: bool, vehicle_source: str,
-                       n_real_reports: int, n_simulated_reports: int, vehicle_note: str | None = None) -> dict:
-    """One entry per input the plan used. ``n_*_reports`` count reports on the chargers near this route."""
+                       n_real_reports: int, n_simulated_reports: int, vehicle_note: str | None = None,
+                       state_source: str = "entered") -> dict:
+    """One entry per input the plan used. ``n_*_reports`` count reports on the chargers near this route. A battery % and
+    position taken from the demo fleet file (WP6) are an input too: then ``vehicle_state`` says simulated."""
     geo_sim = bool(snap.get("is_simulated"))
     matched = weather_hour_matched(snap, departure)
     weather_note = None if matched else "The forecast did not hold the departure hour; the nearest available hour was used."
     n_reports = n_real_reports + n_simulated_reports
-    return {
+    sources = {
         "route": _entry(geo_sim, ROUTER_LABEL.get(snap.get("source", ""), str(snap.get("source", "unknown")))),
         "elevation": _entry(geo_sim, str(snap.get("elevation_source", "unknown"))),
         "weather": _entry(geo_sim, "Open-Meteo forecast", note=weather_note),
@@ -44,7 +47,10 @@ def build_data_sources(snap: dict, departure: datetime, *, vehicle_simulated: bo
                                   note=f"{n_real_reports} real, {n_simulated_reports} simulated" if n_reports else
                                   "No reports on this route's chargers yet: trust is the prior only"),
     }
+    if state_source == "demo_fleet":
+        sources["vehicle_state"] = _entry(True, DEMO_STATE_LABEL)
+    return sources
 
 
 def any_simulated(sources: dict) -> bool:
-    return any(entry["status"] == SIMULATED for entry in sources.values())
+    return any(entry is not None and entry["status"] == SIMULATED for entry in sources.values())

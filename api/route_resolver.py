@@ -49,6 +49,7 @@ class ResolvedRoute:
     poly: np.ndarray
     poly_km: np.ndarray
     is_demo: bool
+    pickup_km: float | None = None  # WP6: km along the route where the waypoint (the pickup) is; None = no waypoint
 
 
 def max_trip_km_setting() -> float:
@@ -93,10 +94,12 @@ class RouteResolver:
         return (straight_km(origin, self.booking["origin"]) <= ENDPOINT_TOLERANCE_KM
                 and straight_km(destination, self.booking["destination"]) <= ENDPOINT_TOLERANCE_KM)
 
-    def resolve(self, origin: dict, destination: dict, departure_time: str) -> ResolvedRoute:
-        if self.is_demo(origin, destination):
+    def resolve(self, origin: dict, destination: dict, departure_time: str, via: dict | None = None) -> ResolvedRoute:
+        """``via`` (WP6): plan ``via`` -> ``origin`` -> ``destination`` as one route, ``via`` being where the car is now;
+        such a route is never the demo route."""
+        if via is None and self.is_demo(origin, destination):
             return self.demo
-        crow = straight_km(origin, destination)
+        crow = straight_km(origin, destination) + (0.0 if via is None else straight_km(via, origin))
         if crow > self.max_trip_km:  # road distance is never shorter than the straight line
             raise _too_long(crow, self.max_trip_km)
         if crow < MIN_TRIP_KM:  # also keeps a zero-length route out of the segment maths
@@ -109,6 +112,8 @@ class RouteResolver:
         # the hour is the IST forecast hour, so 08:00+05:30 and 02:30Z share a route and 08:00Z does not.
         key = (round(origin["lat"], COORD_DP), round(origin["lon"], COORD_DP), round(destination["lat"], COORD_DP),
                round(destination["lon"], COORD_DP), ist_hour(departure))
+        if via is not None:
+            key = (*key, round(via["lat"], COORD_DP), round(via["lon"], COORD_DP))
         cached = self._cache.get(key)
         if cached is not None:
             return cached
@@ -116,20 +121,29 @@ class RouteResolver:
         if retry_after is not None:  # protects the lifetime request budget from a loop of distinct routes
             raise RouteError(429, "rate_limited", f"Too many new routes this hour; try again in "
                              f"{max(1, int(retry_after // 60))} min, or pick a route already planned.")
-        resolved = self._fetch(origin, destination, departure)
+        resolved = self._fetch(origin, destination, departure, via)
         self._cache[key] = resolved
         return resolved
 
-    def _fetch(self, origin: dict, destination: dict, departure: datetime) -> ResolvedRoute:
+    def _fetch(self, origin: dict, destination: dict, departure: datetime, via: dict | None = None) -> ResolvedRoute:
+        start = origin if via is None else via
         try:
-            snap = build_route_snapshot(self.client_factory(), departure, (origin["lat"], origin["lon"]),
+            snap = build_route_snapshot(self.client_factory(), departure, (start["lat"], start["lon"]),
                                         (destination["lat"], destination["lon"]),
-                                        origin_name="Origin", destination_name="Destination")
+                                        via=None if via is None else [(origin["lat"], origin["lon"])],
+                                        origin_name="Origin" if via is None else "Vehicle position",
+                                        destination_name="Destination")
         except (OSError, ValueError, KeyError, IndexError, ArithmeticError) as exc:  # unreadable cache, odd response
             raise RouteError(503, "route_unavailable", "Couldn't fetch this route right now.") from exc
         if snap["is_simulated"]:  # the network or the request budget failed: never plan a real user on fake geometry
             raise RouteError(503, "route_unavailable", "Couldn't fetch this route right now. Try again shortly.")
         if snap["distance_km"] > self.max_trip_km:
             raise _too_long(snap["distance_km"], self.max_trip_km)
-        return ResolvedRoute(snapshot_to_route(snap), snap, np.array(snap["polyline"]), np.array(snap["polyline_km"]),
-                             False)
+        poly, poly_km = np.array(snap["polyline"]), np.array(snap["polyline_km"])
+        pickup_km = None
+        if via is not None:  # where the route passes the pickup: its nearest polyline point (as build_ride_snapshot)
+            d = haversine_m(np.full(len(poly), origin["lat"]), np.full(len(poly), origin["lon"]), poly[:, 0], poly[:, 1])
+            pickup_km = round(float(poly_km[int(np.argmin(d))]), 2)
+            snap["pickup"] = {"name": "Pickup", "lat": origin["lat"], "lon": origin["lon"]}
+            snap["pickup_km"] = pickup_km
+        return ResolvedRoute(snapshot_to_route(snap), snap, poly, poly_km, False, pickup_km)

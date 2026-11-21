@@ -39,6 +39,10 @@ from .models import (
     DispatchResponse,
     PlanRequest,
     PlanResponse,
+    PlanOption,
+    FleetBookingRequest,
+    FleetBookingResponse,
+    ShareResponse,
     DriverDemo,
     ForecastUpdateRequest,
     ForecastUpdateResponse,
@@ -248,6 +252,27 @@ def post_dispatch(req: DispatchRequest, svc: EngineService = Depends(get_service
 def post_plan(req: PlanRequest, svc: EngineService = Depends(get_service)) -> dict:
     """WP4: up to three full releases (fastest, fewest stops, safest), each with its own plan id."""
     return svc.plan(req.model_dump())
+
+
+@app.post("/api/fleet/booking", response_model=FleetBookingResponse)
+def post_fleet_booking(req: FleetBookingRequest, svc: EngineService = Depends(get_service)) -> dict:
+    """WP6: every car ranked for one booking (GO first, then confidence, then minutes); one GO recommended at the full
+    Monte Carlo count. Without ``vehicles`` the demo fleet (real models, SIMULATED battery % and depots) is used."""
+    return svc.fleet_booking(req.model_dump())
+
+
+@app.get("/api/release/{plan_id}", response_model=PlanOption | DispatchResponse)
+def get_release(plan_id: str, svc: EngineService = Depends(get_service)) -> dict:
+    """WP6: any stored release (a dispatch, a WP4 option or a fleet row) by its plan id, for the release views."""
+    return svc.release(plan_id)
+
+
+@app.get("/api/release/{plan_id}/share", response_model=ShareResponse, dependencies=[Depends(limit_voice)])
+def get_release_share(plan_id: str, audio: bool = Query(True), svc: EngineService = Depends(get_service),
+                      voice: SarvamClient | None = Depends(get_voice_client),
+                      cache: AudioCache = Depends(get_audio_cache)) -> dict:
+    """WP6: the release as a message for the driver: text, link, and its spoken sentences (live, else cached: true)."""
+    return svc.share(plan_id, voice if audio else None, cache, audio=audio)
 
 
 @app.get("/api/vehicles", response_model=VehiclesResponse)

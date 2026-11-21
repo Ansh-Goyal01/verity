@@ -61,6 +61,7 @@ from verity.voice_loop import SPEECH_LANGUAGES, spoken_answers
 
 from .bands import load_band_calibration
 from .data_sources import DEMO_FLEET_LABEL, any_simulated, build_data_sources
+from .fleet import FleetEndpoints, load_demo_fleet
 from .graph_endpoints import GraphEndpoints
 from .limits import LruCache
 from .route_resolver import ENDPOINT_TOLERANCE_KM, ResolvedRoute, RouteError, RouteResolver, parse_departure
@@ -237,6 +238,9 @@ class StoredPlan:
     poly_km: np.ndarray | None = None
 
 
+KEY_DEFAULTS = (("start", None), ("state_source", "entered"))
+
+
 def plan_key(req: dict) -> str:
     """sha1 of the canonical request (the plan id prefix and the Monte Carlo seed). A trip end's ``name`` is left out
     when absent, so every request made before names existed keeps its plan id (and its cached audio)."""
@@ -244,6 +248,9 @@ def plan_key(req: dict) -> str:
     for end in ("origin", "destination"):
         if isinstance(body.get(end), dict) and body[end].get("name") is None:
             body[end] = {k: v for k, v in body[end].items() if k != "name"}
+    for name, default in KEY_DEFAULTS:  # WP6 fields at their defaults leave every earlier plan id unchanged
+        if name in body and body[name] == default:
+            del body[name]
     return hashlib.sha1(json.dumps(body, sort_keys=True).encode()).hexdigest()
 
 
@@ -299,7 +306,7 @@ def canonical_request(model: type, req: dict) -> dict:
     return model.model_validate(req).model_dump()
 
 
-class EngineService(GraphEndpoints):
+class EngineService(GraphEndpoints, FleetEndpoints):
     def __init__(self, n_runs: int | None = None, graph_backend: str | None = None,
                  clock: Callable[[], datetime] | None = None,
                  route_client: Callable[[], CachedClient] | None = None,
@@ -333,6 +340,7 @@ class EngineService(GraphEndpoints):
         self.fleet = self._build_fleet()
         self.bands = load_band_calibration()  # WP5: conformal k from the training split (real cars only)
         self.catalog = load_catalog()  # the real Indian cars (WP2): vehicles_india.csv, calibrated on training trips only
+        self.demo_fleet = load_demo_fleet(self.catalog)  # WP6: real car models, SIMULATED battery % and depots
         self.plans: LruCache[str, StoredPlan] = LruCache(PLAN_CACHE_SIZE)
         self._option_sets: LruCache[str, dict] = LruCache(OPTION_SET_CACHE_SIZE)  # WP4: whole POST /api/plan answers
         self.ride_bundles = load_bundles()  # committed ride routes (no network); others are fetched and cached
@@ -501,7 +509,7 @@ class EngineService(GraphEndpoints):
 
     def _resolve_route(self, req: dict) -> ResolvedRoute:
         try:
-            return self.resolver.resolve(req["origin"], req["destination"], req["departure_time"])
+            return self.resolver.resolve(req["origin"], req["destination"], req["departure_time"], req.get("start"))
         except RouteError as exc:
             raise ApiError(exc.status, exc.code, exc.message) from exc
 
@@ -579,7 +587,7 @@ class EngineService(GraphEndpoints):
                  self.last_graph_timing["total_s"], self.graph.backend)
 
     def _release_response(self, plan_id: str, result, req: dict, picked: PickedVehicle, resolved: ResolvedRoute,
-                          near_reports: Sequence[Report]) -> dict:
+                          near_reports: Sequence[Report], n_runs: int | None = None) -> dict:
         """One engine result as a release (the ``POST /api/dispatch`` shape), for a dispatch or a WP4 option."""
         destination = self._speech_destination(req, resolved)
         n_sim = sum(r.is_simulated for r in near_reports)
@@ -588,7 +596,8 @@ class EngineService(GraphEndpoints):
                                      vehicle_note=("Spec sheet only: this car's real range is not measured yet "
                                                    "(class prior, no trip history)."
                                                    if picked.vehicle["calibration_basis"] == "class prior" else None),
-                                     n_real_reports=len(near_reports) - n_sim, n_simulated_reports=n_sim)
+                                     n_real_reports=len(near_reports) - n_sim, n_simulated_reports=n_sim,
+                                     state_source=req.get("state_source", "entered"))
         response = {
             "plan_id": plan_id, "vehicle_id": result.vehicle_id, "decision": result.decision,
             "confidence": result.confidence, "confidence_display": confidence_display(result.confidence),
@@ -605,7 +614,7 @@ class EngineService(GraphEndpoints):
             "point_of_no_return_km": result.point_of_no_return_km, "breakdown": result.breakdown,
             "levers": result.levers, "risk_sources": result.risk_sources, "refusal_reason": result.refusal_reason,
             "verify_chargers": result.verify_chargers,
-            "compute_ms": result.compute_ms, "n_runs": self.cfg.n_runs, "data_sources": sources,
+            "compute_ms": result.compute_ms, "n_runs": n_runs or self.cfg.n_runs, "data_sources": sources,
             "vehicle": picked.vehicle, "calibration": picked.calibration,
             "band_method": self.bands.block(vehicle_simulated=picked.vehicle["is_simulated"]),
             "is_simulated": any_simulated(sources),
@@ -613,11 +622,16 @@ class EngineService(GraphEndpoints):
         return response
 
     # -- trip options (WP4) -------------------------------------------------------------------------------------------
-    def plan(self, req: dict, *, refresh: bool = False) -> dict:
+    def plan(self, req: dict, *, refresh: bool = False, n_runs: int | None = None) -> dict:
         """POST /api/plan: up to three full releases (fastest, fewest stops, safest), each with its own plan id in
-        ``self.plans``, so the live update, replay and graph "why" work on whichever option the driver picks."""
+        ``self.plans``, so the live update, replay and graph "why" work on whichever option the driver picks.
+        ``n_runs`` (WP6 fleet ranking) overrides the Monte Carlo count; it is part of the key, so a reduced plan never
+        shares an id with a full-count one."""
         req = canonical_request(PlanRequest, req)
-        key = plan_key(req)
+        if n_runs == self.cfg.n_runs:
+            n_runs = None
+        key_req = req if n_runs is None else {**req, "n_runs": n_runs}
+        key = plan_key(key_req)
         cached = self._option_sets.get(key)
         if cached is not None and not refresh:
             return cached
@@ -626,6 +640,7 @@ class EngineService(GraphEndpoints):
         p = req["preferences"]
         prefs = Preferences(tuple(p["objectives"]), tuple(p["preferred_operators"]), tuple(p["avoid_operators"]),
                             float(p["arrival_buffer_pct"]), p["max_stops"])
+        cfg = self._cfg_for(picked) if n_runs is None else replace(self._cfg_for(picked), n_runs=n_runs)
         t0, (q0, s0) = time.perf_counter(), self._graph_queries()
 
         def plan_on(g: ChargerGraph) -> tuple[GraphView, tuple, object]:
@@ -634,16 +649,16 @@ class EngineService(GraphEndpoints):
             inputs = self._route_inputs(view, resolved)
             return view, inputs, plan_options(picked.ctx, resolved.route, inputs[0], inputs[1],
                                               start_soc=req["start_soc_pct"], target_confidence=req["target_confidence"],
-                                              prefs=prefs, seed=int(key[:8], 16), cfg=self._cfg_for(picked), graph=g)
+                                              prefs=prefs, seed=int(key[:8], 16), cfg=cfg, graph=g)
 
         view, (near, trust, near_reports), out = self.graph.call(plan_on)
         self._adopt(view)
         self._log_timing(f"options {key[:8]}", t0, q0, s0)
         options = []
         for opt in out.options:
-            opt_req = {**req, "objective": opt.labels[0]}  # what a report-triggered re-plan re-runs (one objective)
+            opt_req = {**key_req, "objective": opt.labels[0]}  # what a report-triggered re-plan re-runs (one objective)
             plan_id = self._plan_id_for(plan_key(opt_req), opt_req)
-            release = self._release_response(plan_id, opt.result, req, picked, resolved, near_reports)
+            release = self._release_response(plan_id, opt.result, req, picked, resolved, near_reports, cfg.n_runs)
             release.update({"labels": list(opt.labels), "meets_target": opt.meets_target,
                             "stop_count": len(release["stops"])})
             self.plans[plan_id] = StoredPlan(opt.result.state, release, opt_req, resolved.poly, resolved.poly_km)
@@ -651,7 +666,7 @@ class EngineService(GraphEndpoints):
             options.append(release)
         response = {"options": options, "unsupported_preferences": out.unsupported, "preferences": p,
                     "n_candidates": out.n_candidates, "avoided_chargers": out.avoided_chargers,
-                    "compute_ms": out.compute_ms, "n_runs": self.cfg.n_runs,
+                    "compute_ms": out.compute_ms, "n_runs": cfg.n_runs,
                     "is_simulated": any(o["is_simulated"] for o in options)}
         self._option_sets[key] = response
         return response
@@ -661,8 +676,8 @@ class EngineService(GraphEndpoints):
         objective = request.get("objective")
         if objective is None:
             return self.dispatch(request, refresh=True)
-        base = {k: v for k, v in request.items() if k != "objective"}
-        options = self.plan(base, refresh=True)["options"]
+        base = {k: v for k, v in request.items() if k not in ("objective", "n_runs")}
+        options = self.plan(base, refresh=True, n_runs=request.get("n_runs"))["options"]
         return next((o for o in options if objective in o["labels"]), options[0])
 
     # -- did a new report move a plan? (W3.3) -----------------------------------------------------------------------

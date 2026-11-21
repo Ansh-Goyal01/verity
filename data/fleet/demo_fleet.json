@@ -1,0 +1,65 @@
+{
+ "schema": "verity.fleet.v1",
+ "is_simulated": true,
+ "note": "SIMULATED scenario: the car MODELS are real rows of data/corpus/vehicles_india.csv, but their battery % and depots were chosen by us for the demo. Depot coordinates are Photon's first result for 'query'. trips_calibrated is read from the catalog, never from this file.",
+ "depots": {
+  "okhla": {
+   "name": "Okhla Phase 1, Delhi",
+   "query": "Okhla Phase 1",
+   "lat": 28.520514,
+   "lon": 77.277225,
+   "source": "Photon (komoot) first result for the query, 2026-11-21"
+  },
+  "dwarka": {
+   "name": "Dwarka Sector 21, Delhi",
+   "query": "Dwarka Sector 21",
+   "lat": 28.551922,
+   "lon": 77.05856,
+   "source": "Photon (komoot) first result for the query, 2026-11-21"
+  }
+ },
+ "vehicles": [
+  {
+   "fleet_id": "F1",
+   "vehicle_id": "tata-curvv-ev-55",
+   "label": "Curvv 55 (Okhla)",
+   "soc_pct": 90,
+   "depot": "okhla"
+  },
+  {
+   "fleet_id": "F2",
+   "vehicle_id": "mahindra-be-6-79",
+   "label": "BE 6 79 (Okhla)",
+   "soc_pct": 85,
+   "depot": "okhla"
+  },
+  {
+   "fleet_id": "F3",
+   "vehicle_id": "tata-tiago-ev-24",
+   "label": "Tiago 24 (Okhla)",
+   "soc_pct": 80,
+   "depot": "okhla"
+  },
+  {
+   "fleet_id": "F4",
+   "vehicle_id": "mg-zs-ev-50.3",
+   "label": "ZS EV (Dwarka)",
+   "soc_pct": 75,
+   "depot": "dwarka"
+  },
+  {
+   "fleet_id": "F5",
+   "vehicle_id": "tata-nexon-ev-45",
+   "label": "Nexon 45 (Dwarka)",
+   "soc_pct": 60,
+   "depot": "dwarka"
+  },
+  {
+   "fleet_id": "F6",
+   "vehicle_id": "mg-comet-ev-17.4",
+   "label": "Comet (Dwarka)",
+   "soc_pct": 95,
+   "depot": "dwarka"
+  }
+ ]
+}

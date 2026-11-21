@@ -7391,7 +7391,7 @@
  ],
  "refusal_reason": null,
  "verify_chargers": [],
- "compute_ms": 4118,
+ "compute_ms": 13981,
  "n_runs": 1500,
  "data_sources": {
   "route": {
@@ -7423,7 +7423,8 @@
    "source": "Driver and source reports in the trust graph",
    "n": 14,
    "note": "0 real, 14 simulated"
-  }
+  },
+  "vehicle_state": null
  },
  "vehicle": {
   "id": "V12",

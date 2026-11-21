@@ -217,6 +217,7 @@ class DataSources(Resp):
     weather: DataSource
     vehicle: DataSource
     charger_reports: DataSource
+    vehicle_state: DataSource | None = None  # WP6: present when the battery % and position are demo scenario inputs
 
 
 class ReleaseVehicle(Resp):
@@ -309,8 +310,13 @@ class PlanPreferences(Req):
     max_stops: int | None = Field(default=None, ge=0, le=6)
 
 
+StateSource = Literal["entered", "demo_fleet"]
+
+
 class PlanRequest(DispatchRequest):
     preferences: PlanPreferences = Field(default_factory=PlanPreferences)
+    start: LatLon | None = None  # WP6: where the car is now; the plan then runs start -> origin (pickup) -> destination
+    state_source: StateSource = "entered"  # WP6: "demo_fleet" = battery % and position are scenario inputs (simulated)
 
 
 class PlanOption(DispatchResponse):
@@ -332,6 +338,79 @@ class PlanResponse(Resp):
     avoided_chargers: int = Field(ge=0)
     compute_ms: int
     n_runs: int = Field(ge=1)
+    is_simulated: bool
+
+
+# --- fleet booking (WP6) ----------------------------------------------------------------------------------------
+
+
+class FleetCar(Req):
+    vehicle_id: str
+    soc_pct: float = Field(ge=0, le=100)
+    location: LatLon | None = None  # None = the car is at the pickup
+    label: str | None = Field(default=None, max_length=80)
+
+
+class FleetBookingRequest(Req):
+    origin: NamedLatLon
+    destination: NamedLatLon
+    departure_time: str
+    passengers: int = Field(ge=0, le=8)
+    ac_on: bool
+    target_confidence: float = Field(gt=0.5, le=0.99)
+    vehicles: list[FleetCar] | None = Field(default=None, min_length=1, max_length=8)  # None = the demo fleet
+
+
+class FleetStart(Resp):
+    name: str | None
+    lat: float
+    lon: float
+
+
+class FleetRow(Resp):
+    rank: int = Field(ge=1)
+    fleet_id: str
+    label: str
+    vehicle: ReleaseVehicle
+    start: FleetStart | None  # None = at the pickup
+    soc_pct: float
+    deadhead_km: float | None  # road km from the car to the pickup
+    decision: Decision
+    confidence: float
+    confidence_display: str
+    arrival_soc: ArrivalSoc
+    charging_minutes: int = Field(ge=0)
+    total_minutes: int  # door to door from the car's position, charging included
+    plan_id: str
+    n_runs: int = Field(ge=1)
+    why_not: str | None  # the engine's reason for a NO_GO or a refusal
+    recommended: bool
+
+
+class FleetBookingResponse(Resp):
+    booking: dict
+    rows: list[FleetRow]
+    recommended_plan_id: str | None
+    n_runs_rank: int = Field(ge=1)
+    n_runs_full: int = Field(ge=1)
+    full_reruns: int = Field(ge=0)
+    fleet_source: str
+    compute_ms: int
+    is_simulated: bool
+
+
+class ShareAudio(Resp):
+    audio_base64: str
+    format: str
+    cached: bool
+
+
+class ShareResponse(Resp):
+    plan_id: str
+    text: dict[str, str]  # language -> the message to send the driver
+    link: str
+    audio: dict[str, ShareAudio | None]  # language -> clip, or None when it cannot be spoken (see audio_note)
+    audio_note: str | None
     is_simulated: bool
 
 
