@@ -35,6 +35,15 @@ def operator_chargers(operator_id: str) -> list[dict]:
     return graph_query("cpo_chargers", operator_id)
 
 
+@router.get("/cpo/directory")
+def directory(user: Operator) -> dict:
+    from .main import get_service
+
+    service = get_service()
+    return {"operators": sorted({c.operator for c in service.chargers if c.operator}),
+            "corridors": ["noida-agra", *sorted(service.resolver.packaged)]}
+
+
 @router.post("/cpo/claims", status_code=201)
 def request_claim(req: ClaimInput, user: Operator) -> dict:
     with transaction() as db:
@@ -52,6 +61,15 @@ def list_claims(user: Operator) -> list[dict]:
             SELECT id, operator_id, approved_at FROM verity_private.cpo_claims
             WHERE user_id = %s ORDER BY operator_id
         """, (user.id,)).fetchall()
+
+
+@router.get("/admin/cpo-claims")
+def pending_claims(user: Admin, limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0)) -> list[dict]:
+    with transaction() as db:
+        return db.execute("""
+            SELECT id, operator_id, user_id FROM verity_private.cpo_claims
+            WHERE approved_at IS NULL AND user_id <> %s ORDER BY operator_id, id LIMIT %s OFFSET %s
+        """, (user.id, limit, offset)).fetchall()
 
 
 @router.post("/admin/cpo-claims/{claim_id}/approve")

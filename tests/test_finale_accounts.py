@@ -126,10 +126,13 @@ def test_operator_approval_and_charger_scope(account_client, monkeypatch):
     monkeypatch.setattr("api.routes_cpo.graph_query", query)
     claim = client.post("/api/cpo/claims", headers=cpo, json={"operator_id": "my-operator"}).json()
     approve = f"/api/admin/cpo-claims/{claim['id']}/approve"
+    assert client.get("/api/admin/cpo-claims", headers=cpo).status_code == 403
+    assert claim["id"] in [row["id"] for row in client.get("/api/admin/cpo-claims", headers=admin).json()]
     assert client.get("/api/cpo/chargers", headers=cpo).json()["chargers"] == []
     assert not calls
     assert client.post(approve, headers=cpo).status_code == 403
     assert client.post(approve, headers=admin).status_code == 200
+    assert claim["id"] not in [row["id"] for row in client.get("/api/admin/cpo-claims", headers=admin).json()]
     assert client.get("/api/cpo/chargers", headers=cpo).json()["open_reports"] == [{"charger_id": "mine"}]
     assert client.get("/api/cpo/critical-chargers?corridor_id=sample&usable_range_km=150",
                       headers=cpo).json() == [{"charger_id": "mine"}]
@@ -153,3 +156,28 @@ def test_manager_checks_own_fleet(account_client):
     booking = {k: v for k, v in sample["request"].items() if k != "start_soc_pct"}
     checked = client.post("/api/fleet/booking/check", json=booking, headers=manager)
     assert checked.json() == [{"vehicle_id": vid, "accepted": True, "decision": "GO", "reason": "Fixture decision"}]
+
+
+def test_real_operator_graph_recovers_reports_and_repairs(account_client, monkeypatch):
+    from api.service import EngineService
+
+    client, make_account = account_client
+    operator, admin, driver = (make_account(role) for role in ("cpo", "admin", "driver"))
+    service = EngineService(graph_backend="memory")
+    charger = next(c for c in service.chargers if c.operator)
+    monkeypatch.setitem(app.dependency_overrides, get_service, lambda: service)
+    monkeypatch.setattr("api.main.get_service", lambda: service)
+    claim = client.post("/api/cpo/claims", headers=operator, json={"operator_id": charger.operator}).json()
+    assert client.post(f"/api/admin/cpo-claims/{claim['id']}/approve", headers=admin).is_success
+    assert client.post("/api/reports/quick", headers=driver,
+                       json={"charger_id": charger.id, "status": "not_working"}).json()["synced_at"]
+    rows = client.get("/api/cpo/chargers", headers=operator).json()
+    assert all(r["operator_id"] == charger.operator for r in rows["chargers"])
+    assert any(r["charger_id"] == charger.id and not r["is_simulated"] for r in rows["open_reports"])
+    assert client.post(f"/api/cpo/chargers/{charger.id}/fixed", headers=operator).json()["fixed_at"]
+    service = EngineService(graph_backend="memory")
+    fresh = client.get("/api/cpo/chargers", headers=operator).json()
+    assert not any(r["charger_id"] == charger.id for r in fresh["open_reports"])
+    assert any(r.evidence == "operator_repair" for r in service.graph.mirror.reports(charger.id))
+    for path in ("suspected-rings", "shared-grid-risk", "critical-chargers?corridor_id=noida-agra&usable_range_km=90"):
+        assert isinstance(client.get("/api/cpo/" + path, headers=operator).json(), list)

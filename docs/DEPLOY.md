@@ -95,6 +95,12 @@ Checked against Vercel's FastAPI and Python runtime docs on 2026-11-21 (vercel.c
 - Environment (project settings, never the repo): `NEO4J_*` or `VERITY_GRAPH=memory`, `SARVAM_API_KEY`,
   `VERITY_CORS_ORIGINS` (the frontend's exact origin), `VERITY_ENV=production`, `SUPABASE_URL`, `DATABASE_URL`.
 - Frontend: deploy from the repository root with the FastAPI preset. Open `/` to reach `/web/home.html`.
+  The custom planner, fleet tools, garage, shared trips and operator workspace are at `/web/planner.html`.
+  Public planning uses the engine without an account. To enable sign-in, configure `SUPABASE_URL` and
+  `SUPABASE_PUBLISHABLE_KEY` (or a browser-safe `SUPABASE_ANON_KEY`), enable email/password sign-in in that project,
+  and apply the account migration to `DATABASE_URL`. Set account roles in Supabase app metadata.
+  Operator repairs are committed to the account audit log and applied to the charger graph.
+  Account reports and repairs can be restored into a new graph instance from Postgres.
   The deployed browser config uses the current origin for API calls. The standalone pages still support their saved
   snapshot and the existing `?api=` override. Verify that the homepage renders, that `/web/drive/styles.css` returns CSS,
   and that `/api/health` returns JSON with `status` set to `ok`.

@@ -1,6 +1,5 @@
-"""Bridge to the finale graph query interface supplied by the engine."""
+"""Account route dispatch to the application's charger graph."""
 
-from importlib import import_module
 from typing import Any
 
 from fastapi import HTTPException
@@ -8,16 +7,12 @@ from neo4j.exceptions import DriverError, Neo4jError
 
 
 def graph_query(name: str, *args: Any) -> list[dict]:
+    # main also imports the account routers. Resolve the service after app initialization.
+    from api.main import get_service
+    from api.operator_graph import OperatorGraph
+
+    graph = OperatorGraph(get_service())
     try:
-        module = import_module("verity.trust.queries")
-    except ModuleNotFoundError as exc:
-        if exc.name != "verity.trust.queries":
-            raise
-        raise HTTPException(503, "Charger graph is unavailable.") from None
-    try:
-        query = getattr(module, name, None)
-        if query is None:
-            raise NotImplementedError
-        return query(*args)["rows"]
-    except (DriverError, Neo4jError, NotImplementedError):
+        return getattr(graph, name)(*args) or []
+    except (DriverError, Neo4jError, OSError):
         raise HTTPException(503, "Charger graph is unavailable.") from None

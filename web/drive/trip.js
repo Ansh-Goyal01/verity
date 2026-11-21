@@ -34,7 +34,7 @@
     return `<nav class="trip-modes" aria-label="Trip Check views">${[['intercity', 'Intercity'], ['cab', 'Cab ride'], ['current', 'Current trip']].map(([id, label]) => {
       const path = id === 'current' && active?.plan.decision === 'GO' ? currentPath(active) : '#/trip/' + id;
       return `<a href="${path}" ${id === mode ? 'aria-current="page"' : ''}>${label}</a>`;
-    }).join('')}</nav>`;
+    }).join('')}<a data-app-link href="planner.html">Custom planner</a></nav>`;
   }
   function currentPath(trip) { return `#/trip/current/${trip.request.vehicle_id}/${trip.request.start_soc_pct}`; }
   function frame(mode, title, intro) {

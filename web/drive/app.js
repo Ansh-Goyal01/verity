@@ -17,6 +17,7 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const work = $('#workspace-content');
+  if (window.VerityAPI.isApiConnected()) $('#plan-entry').href = 'planner.html' + location.search;
   const driver = $('#driver');
   const modes = ['home', 'trip', 'workspace', 'driver'];
   const workTabs = ['dispatch', 'replay', 'chargers', 'evidence', 'engine'];

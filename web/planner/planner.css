@@ -1,0 +1,79 @@
+.plan-shell { max-width: 1180px; padding-bottom: 5rem; }
+.planning { font-size: 1rem; }
+.plan-top { border-bottom: 1px solid var(--line); background: var(--night-deep); }
+.top-row { min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.top-row nav, .tool-tabs, .subnav, .pager, .account-bar, .form-actions, .card-head { display: flex; align-items: center; gap: 1rem; }
+.top-row nav a, .tool-tabs a, .subnav a { padding: .7rem .9rem; font-size: .94rem; color: var(--muted); }
+.top-row nav a:hover, .tool-tabs a:hover, .subnav a:hover { color: var(--ink); }
+.top-row nav a:last-child { border: 1px solid var(--line); border-radius: 6px; }
+.tool-tabs { gap: .5rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; padding-top: .75rem; }
+.tool-tabs a { border-bottom: 2px solid transparent; padding: .8rem .9rem; }
+.tool-tabs a[aria-current] { color: var(--ink); border-color: var(--electric); }
+.page-heading { padding: clamp(2rem,5vw,4rem) 0 clamp(1.5rem,3vw,2.5rem); }
+.page-heading h1 { font: 700 clamp(3.2rem,7vw,6rem)/.95 var(--headline); letter-spacing: -.035em; }
+.page-heading p { margin-top: .8rem; max-width: 62ch; color: var(--muted); font-size: 1.08rem; }
+.page-body { min-width: 0; }
+.planning :is(.sheet,fieldset,.release-card) { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: clamp(1rem,2.7vw,2rem); margin: 0; }
+.planning fieldset { position: relative; padding-top: 1rem; }
+.planning legend { color: var(--ink); padding: 0 .5rem; margin-left: -.5rem; }
+.planning legend, .sheet h2, .results h2, .trip-detail h2 { font: 650 clamp(1.4rem,2.8vw,2rem)/1.1 var(--display); letter-spacing: -.035em; }
+.sheet + .sheet, .results > *, .trip-detail > *, .release-card + .release-card { margin-top: 1rem; }
+.planning .form-columns, .trip-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; align-items: start; }
+.form-columns fieldset { align-self: stretch; }
+.planning form, .planning fieldset, .sheet, .vehicle, .release-card, .share-output:not(:empty), .account-panel { display: grid; gap: 1rem; align-content: start; }
+.planning form { align-items: start; }
+.planning form button { justify-self: start; }
+.planning label, .place-field { display: grid; gap: .35rem; color: var(--muted); font-size: .94rem; min-width: 0; }
+.planning :is(input,select) { width: 100%; min-width: 0; min-height: 46px; padding: .62rem .75rem; border-radius: 5px; border: 1px solid #47516a; color: var(--ink); background: var(--night-deep); font-size: 1rem; }
+.planning select { appearance: none; padding-right: 2.3rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23a9b5cb' stroke-width='1.5'%3E%3Cpath d='m1 1 5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .9rem center; }
+.planning input[type=checkbox] { width: 1.2rem; height: 1.2rem; min-height: 0; accent-color: var(--electric); }
+.planning .check { display: flex; align-items: center; gap: .6rem; color: var(--ink); }
+.planning .button { font: 600 .94rem/1.3 var(--body); }
+.planning button:disabled, .planning input:disabled { opacity: .55; cursor: default; }
+.fields, .facts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; }
+.route-fields { display: grid; gap: .85rem; }
+.places:empty, .status:empty, .results:empty, .pager:empty { display: none; }
+.places button { display: block; width: 100%; background: var(--panel); border: 1px solid var(--line); color: var(--ink); padding: .7rem; text-align: left; }
+.places button:hover { border-color: var(--electric); }
+.place-hint, .source-note { font: .82rem/1.5 var(--mono); color: var(--muted); }
+.planning .muted, .planning .status { color: var(--muted); }
+.planning .error, .planning .stop { color: var(--stop); }
+.planning .warning, .planning .warn { color: var(--warn); }
+.planning .go, .planning .recommend { color: var(--go); }
+.form-actions, .subnav, .account-bar, .card-head, .pager { flex-wrap: wrap; }
+.subnav { gap: .35rem; margin: 0 0 1.4rem; }
+.subnav a { background: var(--surface); border: 1px solid var(--line); border-radius: 5px; }
+.subnav a[aria-current] { border-color: var(--electric); color: var(--ink); }
+.card-head, .account-bar { justify-content: space-between; }
+.account-bar { color: var(--muted); margin-bottom: 1rem; }
+.signin, .car-editor, .add-car, .arrival, .share-output { width: min(100%,36rem); }
+.verdict { font: 600 .88rem/1.4 var(--mono); border: 1px solid currentColor; border-radius: 5px; padding: .25rem .5rem; }
+.facts { grid-template-columns: repeat(auto-fit,minmax(115px,1fr)); border-block: 1px solid var(--line); padding: .9rem 0; margin: 0; }
+.planning dt, .stops span, .list-row span, .history-row small { color: var(--muted); font-size: .9rem; }
+.planning dd { margin: 0; font-weight: 550; }
+.planning .facts dd { font-size: 1.3rem; }
+.planning h4, .planning .stops { margin: 0; }
+.stops { padding-left: 1.4rem; } .stops li span { display: block; }
+.data-scroll { max-height: 18rem; overflow: auto; }
+.planning table { border-collapse: collapse; width: 100%; text-align: left; font-variant-numeric: tabular-nums; }
+.planning th, .planning td { border-bottom: 1px solid var(--line); padding: .6rem; }
+.planning summary { cursor: pointer; color: var(--electric); padding: .65rem 0; }
+.vehicle, .record, .list-row, .history-row { padding: 1rem 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.record { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(11rem,100%),1fr)); gap: .7rem; margin: 0; }
+.list-row, .history-row { display: flex; justify-content: space-between; align-items: center; gap: .8rem; flex-wrap: wrap; }
+.history-row { text-align: left; width: 100%; border: 0; border-bottom: 1px solid var(--line); color: var(--ink); background: transparent; }
+.history-row small { display: block; margin-top: .2rem; }
+.pager { margin-top: 1rem; }
+.planning .results > h2, .planning .trip-detail > h2 { margin-block: 2rem 1rem; scroll-margin-top: 2rem; }
+.planning .sheet :is(p,dd), .release-card p { overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  .planning .form-columns, .trip-tools { grid-template-columns: 1fr; }
+  .plan-shell, .plan-top .shell { width: calc(100% - 2rem); }
+  .top-row { gap: .4rem; min-height: 60px; }
+  .top-row nav { gap: .1rem; } .top-row nav a { padding: .5rem; font-size: .87rem; }
+  .tool-tabs { gap: 0; } .tool-tabs a { padding: .7rem .5rem; font-size: .9rem; }
+}
+@media (max-width: 410px) {
+  .top-row nav a:first-child { display:none; }
+  .tool-tabs { display: grid; grid-template-columns: repeat(2,1fr); }
+}

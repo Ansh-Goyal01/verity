@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0e1118">
+  <meta name="referrer" content="no-referrer">
+  <title>Trip planner · Verity</title>
+  <link rel="icon" href="drive/assets/verity.png">
+  <link rel="stylesheet" href="drive/styles.css">
+  <link rel="stylesheet" href="planner/planner.css">
+  <script defer src="js/config.js"></script>
+  <script defer src="js/verity-core.js"></script>
+  <script defer src="js/navigation.js"></script>
+  <script type="module" src="planner/main.js"></script>
+</head>
+<body class="planning">
+  <a href="#content" class="skip-link">Skip to planner</a>
+  <header class="plan-top"><div class="shell top-row">
+    <a class="wordmark" data-app-link href="home.html" aria-label="Verity overview"><span class="mark" aria-hidden="true"></span>verity<span class="brand-period">.</span></a>
+    <nav aria-label="Verity"><a data-app-link href="home.html">Overview</a><a data-app-link href="home.html#/trip">Demo replay</a><a href="#account" id="account-link">My account</a></nav>
+  </div></header>
+  <main id="content" class="shell plan-shell" tabindex="-1">
+    <nav class="tool-tabs" aria-label="Planning tools">
+      <a href="#plan">Trip planner</a><a href="#fleet">Fleet</a><a href="#account">Garage &amp; trips</a><a href="#operators">Operators</a>
+    </nav>
+    <div id="view" aria-busy="true"><p role="status">Opening the planner…</p></div>
+    <noscript>Enable JavaScript to use the live planner.</noscript>
+  </main>
+</body>
+</html>

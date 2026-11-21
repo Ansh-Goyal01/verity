@@ -21,14 +21,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _corridors import corridors, mid_size_car, range_km  # noqa: E402
 
 from api.service import EngineService  # noqa: E402
+from verity.coverage import critical  # noqa: E402
 from verity.paths import RESULTS_DIR  # noqa: E402
 
 OUT = RESULTS_DIR / "g2_critical_chargers.json"
-
-
-def gaps(kms: list[float], length: float) -> list[float]:
-    points = [0.0, *sorted(kms), length]
-    return [b - a for a, b in zip(points, points[1:])]
 
 
 def longest_gap(kms: list[float], length: float) -> dict:
@@ -36,20 +32,6 @@ def longest_gap(kms: list[float], length: float) -> dict:
     points = [0.0, *sorted(kms), length]
     i = max(range(len(points) - 1), key=lambda k: points[k + 1] - points[k])
     return {"from_km": round(points[i], 1), "to_km": round(points[i + 1], 1)}
-
-
-def critical(near, length: float, reach: float) -> tuple[float, list[dict]]:
-    kms = [rc.km_along for rc in near]
-    full = max(gaps(kms, length))
-    if full > reach:
-        return full, []
-    out = []
-    for i, rc in enumerate(near):
-        opened = max(gaps(kms[:i] + kms[i + 1:], length))
-        if opened > reach:
-            out.append({"charger_id": rc.charger.id, "name": rc.charger.name, "km": round(rc.km_along, 1),
-                        "gap_if_lost_km": round(opened, 1)})
-    return full, out
 
 
 def main() -> int:

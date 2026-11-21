@@ -36,7 +36,7 @@
         <a href="#/workspace/dispatch/V12" data-nav="workspace">Workspace</a>
         <a href="#/driver" data-nav="driver">Driver</a>
       </nav>
-      <a class="header-source" href="#/workspace/evidence">Evidence ledger</a>
+      <a class="header-source" data-app-link href="planner.html#account">My account</a>
     </div>
   </header>
   <main id="main" tabindex="-1">
@@ -52,7 +52,7 @@
             <h1 id="hero-title"><span>Know what’s</span><em>within reach.</em></h1>
             <p class="hero-description">See whether your EV can make the trip, where to charge, and when to switch to a backup.</p>
             <div class="actions">
-              <a class="button button-primary" href="#/trip">Check a trip</a>
+              <a class="button button-primary" id="plan-entry" data-app-link href="#/trip">Plan a trip</a>
               <a class="button hero-secondary" href="#/trip/current/V12/62">Try a charger outage</a>
             </div>
           </div>
@@ -167,6 +167,8 @@
           <a href="#/workspace/evidence" data-workspace="evidence"><i aria-hidden="true">▥</i>Evidence</a>
         </nav>
         <nav class="workspace-tools" aria-label="Fleet tools">
+          <a data-app-link href="planner.html#fleet">Fleet bookings</a>
+          <a data-app-link href="planner.html#operators">Charger operations</a>
           <a data-app-link href="index.html#/dispatch">Mission Control</a>
           <a data-app-link href="console.html">Fleet map</a>
           <a data-app-link href="../logger/index.html">Trip logger</a>

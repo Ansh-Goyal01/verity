@@ -1,10 +1,13 @@
 """Profile and garage endpoints."""
 
 import csv
+import os
 from functools import lru_cache
 from typing import Annotated
+from urllib.parse import urlsplit
 from uuid import UUID
 
+import jwt
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -15,6 +18,25 @@ from .db import owned, transaction
 
 router = APIRouter(prefix="/api")
 Account = Annotated[User, Depends(current_user)]
+
+
+@router.get("/auth/config")
+def browser_auth_config() -> dict:
+    """Publish only the browser-safe Supabase settings used for password sign-in."""
+    project = os.environ.get("SUPABASE_URL", "").rstrip("/")
+    url = urlsplit(project)
+    key = os.environ.get("SUPABASE_PUBLISHABLE_KEY") or os.environ.get("SUPABASE_ANON_KEY", "")
+    public = key.startswith("sb_publishable_")
+    if key and not public:
+        try:
+            # This checks the key type for publication. It never authenticates a user.
+            public = jwt.decode(key, options={"verify_signature": False}).get("role") == "anon"
+        except jwt.PyJWTError:
+            public = False
+    if not (public and url.scheme == "https" and url.hostname and
+            not (url.username or url.password or url.path or url.query or url.fragment)):
+        return {"available": False}
+    return {"available": True, "url": project, "publishable_key": key}
 
 
 @lru_cache(maxsize=1)

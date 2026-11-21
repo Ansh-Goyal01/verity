@@ -8,12 +8,13 @@ The engine contracts are defined in ``api/models.py``. Production errors include
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 import re
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
@@ -75,6 +76,7 @@ from .models import (
 from .service import ApiError, EngineService
 from .demo_cache import offline_enabled
 from . import routes_cpo, routes_fleet, routes_me, routes_share, routes_trips
+from .operator_graph import restore_reports
 from .speech import VOICE_MESSAGE, synthesise
 from .voice_lab import capture_stage, lab_enabled, token_ok, validate as validate_lab_form
 from .voice_ride import decide_stage, hear_stage
@@ -125,7 +127,15 @@ _service: EngineService | None = None
 def get_service() -> EngineService:
     global _service
     if _service is None:
-        _service = EngineService()
+        svc = EngineService()
+        if os.environ.get("DATABASE_URL") and not svc.offline:
+            try:
+                restore_reports(svc)
+            except HTTPException as exc:
+                if exc.status_code != 503:
+                    raise
+                logging.getLogger(__name__).warning("Account observations unavailable during engine startup")
+        _service = svc
     return _service
 
 
