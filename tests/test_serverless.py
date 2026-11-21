@@ -107,3 +107,21 @@ def test_share_keeps_referrer_private() -> None:
 
     response = TestClient(app).get("/api/share/invalid")
     assert response.headers["Referrer-Policy"] == "no-referrer"
+
+
+def test_public_search_metadata() -> None:
+    from xml.etree.ElementTree import fromstring
+    from urllib.parse import urlsplit
+    from app import app
+
+    client = TestClient(app)
+    robots = client.get("/robots.txt").text
+    assert all(f"Disallow: /{prefix}/" in robots for prefix in ("api", "share", "private"))
+    sitemap = client.get("/sitemap.xml")
+    assert sitemap.status_code == 200
+    urls = [node.text for node in fromstring(sitemap.text).findall(".//{*}loc")]
+    assert len(urls) == len(set(urls)) == 6
+    for url in urls:
+        page = client.get(urlsplit(url).path)
+        assert page.status_code == 200 and f'<link rel="canonical" href="{url}">' in page.text
+        assert all(f'property="og:{key}"' in page.text for key in ("title", "description", "image"))

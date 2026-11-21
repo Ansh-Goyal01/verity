@@ -87,6 +87,16 @@ async def browser_config() -> Response:
                     media_type="application/javascript")
 
 
+@app.api_route("/robots.txt", methods=["GET", "HEAD"])
+async def robots() -> FileResponse:
+    return FileResponse(ROOT / "web" / "robots.txt", media_type="text/plain")
+
+
+@app.api_route("/sitemap.xml", methods=["GET", "HEAD"])
+async def sitemap() -> FileResponse:
+    return FileResponse(ROOT / "web" / "sitemap.xml", media_type="application/xml")
+
+
 @app.api_route("/design/tokens.css", methods=["GET", "HEAD"])
 async def design_tokens() -> FileResponse:
     return FileResponse(ROOT / "design" / "tokens.css", media_type="text/css")
