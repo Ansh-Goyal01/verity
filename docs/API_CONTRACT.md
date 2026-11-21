@@ -540,6 +540,20 @@ lower end of that interval. Rows in the samples file that are not consented, non
 
 ## Changelog: contract change proposals and version notes
 
+### 2026-11-21 — CX-1 authenticated route dependencies
+
+Account routes can use `Depends(current_user)` or `Depends(require_role("admin"))` from
+`api.auth`. Both return `User(id, email, role)`. A role guard accepts one or more allowed
+roles. The browser obtains a Supabase session through email/password or Google sign-in
+and sends its access token in `Authorization: Bearer <access_token>` on each protected
+request. Account roles are `owner`, `driver`, `fleet_manager`, `cpo` and `admin`.
+
+A missing or invalid session receives HTTP 401. A valid session with insufficient
+privileges or an unrecognized application role receives HTTP 403. A signing-key
+connection failure or missing project configuration receives HTTP 503. This entry
+introduces dependencies for account routes. The existing public demo routes retain
+their previous access rules.
+
 `docs/API_CONTRACT.md` is **unchanged**. The engine serves exactly its shapes (the response models in
 `api/models.py` forbid extra fields, and `tests/test_api.py` validates every endpoint). The items below are
 places where real engine output is looser than the contract's *example*, or where the contract text no longer
