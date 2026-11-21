@@ -97,4 +97,12 @@ def test_site_headers(path: str) -> None:
     response = TestClient(app, follow_redirects=False).get(path)
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
     assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]
+
+
+def test_share_keeps_referrer_private() -> None:
+    from app import app
+
+    response = TestClient(app).get("/api/share/invalid")
+    assert response.headers["Referrer-Policy"] == "no-referrer"
