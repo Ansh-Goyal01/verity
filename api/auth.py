@@ -8,7 +8,7 @@ from typing import Annotated
 from urllib.parse import urlsplit
 from uuid import UUID
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 
@@ -68,10 +68,12 @@ def verify_access_token(token: str) -> User:
     return User(user_id, email, role)
 
 
-def current_user(credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)]) -> User:
+def current_user(request: Request,
+                 credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)]) -> User:
     if credentials is None:
         raise unauthorized()
-    return verify_access_token(credentials.credentials)
+    user = getattr(request.state, "verified_user", None)
+    return user if user is not None else verify_access_token(credentials.credentials)
 
 
 def require_role(*roles: str) -> Callable[..., User]:

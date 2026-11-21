@@ -23,6 +23,7 @@ import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 import numpy as np
 
@@ -413,22 +414,26 @@ class EngineService(GraphEndpoints):
                 return plan_id
         raise AssertionError("a 40-character hash prefix collided with a different request")
 
-    def dispatch(self, req: dict, *, refresh: bool = False) -> dict:
+    def dispatch(self, req: dict, *, refresh: bool = False, private_vehicle: VehicleContext | None = None) -> dict:
         """The plan for a request. ``refresh`` recomputes against the graph as it is now and replaces the cached plan only
         when the new one is ready (the old one keeps being served until then)."""
         req = canonical_request(DispatchRequest, req)
-        fv = self.fleet.get(req["vehicle_id"])
-        if fv is None:
-            raise ApiError(404, "unknown_vehicle", f"Unknown vehicle {req['vehicle_id']!r}; known: {sorted(self.fleet)}")
+        if private_vehicle is None:
+            fv = self.fleet.get(req["vehicle_id"])
+            if fv is None:
+                raise ApiError(404, "unknown_vehicle", f"Unknown vehicle {req['vehicle_id']!r}; known: {sorted(self.fleet)}")
+            context = fv.ctx
+        else:
+            context = private_vehicle
         self._check_endpoints(req["origin"], req["destination"])
         key = hashlib.sha1(json.dumps({k: req[k] for k in sorted(req)}, sort_keys=True).encode()).hexdigest()
-        plan_id = self._plan_id_for(key, req)
-        stored = self.plans.get(plan_id)  # one atomic read: the plan may be evicted between a check and a second read
+        plan_id = self._plan_id_for(key, req) if private_vehicle is None else f"PVT-{uuid4().hex}"
+        stored = self.plans.get(plan_id) if private_vehicle is None else None
         if stored is not None and not refresh:
             return stored.response
-        ctx = replace(fv.ctx, passengers=req["passengers"], ac_on=req["ac_on"])
+        ctx = replace(context, passengers=req["passengers"], ac_on=req["ac_on"])
         others = [(replace(o.ctx, passengers=req["passengers"], ac_on=req["ac_on"]), float(o.soc_pct))
-                  for vid, o in self.fleet.items() if vid != req["vehicle_id"]]
+                  for vid, o in self.fleet.items() if vid != req["vehicle_id"]] if private_vehicle is None else []
         t0, (q0, s0) = time.perf_counter(), self._graph_queries()
 
         def plan_on(g: ChargerGraph) -> tuple[GraphView, object]:
@@ -463,8 +468,9 @@ class EngineService(GraphEndpoints):
             "levers": result.levers, "risk_sources": result.risk_sources, "refusal_reason": result.refusal_reason,
             "compute_ms": result.compute_ms, "n_runs": self.cfg.n_runs, "is_simulated": True,
         }
-        self.plans[plan_id] = StoredPlan(result.state, response, dict(req))
-        self._record_plan(plan_id, response, view)
+        if private_vehicle is None:
+            self.plans[plan_id] = StoredPlan(result.state, response, dict(req))
+            self._record_plan(plan_id, response, view)
         return response
 
     # -- did a new report move a plan? (W3.3) -----------------------------------------------------------------------

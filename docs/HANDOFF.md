@@ -5,6 +5,17 @@
 CX-1 supplies `api.auth.current_user` and `api.auth.require_role`. Apply the relevant
 dependency to each protected router or handler and use the returned user ID for access checks.
 
+The CX-4 and CX-6 API routes call the query names from the task brief. The graph module
+still needs to supply them. CPO charger, report and critical-charger rows use
+`charger_id`. Keep the full results of operator and ring queries scoped to their
+arguments, including nested rows, and omit report author identifiers from CPO output.
+Quick reports send `working` or `not_working` as specified. Make writes idempotent by
+user, charger and timestamp so retries after an uncertain write do not inflate evidence.
+
+The arrival endpoint persists the reading. The current calibration API requires
+measured trip segments and a SoC window. Add a way to capture those observations and
+exclude sessions with intermediate charging before enabling learned battery estimates.
+
 ## For Ansh
 
 Configure the isolated demo Supabase project with an asymmetric signing key, enable
@@ -29,3 +40,24 @@ password. A collision with an unrelated account requires operator review.
 The local launcher in `start.py` serves the entire checkout on port 5500, including any
 root `.env`. Restrict its static file serving to public assets before storing credentials
 in the checkout or exposing the launcher through a tunnel. Use host settings for deployment.
+
+## Database and deployment
+
+Apply `migrations/001_accounts.sql` once to the isolated Supabase project using the
+chosen migration runner. The migration targets PostgreSQL 15 or newer and Supabase's
+`auth.users`, `anon` and `authenticated`. The API uses `DATABASE_URL` from its process
+environment. Configure a TLS-verified connection for the deployed database. The API
+database role needs access to the private schema. Browser roles have no privileges there.
+
+Set `VERITY_ENV=production` and `VERITY_CORS_ORIGINS` to the frontend's exact HTTPS
+origin or comma-separated origins. The API sends a deny-by-default CSP. The frontend
+host still needs its own CSP with the agreed API and Supabase origins. The API redacts
+share capability URLs from uvicorn’s access log. Redact these paths at the hosting
+proxy too.
+
+## Translation and review
+
+After receiving the approved English JSON file, set `SARVAM_API_KEY` in a private env
+file and run `uv run --env-file <private-env-file> python scripts/translate_ui.py <english-json>`.
+Review `web/i18n/hi.json` before merging it. The script checks placeholder counts and
+writes the file only after every translation succeeds. [Sarvam translation API](https://docs.sarvam.ai/api-reference/text/translate-text)
