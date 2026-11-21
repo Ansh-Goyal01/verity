@@ -88,3 +88,11 @@ def test_html_csp_allows_only_configured_services_and_existing_inline_scripts(mo
 
     monkeypatch.setenv("SUPABASE_URL", "https://untrusted.example; img-src *")
     assert client.get("/web/home.html").headers["content-security-policy"].endswith("connect-src 'self'")
+
+
+@pytest.mark.parametrize("path", ["/", "/web/home.html", "/web/drive/styles.css", "/missing", "/api/health"])
+def test_site_headers(path: str) -> None:
+    from app import app
+
+    response = TestClient(app, follow_redirects=False).get(path)
+    assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]

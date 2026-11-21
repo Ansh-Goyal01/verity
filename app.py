@@ -13,7 +13,8 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
-from starlette.types import Scope
+from starlette.datastructures import MutableHeaders
+from starlette.types import Message, Receive, Scope, Send
 
 ROOT = Path(__file__).resolve().parent
 for entry in (ROOT / "engine", ROOT):
@@ -22,8 +23,21 @@ for entry in (ROOT / "engine", ROOT):
 
 from api.main import app as api, lifespan  # noqa: E402
 
+class Site(FastAPI):
+    """Apply site policy to the first response frame, including redirects and error pages."""
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        async def send_with_headers(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+            await send(message)
+
+        await super().__call__(scope, receive, send_with_headers)
+
+
 # Keep the API's startup and shutdown hooks when serving it as a mounted app.
-app = FastAPI(openapi_url=None, lifespan=lifespan)
+app = Site(openapi_url=None, lifespan=lifespan)
 mimetypes.add_type("image/webp", ".webp")
 mimetypes.add_type("font/woff2", ".woff2")
 
