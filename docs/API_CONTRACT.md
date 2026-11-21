@@ -540,6 +540,57 @@ lower end of that interval. Rows in the samples file that are not consented, non
 
 ## Changelog: contract change proposals and version notes
 
+### 2026-11-21 — CX-1 authenticated route dependencies
+
+Account routes can use `Depends(current_user)` or `Depends(require_role("admin"))` from
+`api.auth`. Both return `User(id, email, role)`. A role guard accepts one or more allowed
+roles. The browser obtains a Supabase session through email/password or Google sign-in
+and sends its access token in `Authorization: Bearer <access_token>` on each protected
+request. Account roles are `owner`, `driver`, `fleet_manager`, `cpo` and `admin`.
+
+A missing or invalid session receives HTTP 401. A valid session with insufficient
+privileges or an unrecognized application role receives HTTP 403. A signing-key
+connection failure or missing project configuration receives HTTP 503. This entry
+introduces dependencies for account routes. The existing public demo routes retain
+their previous access rules.
+
+### 2026-11-21 — CX-2 through CX-6 account API
+
+Except for the vehicle catalog, sample, and shared trip reads, the endpoints below
+require a Supabase access token. Foreign account IDs return the same 404 as a missing
+record. Requests use JSON and UUIDs are strings.
+
+| Endpoint | Request and response |
+| --- | --- |
+| `GET /api/me` | Returns `{profile: {id, display_name, role}, cars: [...]}`. |
+| `GET /api/vehicle-models` | Lists the 13 catalog variants. Use `vehicle_id` as `model_id` when adding a car. |
+| `POST /api/me/cars`, `PUT /api/me/cars/{id}` | Accept `{model_id, nickname, battery_health_pct}`. Return the car with its ID. |
+| `GET /api/me/cars/{id}`, `DELETE /api/me/cars/{id}` | Read the car or delete it with a 204. Saved trip records retain the plan after car deletion. |
+| `GET /api/sample-trip` | Returns a catalog `model_id` and the pinned Noida–Agra dispatch request. Add a garage `car_id` before planning. |
+| `POST /api/trips` | Same journey fields as dispatch, with `car_id` replacing `vehicle_id` and an ISO 8601 departure time with offset. Returns the stored trip and plan. The planner serves the existing Noida–Agra corridor. |
+| `GET /api/trips`, `GET /api/trips/{id}` | List metadata with `limit` and `offset`, or read one trip with its request and plan. Unsaved trips expire after 90 days. |
+| `POST /api/trips/{id}/save` | Marks a trip saved and returns `{id, saved}`. |
+| `POST /api/trips/{id}/arrival` | Accepts `{arrival_pct}`. Returns `{id, arrival_pct, calibration_applied}`. The current endpoint saves the reading with `calibration_applied: false`. |
+| `POST /api/reports/quick` | Accepts `{charger_id, status}`, where status is `working` or `not_working`. Repeating a recent identical report resumes its graph sync or returns the existing row. A temporary graph failure returns 503 while the database retains the pending report. |
+| `GET /api/reports/{id}` | Reads the signed-in account's report. |
+| `POST /api/trips/{id}/share` | Returns `{token, expires_at}`. The capability expires in 48 hours or when the unsaved trip expires. |
+| `GET /api/share/{token}` | Returns `{decision, stops, bingo_line}` only. Missing or expired links return 404. |
+| `GET /api/fleet/vehicles`, `POST /api/fleet/vehicles` | Fleet managers list their vehicles with `limit` and `offset` or add a car with the garage fields and `start_soc_pct`. |
+| `PUT /api/fleet/vehicles/{id}`, `DELETE /api/fleet/vehicles/{id}` | Update or delete one of the manager's vehicles. |
+| `POST /api/fleet/booking/check` | Fleet managers submit journey fields without a car ID or starting SoC. Returns a page of `{vehicle_id, accepted, decision, reason}`, using each vehicle's stored SoC. Use `limit` (1–5) and `offset`. |
+| `GET /api/cpo/claims`, `POST /api/cpo/claims` | CPOs list their claims or request one with `{operator_id}`. New claims start pending. |
+| `POST /api/admin/cpo-claims/{id}/approve` | An admin approves another user's claim and records an audit entry. |
+| `GET /api/cpo/chargers`, `GET /api/cpo/suspected-rings`, `GET /api/cpo/shared-grid-risk` | Read graph results scoped to approved operators. |
+| `GET /api/cpo/critical-chargers` | Accepts `corridor_id` and `usable_range_km`. Returns only matching chargers under approved operators. |
+| `POST /api/cpo/chargers/{id}/fixed` | Checks charger membership before recording a fix. Foreign charger IDs return 404. |
+
+`VERITY_ENV=production` disables interactive docs and OpenAPI and returns
+`{"error": "Plain message", "id": "<request ID>"}` for API errors. Local development
+keeps the legacy `error` code and `message` fields. Security headers and body limits apply
+in both environments. The API accepts up to 64 KiB for JSON and 1 MiB total for audio
+multipart requests. Planning, reports and voice have IP limits and an additional
+account budget when a bearer token is supplied. Read `Retry-After` on 429 responses.
+
 `docs/API_CONTRACT.md` is **unchanged**. The engine serves exactly its shapes (the response models in
 `api/models.py` forbid extra fields, and `tests/test_api.py` validates every endpoint). The items below are
 places where real engine output is looser than the contract's *example*, or where the contract text no longer

@@ -24,6 +24,7 @@ import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 import numpy as np
 
@@ -549,15 +550,17 @@ class EngineService(GraphEndpoints, FleetEndpoints):
                 return plan_id
         raise AssertionError("a 40-character hash prefix collided with a different request")
 
-    def dispatch(self, req: dict, *, refresh: bool = False) -> dict:
+    def dispatch(self, req: dict, *, refresh: bool = False, private_vehicle: VehicleContext | None = None) -> dict:
         """The plan for a request. ``refresh`` recomputes against the graph as it is now and replaces the cached plan only
         when the new one is ready (the old one keeps being served until then)."""
         req = canonical_request(DispatchRequest, req)
-        picked = self._vehicle_for(req)
+        # A private car (an account's own car, CX-2..CX-6) is planned from its own context and never cached, stored in
+        # the plan cache or written to the graph: its plan id is one-off and only the caller keeps the result.
+        picked = self._vehicle_for(req) if private_vehicle is None else self._private_pick(req, private_vehicle)
         resolved = self._resolve_route(req)
         key = plan_key(req)
-        plan_id = self._plan_id_for(key, req)
-        stored = self.plans.get(plan_id)  # one atomic read: the plan may be evicted between a check and a second read
+        plan_id = self._plan_id_for(key, req) if private_vehicle is None else f"PVT-{uuid4().hex}"
+        stored = self.plans.get(plan_id) if private_vehicle is None else None  # one atomic read (eviction)
         if stored is not None and not refresh:
             return stored.response
         ctx, others = picked.ctx, picked.others
@@ -575,9 +578,22 @@ class EngineService(GraphEndpoints, FleetEndpoints):
         self._adopt(view)
         self._log_timing(plan_id, t0, q0, s0)
         response = self._release_response(plan_id, result, req, picked, resolved, near_reports)
-        self.plans[plan_id] = StoredPlan(result.state, response, dict(req), resolved.poly, resolved.poly_km)
-        self._record_plan(plan_id, response, near, trust)
+        if private_vehicle is None:
+            self.plans[plan_id] = StoredPlan(result.state, response, dict(req), resolved.poly, resolved.poly_km)
+            self._record_plan(plan_id, response, near, trust)
         return response
+
+    def _private_pick(self, req: dict, ctx: VehicleContext) -> PickedVehicle:
+        """How a release describes an account's own car: real (not simulated), planned from its class prior."""
+        n = ctx.trips_calibrated
+        basis = "class prior" if n == 0 else "your trips"
+        return PickedVehicle(
+            replace(ctx, passengers=req["passengers"], ac_on=req["ac_on"]), [],
+            {"id": req["vehicle_id"], "name": "Your car", "battery_kwh": round(float(ctx.post.nominal_kwh), 1),
+             "trips_calibrated": n, "calibration_basis": basis, "source_count": 0, "is_simulated": False},
+            {"trips": n, "basis": basis,
+             "label": "First trip in this car: prior only" if n == 0 else f"Calibrated on {n} of your trips"},
+            "Account car: the model's spec row and its battery health, from the owner's garage")
 
     def _cfg_for(self, picked: PickedVehicle) -> ForecastConfig:
         """The Monte Carlo settings for this vehicle: real cars get the conformal band scale (WP5), demo cars do not."""

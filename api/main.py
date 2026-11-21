@@ -2,8 +2,7 @@
 
 Run:  uv run uvicorn api.main:app --reload     (then open http://localhost:8000/api/health)
 
-Every response carries ``is_simulated`` and is validated against ``api/models.py`` (which mirrors the
-contract). Errors always have the shape ``{"error": code, "message": text}``.
+The engine contracts are defined in ``api/models.py``. Production errors include a request ID.
 """
 
 from __future__ import annotations
@@ -15,12 +14,9 @@ import re
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Query, Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from verity.audio_cache import AudioCache
 from verity.trust.graph import load_env
@@ -32,6 +28,7 @@ from .ledger import build_ledger
 from .limits import RateLimiter, client_ip, parse_origins, positive_int, rate_key
 from .voice_plan import decide_plan_stage, hear_plan_stage
 from .demo_ring import ring_attack, ring_reset
+from .middleware import AUDIO_LIMIT, error_response, install
 from .models import (
     GeocodeResponse,
     VehiclesResponse,
@@ -76,6 +73,7 @@ from .models import (
     WhyResponse,
 )
 from .service import ApiError, EngineService
+from . import routes_cpo, routes_fleet, routes_me, routes_share, routes_trips
 from .speech import VOICE_MESSAGE, synthesise
 from .voice_lab import capture_stage, lab_enabled, token_ok, validate as validate_lab_form
 from .voice_ride import decide_stage, hear_stage
@@ -87,7 +85,7 @@ DEFAULT_REPORT_RATE_PER_MIN = 10  # live reports per address: each one writes to
 REPORT_COOLDOWN_S = 600.0  # one address may report on one charger once per 10 minutes (one anonymous caller must not stack reports)
 DEFAULT_VOICE_RATE_PER_MIN = 20  # tts + stt together, per address: every call is paid, a demo needs a handful
 VOICE_WINDOW_S = 60.0
-MAX_RECORDING_BYTES = 5_000_000  # Sarvam takes clips under 30 s; a larger upload is not a driver's one sentence
+MAX_RECORDING_BYTES = AUDIO_LIMIT
 MULTIPART_OVERHEAD_BYTES = 100_000  # the form's other fields and boundaries
 MAX_CONFIRM_JSON_BYTES = 16_384  # the second call is a handful of fields
 LANGUAGE_FIELD = re.compile(r"unknown|[a-z]{2,3}-[A-Z]{2}")  # matched with fullmatch: only a code-shaped value reaches a paid call
@@ -206,42 +204,27 @@ async def lifespan(_: FastAPI):
     svc.close()  # release the Neo4j driver
 
 
-app = FastAPI(title="Verity API", version="0.1.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_methods=["*"], allow_headers=["*"],
-                   allow_credentials=False,
-                   expose_headers=["Retry-After"])  # else a page on another origin reads it as null (W0.7 429)
-
-
-def _error(status: int, code: str, message: str) -> JSONResponse:
-    return JSONResponse(status_code=status, content={"error": code, "message": message})
+PRODUCTION = env_setting("VERITY_ENV") == "production"
+app = FastAPI(title="Verity API", version="0.1.0", lifespan=lifespan,
+              openapi_url=None if PRODUCTION else "/openapi.json")
+origins = parse_origins(env_setting("VERITY_CORS_ORIGINS"), []) if PRODUCTION else ALLOWED_ORIGINS
+install(app, origins, PRODUCTION, TRUST_PROXY, voice_rate_per_min(),
+        planning_limit=positive_int(env_setting("VERITY_PLANNING_RATE_PER_MIN"), 30, "VERITY_PLANNING_RATE_PER_MIN"))
+app.include_router(routes_me.router)
+app.include_router(routes_trips.build_router(get_service))
+app.include_router(routes_share.router)
+app.include_router(routes_fleet.build_router(get_service))
+app.include_router(routes_cpo.router)
 
 
 @app.exception_handler(ApiError)
-async def _api_error(_: Request, exc: ApiError) -> JSONResponse:
-    return _error(exc.status, exc.code, exc.message)
+async def _api_error(request: Request, exc: ApiError) -> JSONResponse:
+    return error_response(request, exc.status, exc.code, exc.message)
 
 
 @app.exception_handler(RateLimited)  # the most specific handler wins, so this one adds the Retry-After header
-async def _rate_limited(_: Request, exc: RateLimited) -> JSONResponse:
-    return JSONResponse(status_code=429, content={"error": exc.code, "message": exc.message},
-                        headers={"Retry-After": str(exc.retry_after)})
-
-
-@app.exception_handler(RequestValidationError)
-async def _validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
-    detail = "; ".join(f"{'.'.join(str(p) for p in e['loc'] if p != 'body')}: {e['msg']}" for e in exc.errors())
-    return _error(422, "invalid_request", detail or "invalid request")
-
-
-@app.exception_handler(StarletteHTTPException)
-async def _http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:
-    code = {404: "not_found", 405: "method_not_allowed"}.get(exc.status_code, "http_error")
-    return _error(exc.status_code, code, str(exc.detail))
-
-
-@app.exception_handler(Exception)
-async def _unexpected(_: Request, exc: Exception) -> JSONResponse:
-    return _error(500, "internal_error", f"{type(exc).__name__}: the engine failed on this request")
+async def _rate_limited(request: Request, exc: RateLimited) -> JSONResponse:
+    return error_response(request, 429, exc.code, exc.message, {"Retry-After": str(exc.retry_after)})
 
 
 @app.get("/api/health", response_model=Health)
@@ -386,32 +369,32 @@ def get_replay(plan_id: str, svc: EngineService = Depends(get_service)) -> dict:
 
 
 @app.post("/api/voice/tts", response_model=TtsResponse, dependencies=[Depends(limit_voice)])
-def voice_tts(req: TtsRequest, voice: SarvamClient | None = Depends(get_voice_client),
+def voice_tts(req: TtsRequest, request: Request, voice: SarvamClient | None = Depends(get_voice_client),
               cache: AudioCache = Depends(get_audio_cache)):
     """Live text-to-speech; when there is no key or Sarvam cannot be reached, the pre-generated clip of exactly this
     sentence (flagged ``cached: true``), and only if there is one. Anything else is the honest 503."""
     try:
         return synthesise(req.text, req.language, voice, cache)
     except VoiceUnavailable as exc:
-        return _error(503, "voice_unavailable", str(exc))
+        return error_response(request, 503, "voice_unavailable", str(exc))
 
 
 @app.post("/api/voice/stt", response_model=SttResponse, dependencies=[Depends(limit_voice)])
 async def voice_stt(request: Request, voice: SarvamClient | None = Depends(get_voice_client)):
     if voice is None:
-        return _error(503, "voice_unavailable", VOICE_MESSAGE)
+        return error_response(request, 503, "voice_unavailable", VOICE_MESSAGE)
     try:
         fields, files = parse_multipart(request.headers.get("content-type", ""), await request.body())
     except ValueError as exc:
-        return _error(422, "invalid_request", str(exc))
+        return error_response(request, 422, "invalid_request", str(exc))
     upload = files.get("audio") or files.get("file")
     if upload is None:
-        return _error(422, "invalid_request", "multipart field 'audio' (the recording) is required")
+        return error_response(request, 422, "invalid_request", "multipart field 'audio' (the recording) is required")
     filename, content_type, data = upload
     try:
         text = await run_in_threadpool(voice.stt, data, filename, content_type, fields.get("language", "en-IN"))
     except VoiceUnavailable as exc:
-        return _error(503, "voice_unavailable", str(exc))
+        return error_response(request, 503, "voice_unavailable", str(exc))
     return {"text": text, "soc_pct": parse_soc_percent(text)}
 
 
@@ -445,35 +428,35 @@ async def voice_ride_check(request: Request, svc: EngineService = Depends(get_se
     is_json = content_type.startswith("application/json")
     body = await read_body_limited(request, MAX_CONFIRM_JSON_BYTES if is_json else MAX_RECORDING_BYTES + MULTIPART_OVERHEAD_BYTES)
     if body is None:
-        return _error(413, "payload_too_large", f"the request is larger than this endpoint accepts "
+        return error_response(request, 413, "payload_too_large", f"the request is larger than this endpoint accepts "
                                                 f"({MAX_RECORDING_BYTES} bytes of audio, one sentence under 30 s)")
     if is_json:
         try:
             confirm = VoiceRideConfirm.model_validate_json(body)
         except ValidationError as exc:
-            return _error(422, "invalid_request", _validation_detail(exc))
+            return error_response(request, 422, "invalid_request", _validation_detail(exc))
         return await run_in_threadpool(decide_stage, svc, voice, cache, confirm)
 
     if voice is None:
-        return _error(503, "voice_unavailable", VOICE_MESSAGE)
+        return error_response(request, 503, "voice_unavailable", VOICE_MESSAGE)
     try:
         fields, files = await run_in_threadpool(parse_multipart, content_type, body)  # not on the event loop
     except ValueError as exc:
-        return _error(422, "invalid_request", str(exc))
+        return error_response(request, 422, "invalid_request", str(exc))
     upload = files.get("audio") or files.get("file")
     if upload is None:
-        return _error(422, "invalid_request", "multipart field 'audio' (the recording) is required")
+        return error_response(request, 422, "invalid_request", "multipart field 'audio' (the recording) is required")
     filename, audio_type, audio = upload
     if not audio or len(audio) > MAX_RECORDING_BYTES:
-        return _error(422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
+        return error_response(request, 422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
     language = fields.get("language", "unknown")
     if not LANGUAGE_FIELD.fullmatch(language):
-        return _error(422, "invalid_request", "language must be 'unknown' or a code like hi-IN")
+        return error_response(request, 422, "invalid_request", "language must be 'unknown' or a code like hi-IN")
     speak = fields.get("speak", "1").strip().lower() not in {"0", "false", "no"}
     try:
         return await run_in_threadpool(hear_stage, voice, cache, audio, filename, audio_type, language, speak)
     except VoiceUnavailable as exc:
-        return _error(503, "voice_unavailable", str(exc))
+        return error_response(request, 503, "voice_unavailable", str(exc))
 
 
 @app.post("/api/voice/plan", response_model=VoicePlanHeard | VoicePlanDecided, dependencies=[Depends(limit_voice)])
@@ -487,7 +470,7 @@ async def voice_plan(request: Request, svc: EngineService = Depends(get_service)
     is_json = content_type.startswith("application/json")
     body = await read_body_limited(request, MAX_CONFIRM_JSON_BYTES if is_json else MAX_RECORDING_BYTES + MULTIPART_OVERHEAD_BYTES)
     if body is None:
-        return _error(413, "payload_too_large", f"the request is larger than this endpoint accepts "
+        return error_response(request, 413, "payload_too_large", f"the request is larger than this endpoint accepts "
                                                 f"({MAX_RECORDING_BYTES} bytes of audio, one sentence under 30 s)")
     if is_json:
         try:
@@ -497,28 +480,28 @@ async def voice_plan(request: Request, svc: EngineService = Depends(get_service)
                 return await run_in_threadpool(decide_plan_stage, svc, voice, cache, confirm.model_dump())
             text = VoicePlanText.model_validate(data)
         except ValidationError as exc:
-            return _error(422, "invalid_request", _validation_detail(exc))
+            return error_response(request, 422, "invalid_request", _validation_detail(exc))
         except ValueError:
-            return _error(422, "invalid_request", "the body is not valid JSON")
+            return error_response(request, 422, "invalid_request", "the body is not valid JSON")
         position = {"lat": text.lat, "lon": text.lon} if text.lat is not None and text.lon is not None else None
         return await run_in_threadpool(lambda: hear_plan_stage(
             svc, voice, cache, transcript=text.transcript, language=text.language, speak=text.speak,
             position=position, vehicle_hint=text.vehicle_id))
     if voice is None:
-        return _error(503, "voice_unavailable", VOICE_MESSAGE)
+        return error_response(request, 503, "voice_unavailable", VOICE_MESSAGE)
     try:
         fields, files = await run_in_threadpool(parse_multipart, content_type, body)
     except ValueError as exc:
-        return _error(422, "invalid_request", str(exc))
+        return error_response(request, 422, "invalid_request", str(exc))
     upload = files.get("audio") or files.get("file")
     if upload is None:
-        return _error(422, "invalid_request", "multipart field 'audio' (the recording) is required")
+        return error_response(request, 422, "invalid_request", "multipart field 'audio' (the recording) is required")
     filename, audio_type, audio = upload
     if not audio or len(audio) > MAX_RECORDING_BYTES:
-        return _error(422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
+        return error_response(request, 422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
     language = fields.get("language", "unknown")
     if not LANGUAGE_FIELD.fullmatch(language):
-        return _error(422, "invalid_request", "language must be 'unknown' or a code like hi-IN")
+        return error_response(request, 422, "invalid_request", "language must be 'unknown' or a code like hi-IN")
     speak = fields.get("speak", "1").strip().lower() not in {"0", "false", "no"}
     try:
         lat, lon = float(fields["lat"]), float(fields["lon"])
@@ -531,7 +514,7 @@ async def voice_plan(request: Request, svc: EngineService = Depends(get_service)
             svc, voice, cache, transcript=None, language=language, speak=speak, position=position, vehicle_hint=hint,
             audio=audio, filename=filename, content_type=audio_type))
     except VoiceUnavailable as exc:
-        return _error(503, "voice_unavailable", str(exc))
+        return error_response(request, 503, "voice_unavailable", str(exc))
 
 
 @app.post("/api/lab/voice-sample", dependencies=[Depends(limit_voice)])
@@ -542,22 +525,22 @@ async def lab_voice_sample(request: Request, svc: EngineService = Depends(get_se
     (transcript and scores only; never audio, a name or an address). Off unless the operator sets ``VERITY_LAB_MODE=1`` and
     ``VERITY_LAB_TOKEN``; every call must carry that token in ``X-Lab-Token``."""
     if not lab_enabled():
-        return _error(403, "lab_disabled", "The voice lab is switched off on this server (VERITY_LAB_MODE and VERITY_LAB_TOKEN).")
+        return error_response(request, 403, "lab_disabled", "The voice lab is switched off on this server (VERITY_LAB_MODE and VERITY_LAB_TOKEN).")
     if not token_ok(request.headers.get("x-lab-token")):
-        return _error(403, "lab_token_invalid", "Send the lab token in the X-Lab-Token header.")
+        return error_response(request, 403, "lab_token_invalid", "Send the lab token in the X-Lab-Token header.")
     body = await read_body_limited(request, MAX_RECORDING_BYTES + MULTIPART_OVERHEAD_BYTES)
     if body is None:
-        return _error(413, "payload_too_large", f"the request is larger than this endpoint accepts ({MAX_RECORDING_BYTES} bytes of audio)")
+        return error_response(request, 413, "payload_too_large", f"the request is larger than this endpoint accepts ({MAX_RECORDING_BYTES} bytes of audio)")
     try:
         fields, files = await run_in_threadpool(parse_multipart, request.headers.get("content-type", ""), body)
     except ValueError as exc:
-        return _error(422, "invalid_request", str(exc))
+        return error_response(request, 422, "invalid_request", str(exc))
     upload = files.get("audio") or files.get("file")
     if upload is None:
-        return _error(422, "invalid_request", "multipart field 'audio' (the recording) is required")
+        return error_response(request, 422, "invalid_request", "multipart field 'audio' (the recording) is required")
     filename, audio_type, audio = upload
     if not audio or len(audio) > MAX_RECORDING_BYTES:
-        return _error(422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
+        return error_response(request, 422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
     form = validate_lab_form(fields, {c.id for c in svc.chargers})
     if form["compare"]:  # a comparison is five paid calls: charge the voice budget five hits, not one (limit_voice charged the first)
         for _ in range(4):
@@ -565,11 +548,11 @@ async def lab_voice_sample(request: Request, svc: EngineService = Depends(get_se
             if retry_after is not None:
                 raise RateLimited(retry_after)
     if voice is None:
-        return _error(503, "voice_unavailable", VOICE_MESSAGE)
+        return error_response(request, 503, "voice_unavailable", VOICE_MESSAGE)
     try:
         return await run_in_threadpool(capture_stage, svc, voice, form, audio, filename, audio_type)
     except VoiceUnavailable as exc:
-        return _error(503, "voice_unavailable", str(exc))
+        return error_response(request, 503, "voice_unavailable", str(exc))
 
 
 @app.post("/api/voice/report", response_model=VoiceReportHeard, dependencies=[Depends(limit_voice)])
@@ -582,37 +565,37 @@ async def voice_report(request: Request, svc: EngineService = Depends(get_servic
     is_json = content_type.startswith("application/json")
     body = await read_body_limited(request, MAX_CONFIRM_JSON_BYTES if is_json else MAX_RECORDING_BYTES + MULTIPART_OVERHEAD_BYTES)
     if body is None:
-        return _error(413, "payload_too_large", f"the request is larger than this endpoint accepts "
+        return error_response(request, 413, "payload_too_large", f"the request is larger than this endpoint accepts "
                                                 f"({MAX_RECORDING_BYTES} bytes of audio, one sentence under 30 s)")
     if is_json:
         try:
             text = VoiceReportText.model_validate_json(body)
         except ValidationError as exc:
-            return _error(422, "invalid_request", _validation_detail(exc))
+            return error_response(request, 422, "invalid_request", _validation_detail(exc))
         return await run_in_threadpool(lambda: hear_report_stage(svc, voice, cache, transcript=text.transcript,
                                                                  language=text.language, speak=text.speak))
     if voice is None:
-        return _error(503, "voice_unavailable", VOICE_MESSAGE)
+        return error_response(request, 503, "voice_unavailable", VOICE_MESSAGE)
     try:
         fields, files = await run_in_threadpool(parse_multipart, content_type, body)
     except ValueError as exc:
-        return _error(422, "invalid_request", str(exc))
+        return error_response(request, 422, "invalid_request", str(exc))
     upload = files.get("audio") or files.get("file")
     if upload is None:
-        return _error(422, "invalid_request", "multipart field 'audio' (the recording) is required")
+        return error_response(request, 422, "invalid_request", "multipart field 'audio' (the recording) is required")
     filename, audio_type, audio = upload
     if not audio or len(audio) > MAX_RECORDING_BYTES:
-        return _error(422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
+        return error_response(request, 422, "invalid_request", f"the recording must be between 1 byte and {MAX_RECORDING_BYTES} bytes")
     language = fields.get("language", "unknown")
     if not LANGUAGE_FIELD.fullmatch(language):
-        return _error(422, "invalid_request", "language must be 'unknown' or a code like hi-IN")
+        return error_response(request, 422, "invalid_request", "language must be 'unknown' or a code like hi-IN")
     speak = fields.get("speak", "1").strip().lower() not in {"0", "false", "no"}
     try:
         return await run_in_threadpool(lambda: hear_report_stage(svc, voice, cache, transcript=None, audio=audio,
                                                                  filename=filename, content_type=audio_type,
                                                                  language=language, speak=speak))
     except VoiceUnavailable as exc:
-        return _error(503, "voice_unavailable", str(exc))
+        return error_response(request, 503, "voice_unavailable", str(exc))
 
 
 @app.post("/api/voice/report/confirm", response_model=VoiceReportDecided,
