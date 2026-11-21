@@ -5,12 +5,15 @@ The repo's own ``engine/`` goes first on the import path so ``verity`` resolves 
 """
 
 import mimetypes
+import os
+import re
 import sys
 from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.types import Scope
 
 ROOT = Path(__file__).resolve().parent
 for entry in (ROOT / "engine", ROOT):
@@ -23,6 +26,31 @@ from api.main import app as api, lifespan  # noqa: E402
 app = FastAPI(openapi_url=None, lifespan=lifespan)
 mimetypes.add_type("image/webp", ".webp")
 mimetypes.add_type("font/woff2", ".woff2")
+
+
+# Vercel serves the browser API on this same origin. Permit just the configured
+# Supabase project for sign-in. Inline script hashes cover the three legacy HTML pages.
+def frontend_csp() -> str:
+    project = os.environ.get("SUPABASE_URL", "").rstrip("/")
+    connections = "'self'"
+    if re.fullmatch(r"https://[A-Za-z0-9.-]+(?::[0-9]{1,5})?", project):
+        connections += " " + project
+    return (
+        "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; "
+        "script-src 'self' 'sha256-Jwd4k1QAsafYuY52nZJOWTEDTc1DTKLLQBM1TIiE9iQ=' "
+        "'sha256-A7t06XADOxD5KB/lDBkghPjAZ+lhNoPsspbym8TWcUk=' "
+        "'sha256-LUB9ZwX709iWs4OwnDwUDixMoc4R5rYM0NcPb8UzH7I='; "
+        "style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; "
+        "media-src 'self' data: blob:; connect-src " + connections
+    )
+
+
+class FrontendFiles(StaticFiles):
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        if response.headers.get("content-type", "").startswith("text/html"):
+            response.headers["Content-Security-Policy"] = frontend_csp()
+        return response
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
@@ -46,7 +74,7 @@ async def design_tokens() -> FileResponse:
     return FileResponse(ROOT / "design" / "tokens.css", media_type="text/css")
 
 
-app.mount("/web", StaticFiles(directory=ROOT / "web", html=True), name="web")
-app.mount("/logger", StaticFiles(directory=ROOT / "logger", html=True), name="logger")
+app.mount("/web", FrontendFiles(directory=ROOT / "web", html=True), name="web")
+app.mount("/logger", FrontendFiles(directory=ROOT / "logger", html=True), name="logger")
 app.mount("/data/audio_cache", StaticFiles(directory=ROOT / "data" / "audio_cache"), name="demo-audio")
 app.mount("/", api)

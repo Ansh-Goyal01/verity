@@ -51,12 +51,12 @@
     return `<section class="ticket-section"><h3>What changes the decision?</h3><div class="lever-options">${plan.levers.map(row => {
       const minutes = row.time_cost_min;
       const time = minutes < 0 ? `${-minutes} min saved` : minutes > 0 ? `${minutes} min longer` : 'Same journey time';
-      return `<details><summary>${esc(row.label)}</summary><p>${Math.round(row.new_confidence * 100)}% modeled confidence · ${time}</p></details>`;
+      return `<details><summary>${esc(row.label)}</summary><p>${window.VerityCore.pct(row.new_confidence)} modeled confidence · ${esc(plan.n_runs)} runs · ${time}</p></details>`;
     }).join('')}</div></section>`;
   }
   function slipHeader(plan, cab) {
     const [dispatchTitle, cabTitle, kind] = verdicts[plan.decision];
-    return `<div class="ticket-top"><span>${cab ? 'Ride decision' : 'Dispatch decision'}</span>${source()}</div>
+    return `<div class="ticket-top"><span>${cab ? 'Ride decision' : 'Dispatch decision'}${plan.is_simulated ? ' (simulated)' : ''}</span>${source()}</div>
       <div class="decision-title" data-tone="${kind}"><span class="status-rule"></span><h2 tabindex="-1">${cab ? cabTitle : dispatchTitle}</h2></div>
       <p class="ticket-reason">${esc(plan.reason || plan.refusal_reason)}</p>`;
   }
@@ -75,7 +75,8 @@
     const { plan } = trip;
     const arrival = plan.arrival_soc;
     const held = plan.decision === 'INSUFFICIENT_EVIDENCE';
-    result.innerHTML = slipHeader(plan, false) + `<dl class="ticket-facts">${fact('Trip confidence', plan.confidence_display)}
+    result.innerHTML = slipHeader(plan, false) + `<dl class="ticket-facts">${fact('Trip confidence', window.VerityCore.confidenceText(plan))}
+      ${plan.band_method ? fact('Arrival band', plan.band_method.name + (plan.band_method.n == null ? '' : ' · ' + plan.band_method.n + ' calibration trips')) : ''}
       ${fact('Target', Math.round(trip.request.target_confidence * 100) + '%')}
       ${held ? fact('Release', 'On hold') : fact('Arrival battery range', `${arrival.p10}–${arrival.p90}%`)}</dl>
       ${!held ? '<p class="ticket-note">The arrival range spans the middle 80% of simulated arrivals.</p>' : ''}
@@ -107,7 +108,7 @@
   function showRide(result, ride) {
     const after = ride.after_drop;
     const rate = ride.earning_rate;
-    result.innerHTML = slipHeader(ride, true) + `<dl class="ticket-facts">${fact('Ride confidence', ride.confidence_display)}
+    result.innerHTML = slipHeader(ride, true) + `<dl class="ticket-facts">${fact('Ride confidence', window.VerityCore.confidenceText(ride))}
       ${fact('Arrival at drop', ride.ride.drop_soc.p50 + '%')}${fact('Ride distance', ride.ride.distance_km + ' km')}</dl>` +
       (after?.charger ? `<section class="ticket-section"><h3>Charge after drop-off</h3>${chargerLink(after.charger.charger_id, after.charger.name)}
       <dl class="ticket-facts paired">${fact('Expected time lost', after.expected_lost_min + ' min')}${fact('Earnings opportunity', '₹' + after.expected_lost_rs)}</dl>
@@ -242,7 +243,7 @@
           ${alternate ? `<section class="ticket-section"><h3>Use this backup</h3>${chargerLink(alternate.charger_id, alternate.name)}</section>` : ''}
           <a class="text-link" href="#/workspace/evidence">Inspect the evidence</a>`;
       }
-      display('Ready to depart', trip.plan.reason, [['Vehicle', id], ['Starting battery', soc + '%'], ['Trip confidence', trip.plan.confidence_display]]);
+      display('Ready to depart', trip.plan.reason, [['Vehicle', id], ['Starting battery', soc + '%'], ['Trip confidence', window.VerityCore.confidenceText(trip.plan)]]);
       async function update(kind) {
         const turn = ++request;
         const liveHere = () => token === generation && turn === request;

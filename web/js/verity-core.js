@@ -6,12 +6,34 @@
   const DECISION_LABEL = { GO: 'GO', NO_GO: 'NO-GO', INSUFFICIENT_EVIDENCE: 'INSUFFICIENT EVIDENCE' };
   const isNum = v => typeof v === 'number' && Number.isFinite(v);
 
-  function pct(p) { return isNum(p) ? `${Math.round(p * 100)}%` : '—'; }
+  function pct(p) { return isNum(p) && p >= 0 && p <= 1 ? `${Math.round(p * 20) * 5}%` : '—'; }
+  function confidenceText(result) {
+    if (!isNum(result.confidence) || !Number.isInteger(result.n_runs) || result.n_runs < 1) return 'Unavailable';
+    const rounded = pct(result.confidence);
+    if (rounded === '—') return 'Unavailable';
+    const label = ['95%+', 'under 5%'].includes(result.confidence_display) ? result.confidence_display : rounded;
+    return label + ' · ' + result.n_runs.toLocaleString('en-IN') + ' runs';
+  }
   function decisionLabel(d) { return DECISION_LABEL[d] || String(d || '—'); }
   function decisionClass(d) { return d === 'NO_GO' ? 'nogo' : d === 'INSUFFICIENT_EVIDENCE' ? 'unknown' : 'go'; }
 
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  let hindiCatalog;
+  async function hindiStrings(group, offline) {
+    if (location.protocol === 'file:') return offline;
+    try {
+      if (!hindiCatalog) hindiCatalog = fetch('i18n/hi.json').then(response => {
+        if (!response.ok) throw new Error('Hindi catalog unavailable');
+        return response.json();
+      });
+      return (await hindiCatalog)[group] || offline;
+    } catch {
+      hindiCatalog = null;
+      return offline;
+    }
   }
 
   function fmtClock(seconds) {
@@ -110,7 +132,7 @@
     return { events: out, next: i };
   }
 
-  const api = { pct, decisionLabel, decisionClass, escapeHtml, fmtClock, fmtDuration, bingoAt, nearestPoint, haversineKm, cumulativeKm, pointAtKm, waterfall, chargerStats, dueEvents, isNum };
+  const api = { pct, confidenceText, hindiStrings, decisionLabel, decisionClass, escapeHtml, fmtClock, fmtDuration, bingoAt, nearestPoint, haversineKm, cumulativeKm, pointAtKm, waterfall, chargerStats, dueEvents, isNum };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.VerityCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

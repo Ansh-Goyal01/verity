@@ -540,6 +540,13 @@ lower end of that interval. Rows in the samples file that are not consented, non
 
 ## Changelog: contract change proposals and version notes
 
+### Proposed (pending engine review) — production route errors
+
+Keep the redacted production message and request ID. For route errors only, also return
+the public machine-readable `code` (`route_unavailable` or `route_too_long`), as v17
+already does for `offline`. Currently 503 and 422 have other causes, so the frontend
+can only offer general retry or input guidance when the code is absent.
+
 ### 2026-11-21 — v17: WP10 offline routes and health
 
 - **Health** adds `offline`, `cached_route_count` and `charger_count`. Existing

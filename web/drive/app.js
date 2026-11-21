@@ -47,7 +47,7 @@
   }
 
   function probability(value) {
-    return Math.round(value * 100) + '%';
+    return window.VerityCore.pct(value);
   }
 
   function pill(text, kind = 'neutral') {
@@ -80,7 +80,7 @@
     $('#hero-release').innerHTML =
       '<div class="release-cell release-route"><span class="eyebrow">Simulated trip · V12</span>' +
       '<strong>' + escapeHTML(routeName()) + '</strong></div>' +
-      '<div class="release-cell"><span class="eyebrow">Trip confidence</span><div class="release-confidence"><strong>' +
+      '<div class="release-cell"><span class="eyebrow">Trip confidence · ' + escapeHTML(flagship.n_runs) + ' runs</span><div class="release-confidence"><strong>' +
       escapeHTML(flagship.confidence_display) + '</strong>' + statusBadge(flagship) + '</div></div>' +
       '<div class="release-cell" title="Bingo Line at departure"><span class="eyebrow">Bingo Line</span><strong>' +
       flagship.bingo_line[0].bingo_soc_pct + '%</strong></div><span class="release-arrow" aria-hidden="true">↗</span>';
@@ -88,7 +88,7 @@
     $('#home-fleet').innerHTML = vehicleIds.map(id => {
       const release = data.releases[id];
       const [, tone, summary] = decision[release.decision];
-      const detail = release.refusal_reason ? 'Review the evidence' : release.confidence_display + ' trip confidence';
+      const detail = release.refusal_reason ? 'Review the evidence' : window.VerityCore.confidenceText(release) + ' trip confidence';
       return '<a class="fleet-choice" data-decision="' + tone + '" href="#/trip/intercity/' + id +
         '"><span class="fleet-id-row"><strong class="fleet-id">' + id + '</strong>' + statusBadge(release) +
         '</span><span class="fleet-lede">' + summary + '</span><span class="fleet-detail"><span>' +
@@ -141,7 +141,7 @@
     if (!index) return {
       ...reading, chapter: 0, status: 'Go', kind: 'go',
       metrics: [
-        ['Trip confidence', flagship.confidence_display],
+        ['Trip confidence', window.VerityCore.confidenceText(flagship)],
         ['Expected arrival', flagship.arrival_soc.p50 + '%'],
         ['Backup plan', 'Reachable', true]
       ]
@@ -260,7 +260,7 @@
     const ranked = [...release.alternates].sort((left, right) => right.p_works * right.p_reach - left.p_works * left.p_reach);
     const alternate = ranked[0];
     if (alternate) stops.push('<li><div><strong>' + escapeHTML(alternate.name) + '</strong><small>Backup · ' +
-      probability(alternate.p_reach) + ' reachable in simulation</small></div>' + pill('Backup', 'go') + '</li>');
+      probability(alternate.p_reach) + ' reachable in ' + escapeHTML(release.n_runs) + ' simulated runs</small></div>' + pill('Backup', 'go') + '</li>');
     return '<section class="work-card panel"><h2>Charging plan</h2><ul class="charge-list">' + stops.join('') + '</ul></section>';
   }
 
@@ -290,7 +290,7 @@
       '<section class="work-card panel release-card" aria-label="Release decision"><div class="release-top">' +
       '<span class="eyebrow">Release ' + escapeHTML(release.plan_id) + '</span>' + statusBadge(release) + '</div>' +
       '<div class="confidence">' + escapeHTML(release.confidence_display) + '</div>' +
-      '<div class="confidence-caption">Trip confidence <b>· ' + target + ' target</b></div>' +
+      '<div class="confidence-caption">Trip confidence · ' + escapeHTML(release.n_runs) + ' simulated runs <b>· ' + target + ' target</b></div>' +
       '<div class="confidence-rule ' + (release.decision === 'NO_GO' ? 'is-stop' : '') + '" aria-hidden="true"><span style="width:' +
       probability(release.confidence) + '"></span><i style="left:' + target + '"></i></div>' +
       '<p class="explanation">' + escapeHTML(release.reason.replace(/^(GO|NO_GO) because /, '').replace(/^./, ch => ch.toUpperCase())) + '</p>' +
@@ -322,7 +322,7 @@
       $$('[data-lever]', work).forEach(other => other.setAttribute('aria-pressed', other === button));
       const lever = release.levers[Number(button.dataset.lever)];
       $('#lever-result').innerHTML = '<p>What-if confidence <b>' + probability(lever.new_confidence) +
-        '</b> · ' + (lever.time_cost_min < 0 ? -lever.time_cost_min + ' min saved' : lever.time_cost_min + ' min added') + '</p>';
+        '</b> · ' + escapeHTML(release.n_runs) + ' simulated runs · ' + (lever.time_cost_min < 0 ? -lever.time_cost_min + ' min saved' : lever.time_cost_min + ' min added') + '</p>';
     }));
     refreshForecast();
   }

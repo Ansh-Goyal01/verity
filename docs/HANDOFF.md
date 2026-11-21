@@ -49,8 +49,7 @@ environment. Configure a TLS-verified connection for the deployed database. The 
 database role needs access to the private schema. Browser roles have no privileges there.
 
 Set `VERITY_ENV=production` and `VERITY_CORS_ORIGINS` to the frontend's exact HTTPS
-origin or comma-separated origins. The API sends a deny-by-default CSP. The frontend
-host still needs its own CSP with the agreed API and Supabase origins. The API redacts
+origin or comma-separated origins. The API sends a deny-by-default CSP. The Vercel entrypoint sends an HTML CSP that permits the same-origin API and the configured Supabase project. The API redacts
 share capability URLs from uvicorn’s access log. Redact these paths at the hosting
 proxy too.
 

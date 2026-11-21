@@ -123,10 +123,10 @@
 
   function setSource() {
     const el = $('#source'), src = API.dataSource(), sim = state.scenario?.is_simulated;
-    const text = { live: 'Live engine', snapshot: 'Engine snapshot', mock: 'Illustrative mock' }[src] + (sim ? ' · Simulated' : '');
+    const text = { live: 'Live engine', snapshot: 'Engine snapshot', unavailable: 'Engine snapshot unavailable' }[src] + (sim ? ' · Simulated' : '');
     el.className = 'source ' + (src === 'live' ? 'live' : '');
     el.querySelector('span').textContent = text;
-    el.title = src === 'live' ? 'Connected to the engine API' : src === 'snapshot' ? 'Saved real engine outputs from docs/api_examples (the simulated demo scenario). Add ?api=http://127.0.0.1:8000 to use the live engine.' : 'Hand-written illustrative data, not engine output.';
+    el.title = src === 'live' ? 'Connected to the engine API' : src === 'snapshot' ? 'Saved real engine outputs from docs/api_examples (the simulated demo scenario). Add ?api=http://127.0.0.1:8000 to use the live engine.' : 'The engine snapshot is unavailable.';
   }
   function setTicker() {
     const b = state.scenario.booking, n = state.scenario.vehicles.length;
@@ -146,7 +146,7 @@
       <div class="doc-route"><span>${esc(b.origin.name)}</span><span class="arrow"></span><span>${esc(b.destination.name)}</span></div>
       <div class="doc-stamp">${stamp(p.decision, 'big' + (animate && !REDUCED ? ' slam' : ''))}</div>
       <div class="doc-grid">
-        <div><small>Confidence</small><b>${esc(p.confidence_display || pct(p.confidence))}</b></div>
+        <div><small>Confidence</small><b>${esc(window.VerityCore.confidenceText(p))}</b></div>
         <div><small>Target</small><b>${pct(b.target_confidence)}</b></div>
         <div><small>Arrival p50</small><b>${isNum(p.arrival_soc?.p50) ? p.arrival_soc.p50 + '%' : '—'}</b></div>
         <div><small>Charging stops</small><b>${p.stops?.length ?? '—'}</b></div>
@@ -182,7 +182,7 @@
       return `<button class="strip ${cls}" data-go="${esc(id)}">
         <div class="strip-head"><div><div class="strip-id">${esc(id)}</div><div class="strip-label">${esc(v.label)} · ${esc(String(v.model_class || '').replace(/_/g, ' '))}</div></div>${stamp(p.decision)}</div>
         <div class="strip-rows">
-          <div><small>Confidence</small><b>${esc(p.confidence_display || pct(p.confidence))}</b></div>
+          <div><small>Confidence</small><b>${esc(window.VerityCore.confidenceText(p))}</b></div>
           <div><small>Arrival p10–p90</small><b>${isNum(p.arrival_soc?.p10) ? `${p.arrival_soc.p10}–${p.arrival_soc.p90}%` : '—'}</b></div>
           <div><small>Start battery</small><b>${isNum(v.soc_pct) ? v.soc_pct + '%' : '—'}</b></div>
           <div><small>Trips calibrated</small><b>${v.trips_calibrated ?? '—'}</b></div>
@@ -223,7 +223,7 @@
       const p = plan(id);
       return `<button class="rcard ${C.decisionClass(p.decision)}" data-id="${esc(id)}" aria-pressed="${id === state.selected}">
         <div class="rcard-head"><span class="rcard-id">${esc(id)}</span>${stamp(p.decision)}</div>
-        <div class="rcard-meta"><span>Conf. <b>${esc(p.confidence_display || pct(p.confidence))}</b></span><span>Arr. <b>${isNum(p.arrival_soc?.p50) ? p.arrival_soc.p50 + '%' : '—'}</b></span><span>SoC <b>${vehicle(id).soc_pct}%</b></span></div>
+        <div class="rcard-meta"><span>Conf. <b>${esc(window.VerityCore.confidenceText(p))}</b></span><span>Arr. <b>${isNum(p.arrival_soc?.p50) ? p.arrival_soc.p50 + '%' : '—'}</b></span><span>SoC <b>${vehicle(id).soc_pct}%</b></span></div>
       </button>`;
     }).join('');
     $$('#rail .rcard').forEach(b => b.onclick = () => go('dispatch', b.dataset.id));
@@ -235,11 +235,11 @@
     $('#release').className = 'release ' + cls;
     $('#release').innerHTML = `
       <div class="rel-top">
-        <div class="gauge" style="--c:var(--${cls})" role="img" aria-label="Confidence ${esc(p.confidence_display || pct(p.confidence))}, target ${pct(b.target_confidence)}">
+        <div class="gauge" style="--c:var(--${cls})" role="img" aria-label="Confidence ${esc(window.VerityCore.confidenceText(p))}, target ${pct(b.target_confidence)}">
           <svg viewBox="0 0 120 120"><circle class="g-bg" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
           <circle class="g-val" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-dasharray="${circ}" stroke-dashoffset="${REDUCED ? circ * (1 - conf) : circ}" data-off="${circ * (1 - conf)}"/>
           <circle class="g-tgt" cx="60" cy="60" r="52" fill="none" stroke-width="14" stroke-dasharray="2 ${circ}" stroke-dashoffset="${-circ * b.target_confidence + 1}"/></svg>
-          <div class="gauge-txt"><b>${esc(p.confidence_display || pct(p.confidence))}</b><small>CONFIDENCE</small></div>
+          <div class="gauge-txt"><b>${esc(window.VerityCore.confidenceText(p))}</b><small>CONFIDENCE</small></div>
         </div>
         <div class="rel-title"><small>DISPATCH RELEASE · ${esc(p.plan_id)}</small><h2>${esc(id)} · ${esc(v.label)} — ${esc(b.origin.name)} to ${esc(b.destination.name)}</h2><p>${esc(v.health_note)} · ${v.trips_calibrated} calibrated trips · usable ${isNum(v.usable_kwh_estimate?.p50) ? v.usable_kwh_estimate.p50 + ' kWh (p10 ' + v.usable_kwh_estimate.p10 + ', p90 ' + v.usable_kwh_estimate.p90 + ')' : '—'}</p></div>
         ${stamp(p.decision, 'big' + (REDUCED ? '' : ' slam'))}
@@ -282,7 +282,7 @@
       const at = C.pointAtKm(pts, cum, p.route.distance_km, p.point_of_no_return_km);
       if (at) L.circleMarker(at, { radius: 7, color: tok('--nogo'), weight: 3, fillColor: tok('--bg'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Point of no return</span><br><b>km ${round1(p.point_of_no_return_km)}</b><br>Past here, turning back is no longer the safe option.`).addTo(m.layer);
     }
-    (p.alternates || []).forEach(a => L.circleMarker([a.lat, a.lon], { radius: 9, color: tok('--unknown'), weight: 3, fillColor: tok('--bg'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Alternate · ${esc(a.charger_id)}</span><br><b>${esc(a.name)}</b><br>${pct(a.p_reach)} chance to reach · ${pct(a.p_works)} chance it works`).addTo(m.layer));
+    (p.alternates || []).forEach(a => L.circleMarker([a.lat, a.lon], { radius: 9, color: tok('--unknown'), weight: 3, fillColor: tok('--bg'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Alternate · ${esc(a.charger_id)}</span><br><b>${esc(a.name)}</b><br>${pct(a.p_reach)} chance to reach (${esc(p.n_runs)} runs) · ${pct(a.p_works)} chance it works (${esc(a.trust?.n_reports ?? '—')} reports)`).addTo(m.layer));
     (p.stops || []).forEach((s, i) => L.circleMarker([s.lat, s.lon], { radius: 11, color: tok('--bg'), weight: 3, fillColor: tok('--accent'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Planned stop ${i + 1} · km ${round1(s.km_along_route)}</span><br><b>${esc(s.name)}</b><br>${pct(s.p_works)} chance it works · ${s.if_needed ? 'top up only if needed' : 'charge ' + s.charge_minutes + ' min'}<br>${s.evidence?.n_reports ?? '—'} reports · trust ${esc(s.evidence?.trust_level || 'unknown')}${s.trust?.basis ? ' · ' + esc(s.trust.basis) : ''}`).addTo(m.layer));
     endpointMarkers(m, state.scenario.booking);
     $('#d-legend').innerHTML = `<span><i style="background:var(--accent)"></i>Planned stop</span><span><i class="ring" style="border-color:var(--unknown)"></i>Alternate</span><span><i class="ring" style="border-color:var(--nogo)"></i>Point of no return</span>` + ['high', 'medium', 'low', 'unknown'].map(t => `<span><i style="background:${trustColor(t)};opacity:.7"></i>${t} trust</span>`).join('');
@@ -297,7 +297,7 @@
     items.sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
     const alts = p.alternates || [];
     $('#d-plan').innerHTML = `<ol class="plan">${items.map(it => `<li><span class="pin ${it.cls}"></span><div class="p-km">KM ${round1(it.km)}${it.label ? ' · ' + it.label.toUpperCase() : ''}</div><h4>${esc(it.title)}</h4><p>${esc(it.body)}</p>${it.tags.length ? `<div class="p-tags">${it.tags.join('')}</div>` : ''}</li>`).join('')}</ol>`
-      + (alts.length ? `<div class="alts"><h5>Backup chargers if a stop fails</h5>${alts.map(a => `<div class="alt"><div>${esc(a.name)}</div><span>reach ${pct(a.p_reach)}</span><span>works ${pct(a.p_works)}</span></div>`).join('')}</div>` : '<p class="note">No alternates were returned for this plan.</p>');
+      + (alts.length ? `<div class="alts"><h5>Backup chargers if a stop fails</h5>${alts.map(a => `<div class="alt"><div>${esc(a.name)}</div><span>reach ${pct(a.p_reach)} · ${esc(p.n_runs)} runs</span><span>works ${pct(a.p_works)} · ${esc(a.trust?.n_reports ?? '—')} reports</span></div>`).join('')}</div>` : '<p class="note">No alternates were returned for this plan.</p>');
   }
 
   function drawBingo(p) {
@@ -373,7 +373,7 @@
     const el = $('#d-levers'), lv = p.levers || [];
     if (!lv.length) { el.innerHTML = '<p class="state">The engine returned no levers for this plan.</p>'; return; }
     el.innerHTML = lv.map((l, i) => `<button class="lever" data-i="${i}" aria-pressed="false"><span class="lever-label">${esc(l.label)}</span><span class="lever-cost">${isNum(l.time_cost_min) ? (l.time_cost_min > 0 ? '+' : '') + l.time_cost_min + ' min' : '—'}</span>
-      <span class="lever-bar"><span>${esc(p.confidence_display || pct(p.confidence))}</span><span class="lever-track"><span class="new" style="width:${(l.new_confidence || 0) * 100}%"></span><span class="now" style="width:${(p.confidence || 0) * 100}%"></span></span><span style="color:var(--go)">${pct(l.new_confidence)}</span></span></button>`).join('')
+      <span class="lever-bar"><span>${esc(window.VerityCore.confidenceText(p))}</span><span class="lever-track"><span class="new" style="width:${(l.new_confidence || 0) * 100}%"></span><span class="now" style="width:${(p.confidence || 0) * 100}%"></span></span><span style="color:var(--go)">${pct(l.new_confidence)}</span></span></button>`).join('')
       + '<p class="note">Tap a lever to compare the confidence the engine computed for it with the current plan.</p>';
     $$('.lever', el).forEach(b => b.onclick = () => { const on = b.getAttribute('aria-pressed') !== 'true'; $$('.lever', el).forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', String(on)); });
   }
@@ -386,7 +386,7 @@
   /* ================================================================== 03 LIVE TRIP */
   const I18N = {
     en: { brand: 'VERITY · DRIVER', battery: 'BATTERY', toGo: 'KM TO GO', above: 'ABOVE BINGO', below: 'BELOW BINGO', ponr: 'NO RETURN', next: 'NEXT', ready: 'Press Play to start the recorded trip.', planMsg: 'Plan: charge at {name}, km {km}.', reported: 'Charger reported {status}: {name}', divert: 'DIVERT NOW', slow: 'SLOW DOWN', understood: 'Understood', safety: 'Use only when safely stopped, or let a passenger do it.', divertMessage: 'Divert to {name}. Planned charger reported broken.', noPlan: 'No charging stop planned.', done: 'Replay complete.' },
-    hi: { brand: 'VERITY · ड्राइवर', battery: 'बैटरी', toGo: 'बाकी किमी', above: 'बिंगो से ऊपर', below: 'बिंगो से नीचे', ponr: 'वापसी सीमा', next: 'अगला', ready: 'रिकॉर्ड की गई यात्रा शुरू करने के लिए Play दबाएँ।', planMsg: 'योजना: {name} पर चार्ज करें, किमी {km}।', reported: 'चार्जर की रिपोर्ट ({status}): {name}', divert: 'अभी रास्ता बदलें', slow: 'धीमे चलें', understood: 'समझ गए', safety: 'आवाज़ या स्क्रीन का उपयोग सुरक्षित जगह रुकने के बाद ही करें।', divertMessage: '{name} की ओर मुड़ें। नियोजित चार्जर खराब बताया गया है।', noPlan: 'कोई चार्जिंग पड़ाव नियोजित नहीं है।', done: 'रीप्ले पूरा हुआ।' },
+    hi: { brand: 'VERITY · ड्राइवर', battery: 'बैटरी', toGo: 'बाकी किमी', above: 'बिंगो से ऊपर', below: 'बिंगो से नीचे', ponr: 'वापसी सीमा', next: 'अगला', ready: 'रिकॉर्ड की गई यात्रा शुरू करने के लिए “Play” दबाएँ।', planMsg: 'योजना: {name} पर चार्ज करें, किमी {km}।', reported: 'चार्जर की रिपोर्ट ({status}): {name}', divert: 'अभी रास्ता बदलें', slow: 'धीमे चलें', understood: 'समझ गए', safety: 'आवाज़ या स्क्रीन का उपयोग सुरक्षित जगह रुकने के बाद ही करें, या किसी यात्री से करवाएँ।', divertMessage: '{name} की ओर मुड़ें। नियोजित चार्जर खराब बताया गया है।', noPlan: 'कोई चार्जिंग पड़ाव नियोजित नहीं है।', done: 'रीप्ले पूरा हुआ।' },
   };
   const SLOW_HI = 'नियोजित चार्जर खराब बताया गया है और कोई दूसरा चार्जर भरोसे से पहुँच में नहीं है: धीमे चलें और ऊर्जा बचाएँ।';
   const trip = (() => {
@@ -424,7 +424,7 @@
         t.pts = routePoints(p); t.cum = C.cumulativeKm(t.pts);
         if (t.pts.length > 1) {
           m.bounds = L.latLngBounds(t.pts); drawRoute(m, t.pts);
-          (p.alternates || []).forEach(a => L.circleMarker([a.lat, a.lon], { radius: 8, color: tok('--unknown'), weight: 3, fillColor: tok('--bg'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Alternate</span><br><b>${esc(a.name)}</b><br>${pct(a.p_works)} works`).addTo(m.layer));
+          (p.alternates || []).forEach(a => L.circleMarker([a.lat, a.lon], { radius: 8, color: tok('--unknown'), weight: 3, fillColor: tok('--bg'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Alternate</span><br><b>${esc(a.name)}</b><br>${pct(a.p_works)} works · ${esc(a.trust?.n_reports ?? '—')} reports`).addTo(m.layer));
           (p.stops || []).forEach(s => L.circleMarker([s.lat, s.lon], { radius: 10, color: tok('--bg'), weight: 3, fillColor: tok('--accent'), fillOpacity: 1 }).bindTooltip(`<span class="tt-k">Planned stop · km ${round1(s.km_along_route)}</span><br><b>${esc(s.name)}</b>`).addTo(m.layer));
           endpointMarkers(m, state.scenario.booking);
           t.car = L.marker(t.pts[0], { icon: L.divIcon({ className: '', html: '<div class="car-icon"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }), zIndexOffset: 1000, keyboard: false }).bindTooltip('Vehicle position at the last reported km').addTo(m.layer);
@@ -506,7 +506,11 @@
         <div class="ps-safe">${tr('safety')}</div>
         ${t.alert ? `<div class="ps-alert ${t.alert.action === 'SLOW_DOWN' ? 'slow' : ''}" role="alert"><span class="badge">${t.alert.action === 'DIVERT' ? tr('divert') : tr('slow')}</span><h3>${t.alert.action === 'DIVERT' ? tr('divert') : tr('slow')}</h3><p>${esc(t.alert.action === 'DIVERT' && t.alert.divert_to ? tr('divertMessage', { name: t.alert.divert_to.name }) : t.lang === 'hi' ? SLOW_HI : t.alert.message)}</p>${t.alert.divert_to ? `<small>${pct(t.alert.divert_to.p_works)} chance it works</small>` : ''}<button type="button" data-dismiss>${tr('understood')}</button></div>` : ''}`;
       const sc = $('#phone-screen');
-      sc.querySelector('[data-lang]').onclick = () => { t.lang = t.lang === 'en' ? 'hi' : 'en'; paint(); };
+      sc.querySelector('[data-lang]').onclick = async () => {
+        t.lang = t.lang === 'en' ? 'hi' : 'en';
+        if (t.lang === 'hi') I18N.hi = await C.hindiStrings('replay', I18N.hi);
+        paint();
+      };
       const d = sc.querySelector('[data-dismiss]'); if (d) d.onclick = () => { t.alert = null; paint(); };
     }
     return { render, pause, play: () => { if (state.active !== 'trip') go('trip'); requestAnimationFrame(() => { if (state.active === 'trip' && t.id && !t.running) play(); }); } };
