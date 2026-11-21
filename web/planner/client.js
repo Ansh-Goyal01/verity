@@ -75,8 +75,9 @@ async function accessToken() {
   if (!session) throw new Error('Your session has ended. Sign in again.');
   return session.access_token;
 }
-export async function api(path, {method = 'GET', body, private: authenticated = false} = {}) {
+export async function api(path, {method = 'GET', body, private: authenticated = false, writeKey} = {}) {
   const headers = {};
+  if (writeKey) headers['Idempotency-Key'] = writeKey;
   const multipart = body instanceof FormData;
   if (body !== undefined && !multipart) headers['Content-Type'] = 'application/json';
   const token = authenticated ? await accessToken() : null;
@@ -92,3 +93,14 @@ export async function api(path, {method = 'GET', body, private: authenticated = 
   }
 }
 export const accountApi = (path, options = {}) => api(path, {...options, private: true});
+
+// Keep a retry tied to its original account and operation, including across a page reload.
+export function keyedWrite(user, path, body) {
+  const slot = JSON.stringify(['verity.write',base,user,path,body]);
+  let key = sessionStorage.getItem(slot);
+  if (!key) { key = crypto.randomUUID(); sessionStorage.setItem(slot,key); }
+  return accountApi(path,{method:'POST',body,writeKey:key}).then(result => {
+    if (sessionStorage.getItem(slot) === key) sessionStorage.removeItem(slot);
+    return result;
+  });
+}
