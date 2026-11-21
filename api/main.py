@@ -25,6 +25,7 @@ from verity.voice import SarvamClient, VoiceUnavailable, parse_multipart, parse_
 
 from verity.paths import RESULTS_DIR
 
+from .auth import require_role
 from .ledger import build_ledger
 from .limits import RateLimiter, client_ip, parse_origins, positive_int, rate_key
 from .voice_plan import decide_plan_stage, hear_plan_stage
@@ -349,15 +350,17 @@ def require_demo() -> None:
         raise ApiError(403, "demo_disabled", "The ring-attack demo is switched off on this server (VERITY_DEMO=1).")
 
 
-@app.post("/api/demo/ring-attack", response_model=RingAttackResponse, dependencies=[Depends(require_demo)])
+@app.post("/api/demo/ring-attack", response_model=RingAttackResponse,
+          dependencies=[Depends(require_demo), Depends(require_role("admin"))])
 def post_ring_attack(req: RingAttackRequest, svc: EngineService = Depends(get_service)) -> dict:
-    """WP8a: N SIMULATED sources report one charger broken within minutes; the graph finds the ring, trust holds."""
+    """WP8a (admin only): N SIMULATED sources report one charger broken within minutes; the graph finds the ring, trust holds."""
     return ring_attack(svc, req.charger_id, req.n_sources)
 
 
-@app.post("/api/demo/ring-attack/reset", response_model=RingResetResponse, dependencies=[Depends(require_demo)])
+@app.post("/api/demo/ring-attack/reset", response_model=RingResetResponse,
+          dependencies=[Depends(require_demo), Depends(require_role("admin"))])
 def post_ring_reset(svc: EngineService = Depends(get_service)) -> dict:
-    """WP8a: remove every report (and source) the attack added."""
+    """WP8a (admin only): remove every report (and source) the attack added."""
     return ring_reset(svc)
 
 

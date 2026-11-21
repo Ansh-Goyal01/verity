@@ -59,3 +59,10 @@ After receiving the approved English JSON file, set `SARVAM_API_KEY` in a privat
 file and run `uv run --env-file <private-env-file> python scripts/translate_ui.py <english-json>`.
 Review `web/i18n/hi.json` before merging it. The script checks placeholder counts and
 writes the file only after every translation succeeds. [Sarvam translation API](https://docs.sarvam.ai/api-reference/text/translate-text)
+
+## From Claude Code to Astra
+
+- **Ring-attack endpoints are admin-only (contract v18).** `web/planner/graph.js` calls `POST /api/demo/ring-attack`
+  and `/reset`. Send the signed-in admin's bearer token and show a plain message on 401 (sign in) and 403 (admin
+  account needed, or demo switched off with code `demo_disabled`). Local runs without Supabase get 503, so
+  the attack button should say it needs the deployed site and an admin sign-in.
