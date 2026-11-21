@@ -96,3 +96,28 @@ test('fleet booking sends the entered pickup batteries and leaves depot routing 
   data.set('fleetMode','demo');
   assert.deepEqual(bookingRequest(journey,data),journey);
 });
+
+test('an uncertain report or repair retries with its original request key', async t => {
+  const values = new Map([['verity.session:https://verity.example',JSON.stringify({
+    access_token:'test-session',expires_at:Date.now()/1000+600})]]);
+  global.sessionStorage = {getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};
+  const {keyedWrite} = await import('../web/planner/client.js?retry-test');
+  const sent = [];
+  t.mock.method(global,'fetch',async (url,request)=>{
+    sent.push(request.headers['Idempotency-Key']);
+    if (sent.length % 2) throw new Error('Connection lost after submission');
+    return Response.json({saved:true});
+  });
+  try {
+    for (const path of ['/reports/quick','/cpo/chargers/test/fixed']) {
+      const body = path.includes('quick') ? {charger_id:'test',status:'working'} : undefined;
+      await assert.rejects(keyedWrite('owner',path,body), /reach the service/);
+      assert.deepEqual(await keyedWrite('owner',path,body),{saved:true});
+    }
+    assert.ok(sent.every(Boolean));
+    assert.equal(sent[0],sent[1]);
+    assert.equal(sent[2],sent[3]);
+    assert.notEqual(sent[0],sent[2]);
+    assert.equal(values.size,1);
+  } finally { delete global.sessionStorage; }
+});

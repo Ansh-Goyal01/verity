@@ -16,3 +16,13 @@ def graph_query(name: str, *args: Any) -> list[dict]:
         return getattr(graph, name)(*args) or []
     except (DriverError, Neo4jError, OSError):
         raise HTTPException(503, "Charger graph is unavailable.") from None
+
+
+def sync_saved_reports() -> None:
+    from api.main import get_service
+    from api.operator_graph import restore_reports
+
+    try:
+        restore_reports(get_service())
+    except (DriverError, Neo4jError, OSError):
+        raise HTTPException(503, "Repair saved. Retry to synchronize the charger graph.") from None

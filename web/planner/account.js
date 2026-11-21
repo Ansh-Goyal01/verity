@@ -1,4 +1,4 @@
-import {api, accountApi, configuration, hasSession, signIn, signOut} from './client.js';
+import {api, accountApi, keyedWrite, configuration, googleAvailable, googleSignIn, hasSession, signIn, signOut} from './client.js';
 import {modelOptions, planner} from './journey.js';
 import {button, dateText, esc, idPath, numberInput, onSubmit, paginate, release, section, setStatus, statusBox, stopsAndThresholds, verdict} from './ui.js';
 
@@ -16,6 +16,13 @@ export async function login(root, description, reopen) {
     return;
   }
   form.querySelector('button').disabled = false;
+  googleAvailable(cfg).then(available => {
+    if (!available || !form.isConnected) return;
+    const google = document.createElement('button');
+    google.type = 'button'; google.className = 'button button-outline'; google.textContent = 'Continue with Google';
+    google.onclick = () => googleSignIn(cfg).catch(error => setStatus(form.querySelector('.status'),error.message,true));
+    form.append(google);
+  });
   onSubmit(form, async data => {
     await signIn(data.get('email').trim(),data.get('password'));
     form.reset();
@@ -76,13 +83,25 @@ export async function garage(root, {fleet, cars, reload}) {
   bindEditor(root.querySelector('.add-car form'),null);
 }
 
-function tripDetail(root, trip, changed) {
+function tripDetail(root, trip, changed, user) {
   const path = '/trips/' + idPath(trip.id);
   root.innerHTML = `<h2 tabindex="-1">Trip details</h2>${release(trip.plan,'Trip decision')}
     <div class="trip-tools">${section('Trip record',`<form class="save-trip">${button(trip.saved ? 'Trip saved' : 'Keep this trip')}${statusBox()}</form>
       <form class="arrival">${numberInput('arrival','Actual arrival battery (%)',trip.arrival_pct ?? '',0,100,'any')}${button('Record arrival')}${statusBox()}</form>`)}
     ${section('Share this trip',`<p>Anyone with the link can view the decision, charging stops, and battery thresholds for 48 hours.</p>
       <form class="share">${button('Create share link')}${statusBox()}</form><div class="share-output"></div>`)}</div>`;
+  const stops = [...(trip.plan.stops || []), ...(trip.plan.alternates || [])];
+  if (stops.length) {
+    const form = document.createElement('form');
+    form.className = 'sheet';
+    form.innerHTML = `<h3>Report a charger</h3><label>Charging stop<select name="charger">${stops.map(s=>option(s.charger_id,s.name)).join('')}</select></label>
+      <div class="form-actions"><button type="submit" value="working">Working</button><button type="submit" value="not_working">Not working</button></div>${statusBox()}`;
+    root.append(form);
+    onSubmit(form, async (data,submit) => {
+      const saved = await keyedWrite(user,'/reports/quick',{charger_id:data.get('charger'),status:submit.value});
+      return 'Report recorded ' + dateText(saved.created_at) + '.';
+    },'Recording report…');
+  }
   const save = root.querySelector('.save-trip');
   if (trip.saved) save.querySelector('button').disabled = true;
   onSubmit(save,async () => {
@@ -121,7 +140,7 @@ export async function account(root, panel, reopen) {
     body.innerHTML = section('Your vehicles','<div class="garage"></div>');
     return garage(body.querySelector('.garage'),{fleet:false,cars,reload:reopen});
   }
-  if (selected === 'plan') return planner(body,cars,(trip,node)=>tripDetail(node,trip,()=>{}));
+  if (selected === 'plan') return planner(body,cars,(trip,node)=>tripDetail(node,trip,()=>{},profile.id));
   body.innerHTML = section('Trip history','<div class="history"></div>') + '<div class="trip-detail"></div>';
   const detail = body.querySelector('.trip-detail');
   const names = new Map(cars.map(c=>[c.id,c.nickname]));
@@ -133,7 +152,7 @@ export async function account(root, panel, reopen) {
       display.textContent = 'Opening trip…';
       try {
         const trip = await accountApi('/trips/' + idPath(rows[i].id));
-        tripDetail(display,trip,refresh); display.querySelector('h2').focus();
+        tripDetail(display,trip,refresh,profile.id); display.querySelector('h2').focus();
       } catch (error) { display.textContent = error.message; }
     });
   });

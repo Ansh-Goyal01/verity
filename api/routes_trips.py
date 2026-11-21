@@ -14,6 +14,7 @@ from verity.vehicles import get_prior
 
 from .db import expire_trips, owned, transaction
 from .db.graph import graph_query
+from .db.receipts import WriteKey, lookup, remember
 from .models import LatLon, Req
 from .routes_me import Account, get_car, vehicle_catalog
 from .service import EngineService, demo_dispatch_request
@@ -125,29 +126,34 @@ def build_router(get_service: Callable[[], EngineService]) -> APIRouter:
             """, (user.id, report_id)).fetchone())
 
     @router.post("/reports/quick", status_code=201)
-    def quick_report(req: QuickReport, user: Account, svc: EngineService = Depends(get_service)) -> dict:
+    def quick_report(req: QuickReport, user: Account, svc: EngineService = Depends(get_service), key: WriteKey = None) -> dict:
         if not any(charger.id == req.charger_id for charger in svc.chargers):
             raise HTTPException(404, "Charger not found.")
         with transaction() as db:
             db.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (user.id,))
-            row = db.execute("""
-                SELECT id, status, created_at FROM verity_private.reports
-                WHERE user_id = %s AND charger_id = %s
-                  AND (synced_at IS NULL OR created_at > now() - interval '10 minutes')
-                ORDER BY created_at DESC LIMIT 1
-            """, (user.id, req.charger_id)).fetchone()
-            if row is not None and row["status"] != req.status:
-                raise HTTPException(429, "Try again after the charger report cooldown.")
-            if row is None:
+            operation = ["quick-report", req.charger_id, req.status]
+            report_id = lookup(db, user.id, key, operation)
+            if report_id is None:
                 row = db.execute("""
-                    INSERT INTO verity_private.reports (user_id, charger_id, status) VALUES (%s, %s, %s)
-                    RETURNING id, status, created_at
-                """, (user.id, req.charger_id, req.status)).fetchone()
+                    SELECT id, status, created_at FROM verity_private.reports
+                    WHERE user_id = %s AND charger_id = %s
+                      AND (synced_at IS NULL OR created_at > now() - interval '10 minutes')
+                    ORDER BY created_at DESC LIMIT 1
+                """, (user.id, req.charger_id)).fetchone()
+                if row is not None and row["status"] != req.status:
+                    raise HTTPException(429, "Try again after the charger report cooldown.")
+                if row is None:
+                    row = db.execute("""
+                        INSERT INTO verity_private.reports (user_id, charger_id, status) VALUES (%s, %s, %s)
+                        RETURNING id, status, created_at
+                    """, (user.id, req.charger_id, req.status)).fetchone()
+                report_id = row["id"]
+                remember(db, user.id, key, operation, str(report_id))
         with transaction() as db:
             report = owned(db.execute("""
                 SELECT id, charger_id, status, created_at, synced_at
                 FROM verity_private.reports WHERE user_id = %s AND id = %s FOR UPDATE
-            """, (user.id, row["id"])).fetchone())
+            """, (user.id, report_id)).fetchone())
             if report["synced_at"] is None:
                 graph_query("record_user_report", user.id, req.charger_id, req.status, report["created_at"])
                 report["synced_at"] = db.execute("""

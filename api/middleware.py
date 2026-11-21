@@ -222,7 +222,7 @@ def install(app: FastAPI, origins: list[str], production: bool, trust_proxy: boo
             exact.append(origin)
     app.add_middleware(RequestGuard, trust_proxy=trust_proxy, voice_limit=voice_limit, planning_limit=planning_limit)
     app.add_middleware(CORSMiddleware, allow_origins=exact, allow_methods=["GET", "POST", "PUT", "DELETE"],
-                       allow_headers=["Authorization", "Content-Type", "X-Lab-Token"],
+                       allow_headers=["Authorization", "Content-Type", "X-Lab-Token", "Idempotency-Key"],
                        expose_headers=["Retry-After", "X-Request-ID"])
     app.add_middleware(SecurityHeaders, production=production)
     app.add_exception_handler(StarletteHTTPException, http_error)

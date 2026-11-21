@@ -9,7 +9,8 @@ from pydantic import Field
 
 from .auth import User, require_role
 from .db import owned, transaction
-from .db.graph import graph_query
+from .db.graph import graph_query, sync_saved_reports
+from .db.receipts import WriteKey, lookup, remember
 from .models import Req
 
 router = APIRouter(prefix="/api")
@@ -121,10 +122,25 @@ def grid_risk(user: Operator) -> list[dict]:
 
 
 @router.post("/cpo/chargers/{charger_id}/fixed")
-def mark_fixed(charger_id: ChargerID, user: Operator) -> dict:
+def mark_fixed(charger_id: ChargerID, user: Operator, key: WriteKey = None) -> dict:
     for operator in approved_operators(user):
         if any(row["charger_id"] == charger_id for row in operator_chargers(operator)):
-            at = datetime.now(timezone.utc)
-            graph_query("record_fix", charger_id, user.id, at)
+            if key is None:
+                at = datetime.now(timezone.utc)
+                graph_query("record_fix", charger_id, user.id, at)
+            else:
+                operation = ["repair", charger_id]
+                with transaction() as db:
+                    db.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (user.id,))
+                    saved = lookup(db, user.id, key, operation)
+                    if saved is None:
+                        at = db.execute("""
+                            INSERT INTO verity_private.audit_log (user_id, action, target)
+                            VALUES (%s, 'operator_repair', %s) RETURNING at
+                        """, (user.id, charger_id)).fetchone()["at"]
+                        remember(db, user.id, key, operation, at.isoformat())
+                    else:
+                        at = datetime.fromisoformat(saved)
+                sync_saved_reports()
             return {"charger_id": charger_id, "fixed_at": at}
     raise HTTPException(404, "Charger not found.")

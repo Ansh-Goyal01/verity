@@ -80,7 +80,10 @@ def test_signed_in_journey_and_cross_user_isolation(account_client, database, mo
     graph_calls = []
     monkeypatch.setattr("api.routes_trips.graph_query", lambda *args: graph_calls.append(args))
     report_body = {"charger_id": "known-charger", "status": "working"}
-    report = client.post("/api/reports/quick", json=report_body, headers=first)
+    keyed = {**first, "Idempotency-Key": "518d4e17-9642-4c44-bec8-4b9f5c89d114"}
+    report = client.post("/api/reports/quick", json=report_body, headers=keyed)
+    assert client.post("/api/reports/quick", json=report_body, headers=keyed).json()["id"] == report.json()["id"]
+    assert client.post("/api/reports/quick", json={**report_body, "status":"not_working"}, headers=keyed).status_code == 409
     assert report.status_code == 201, report.text
     assert client.post("/api/reports/quick", json=report_body, headers=first).json()["id"] == report.json()["id"]
     assert len(graph_calls) == 1
@@ -174,7 +177,10 @@ def test_real_operator_graph_recovers_reports_and_repairs(account_client, monkey
     rows = client.get("/api/cpo/chargers", headers=operator).json()
     assert all(r["operator_id"] == charger.operator for r in rows["chargers"])
     assert any(r["charger_id"] == charger.id and not r["is_simulated"] for r in rows["open_reports"])
-    assert client.post(f"/api/cpo/chargers/{charger.id}/fixed", headers=operator).json()["fixed_at"]
+    keyed = {**operator, "Idempotency-Key": "0feb659c-82c3-4a72-963b-f3aa0ddf733d"}
+    endpoint = f"/api/cpo/chargers/{charger.id}/fixed"
+    fixed = client.post(endpoint, headers=keyed).json()["fixed_at"]
+    assert client.post(endpoint, headers=keyed).json()["fixed_at"] == fixed
     service = EngineService(graph_backend="memory")
     fresh = client.get("/api/cpo/chargers", headers=operator).json()
     assert not any(r["charger_id"] == charger.id for r in fresh["open_reports"])

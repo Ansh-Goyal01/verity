@@ -51,6 +51,32 @@ async function authRequest(path, body, token) {
   if (token) headers.Authorization = 'Bearer ' + token;
   return jsonRequest(cfg.url + '/auth/v1/' + path, {method: 'POST', headers, body: JSON.stringify(body)});
 }
+export async function googleAvailable(cfg) {
+  try {
+    const settings = await jsonRequest(cfg.url + '/auth/v1/settings',{headers:{apikey:cfg.publishable_key}});
+    return settings.external?.google === true;
+  } catch { return false; }
+}
+export async function googleSignIn(cfg) {
+  const verifier = Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');
+  const digest = await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier));
+  const challenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
+  sessionStorage.setItem(storageKey + ':pkce',verifier);
+  const query = new URLSearchParams({provider:'google',redirect_to:location.origin + location.pathname,
+    code_challenge_method:'s256',code_challenge:challenge});
+  location.assign(cfg.url + '/auth/v1/authorize?' + query);
+}
+export async function finishGoogle() {
+  const url = new URL(location.href);
+  if (!url.searchParams.has('code') && !url.searchParams.has('error')) return;
+  const verifier = sessionStorage.getItem(storageKey + ':pkce');
+  if (!verifier) return;
+  const code = url.searchParams.get('code');
+  sessionStorage.removeItem(storageKey + ':pkce');
+  history.replaceState(null,'',location.pathname + '#account');
+  if (!code) throw new Error('Google sign-in was cancelled. Try signing in again.');
+  setSession(await authRequest('token?grant_type=pkce',{auth_code:code,code_verifier:verifier}));
+}
 export async function signIn(email, password) {
   setSession(await authRequest('token?grant_type=password', {email, password}));
 }
@@ -75,8 +101,9 @@ async function accessToken() {
   if (!session) throw new Error('Your session has ended. Sign in again.');
   return session.access_token;
 }
-export async function api(path, {method = 'GET', body, private: authenticated = false} = {}) {
+export async function api(path, {method = 'GET', body, private: authenticated = false, writeKey} = {}) {
   const headers = {};
+  if (writeKey) headers['Idempotency-Key'] = writeKey;
   const multipart = body instanceof FormData;
   if (body !== undefined && !multipart) headers['Content-Type'] = 'application/json';
   const token = authenticated ? await accessToken() : null;
@@ -92,3 +119,14 @@ export async function api(path, {method = 'GET', body, private: authenticated = 
   }
 }
 export const accountApi = (path, options = {}) => api(path, {...options, private: true});
+
+// Keep a retry tied to its original account and operation, including across a page reload.
+export function keyedWrite(user, path, body) {
+  const slot = JSON.stringify(['verity.write',base,user,path,body]);
+  let key = sessionStorage.getItem(slot);
+  if (!key) { key = crypto.randomUUID(); sessionStorage.setItem(slot,key); }
+  return accountApi(path,{method:'POST',body,writeKey:key}).then(result => {
+    if (sessionStorage.getItem(slot) === key) sessionStorage.removeItem(slot);
+    return result;
+  });
+}

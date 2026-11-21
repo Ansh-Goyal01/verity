@@ -1,4 +1,4 @@
-import {accountApi, hasSession} from './client.js';
+import {accountApi, hasSession, keyedWrite} from './client.js';
 import {allFleetVehicles, garage, login} from './account.js';
 import {fleetBooking} from './journey.js';
 import {button, dateText, esc, idPath, numberInput, onSubmit, option, paginate, records, section, statusBox} from './ui.js';
@@ -43,14 +43,14 @@ async function claims(root, reopen) {
     if (root.isConnected) reopen();
   },'Submitting claim…');
 }
-async function chargers(root, reopen) {
+async function chargers(root, reopen, user) {
   const data = await accountApi('/cpo/chargers');
   root.innerHTML = section('Managed chargers',data.chargers.map(c=>`<article class="vehicle"><h3>${esc(c.name || c.charger_id)}</h3>
     <p>${esc(c.charger_id)} · ${esc(c.operator_id || c.operator || '')}</p><details><summary>Record repair</summary><form><p>Confirm this charger has been repaired.</p>
     ${button('Mark fixed')}${statusBox()}</form></details></article>`).join('') || '<p>No chargers for your approved operators.</p>') +
     section('Open reports',records(data.open_reports,'No open reports.'));
   root.querySelectorAll('form').forEach((form,i)=>onSubmit(form,async()=>{
-    const response = await accountApi('/cpo/chargers/'+idPath(data.chargers[i].charger_id)+'/fixed',{method:'POST'});
+    const response = await keyedWrite(user,'/cpo/chargers/'+idPath(data.chargers[i].charger_id)+'/fixed');
     form.innerHTML = `<p role="status">Repair recorded ${esc(dateText(response.fixed_at))}.</p><button type="button" class="button button-outline">Refresh reports</button>`;
     form.querySelector('button').onclick = reopen;
   },'Recording repair…'));
@@ -84,7 +84,7 @@ export async function operators(root, panel, reopen) {
   const selected = ['chargers','risk'].includes(panel) ? panel : 'claims';
   root.innerHTML = links('operators',selected,[['claims','Operator claims'],['chargers','Chargers & reports'],['risk','Risk analysis']]) + '<div class="tool-panel"></div>';
   const area = root.querySelector('.tool-panel');
-  if (selected === 'chargers') return chargers(area,reopen);
+  if (selected === 'chargers') return chargers(area,reopen,profile.id);
   if (selected === 'risk') return risk(area);
   return claims(area,reopen);
 }
