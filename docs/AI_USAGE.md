@@ -107,3 +107,4 @@ The `code-reviewer` subagent reviewed the diff in S3, S5, S6 and S7 (no external
 | --- | --- | --- |
 | 2026-11-21 | Codex | Implemented CX-1 authentication dependencies and demo-account seeding, consulted Supabase documentation, and tested with ephemeral signing keys and simulated Auth responses. Live project credentials were unavailable. |
 | 2026-11-21 | Codex | Implemented CX-2 to CX-7 backend changes and translation tooling. Used a disposable loopback PostgreSQL server for SQL and access-control checks, simulated graph responses, and ran the dependency audit. No live Supabase, Neo4j, or paid Sarvam calls for these changes. |
+| 2026-11-21 | Codex | Restricted the launcher to public assets, implemented WP10 offline planning and geocoding, and added the migration and deployment check commands. Cached public demo routes using Photon, OSRM and Open-Meteo. Tested locally with a disposable PostgreSQL database. No paid voice calls or live account writes. |

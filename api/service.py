@@ -37,7 +37,7 @@ from verity.paths import SIM_DIR
 from verity.catalog import load_catalog, vehicle_context
 from verity.geocode import geocode, geocode_client, normalise_query
 from verity.options import Preferences, plan_options
-from verity.routing import CachedClient, NetworkUnavailable, RequestBudgetExceeded, load_planned_route
+from verity.routing import CacheMiss, CachedClient, NetworkUnavailable, RequestBudgetExceeded, load_planned_route
 from verity.schemas import ChargerRecord, Report
 from verity.sim import generate_dataset, load_manifest
 from verity.trips import haversine_m, load_sim_observation
@@ -67,6 +67,7 @@ from .fleet import FleetEndpoints, load_demo_fleet
 from .graph_endpoints import GraphEndpoints
 from .limits import LruCache
 from .route_resolver import ENDPOINT_TOLERANCE_KM, ResolvedRoute, RouteError, RouteResolver, parse_departure
+from .demo_cache import load_geocodes, offline_enabled
 from .models import DispatchRequest, PlanRequest, RideCheckRequest
 from .ride import (
     AFTER_DROP_RADIUS_KM,
@@ -206,9 +207,10 @@ def driver_demo_reports(chargers: Sequence[ChargerRecord], pins: Sequence[PointP
 
 
 class ApiError(Exception):
-    def __init__(self, status: int, code: str, message: str) -> None:
+    def __init__(self, status: int, code: str, message: str, *, cached_trips: list[dict] | None = None) -> None:
         super().__init__(message)
         self.status, self.code, self.message = status, code, message
+        self.cached_trips = cached_trips
 
 
 @dataclass
@@ -316,6 +318,8 @@ class EngineService(GraphEndpoints, FleetEndpoints):
         # One client each for the life of the service (functools.cache of a zero-argument factory): httpx clients are
         # thread-safe and CachedClient serialises its own cache, so per-request clients would only leak connections.
         self.geocoder_client: Callable[[], CachedClient] = geocoder_client or functools.cache(geocode_client)
+        self.offline = offline_enabled()
+        self.demo_geocodes = load_geocodes()
         # Real reports are aged by this clock, simulated ones by reports_sim.NOW (trust/clock.py); injectable for tests.
         self.clock: Callable[[], datetime] = clock or (lambda: datetime.now(timezone.utc))
         self.cfg = ForecastConfig(n_runs=n_runs or int(os.environ.get("VERITY_N_RUNS", "1500")))
@@ -323,7 +327,8 @@ class EngineService(GraphEndpoints, FleetEndpoints):
         self.poly = np.array(self.snap["polyline"])
         self.poly_km = np.array(self.snap["polyline_km"])
         # Any other route is fetched per request (WP1); the client factory is injectable so tests replay recordings.
-        self.resolver = RouteResolver(self.route, self.snap, BOOKING, route_client or functools.cache(CachedClient))
+        self.resolver = RouteResolver(self.route, self.snap, BOOKING, route_client or functools.cache(CachedClient),
+                                      offline=self.offline)
         directory, self.directory_meta = load_chargers()
         # WP3: real hand-collected evidence (verified rows matched to the directory) seeds the graph next to the
         # simulated demo reports; it keeps is_simulated false, so real-route plans keep it.
@@ -335,7 +340,8 @@ class EngineService(GraphEndpoints, FleetEndpoints):
         # only seeds it. VERITY_GRAPH=auto|memory|neo4j overrides the default (auto).
         self.graph: GraphHandle = open_graph(directory, self.demo_reports + self.driver_demo_reports
                                              + self.real_evidence.reports,
-                                             prefer=graph_backend or os.environ.get("VERITY_GRAPH", "auto"))
+                                             prefer="memory" if self.offline else
+                                             graph_backend or os.environ.get("VERITY_GRAPH", "auto"))
         # WP8c: each charger's NEAREST substation within 5 km (OpenStreetMap, proximity only, never "feeds it").
         substations = load_substations()
         self.substation_links = nearest_substations(directory, substations)
@@ -384,6 +390,8 @@ class EngineService(GraphEndpoints, FleetEndpoints):
         backend, counts = self._graph_counts()  # one read of the backend: both labels below come from it
         return {"status": "ok", "version": __version__, "neo4j": "connected" if backend == "neo4j" else "in_memory",
                 "is_simulated": True,
+                "offline": self.offline, "cached_route_count": len(self.resolver.cached_trips()),
+                "charger_count": len(self.chargers),
                 "graph": {"backend": backend, "nodes": counts.nodes, "relationships": counts.relationships},
                 "bands": {"method": "split conformal" if self.bands.available else "model only", "n": self.bands.n,
                           "k": None if self.bands.k is None else round(self.bands.k, 3),
@@ -463,15 +471,29 @@ class EngineService(GraphEndpoints, FleetEndpoints):
     def geocode(self, q: str, limit: int = 5, near: tuple[float, float] | None = None) -> dict:
         """India-only place search (WP1) through Photon, cached; its own request budget (engine/verity/geocode.py)."""
         try:
-            normalise_query(q)
+            query = normalise_query(q)
         except ValueError as exc:  # only the query check is the caller's fault
             raise ApiError(422, "invalid_request", str(exc)) from exc
+        source = "Photon (komoot), OpenStreetMap data"
+        packaged = self.demo_geocodes.get(query)
+        if near is None and packaged is not None:
+            return {"results": packaged[:limit], "source": source}
         try:
-            places = geocode(self.geocoder_client(), q, limit, near)
+            places = (geocode(self.geocoder_client(), q, limit, near, cache_only=True) if self.offline
+                      else geocode(self.geocoder_client(), q, limit, near))
+        except CacheMiss:
+            if packaged is not None:
+                return {"results": packaged[:limit], "source": source}
+            raise self.offline_error("This place is unavailable in offline mode. Choose a cached trip.") from None
         except (NetworkUnavailable, RequestBudgetExceeded, OSError, ValueError, KeyError) as exc:
+            if self.offline:
+                raise self.offline_error("This place is unavailable in offline mode. Choose a cached trip.") from None
             log.warning("geocoder unavailable (%s)", type(exc).__name__)
             raise ApiError(503, "geocoder_unavailable", "Place search is unavailable right now; try again shortly.") from exc
-        return {"results": [p.as_dict() for p in places], "source": "Photon (komoot), OpenStreetMap data"}
+        return {"results": [p.as_dict() for p in places], "source": source}
+
+    def offline_error(self, message: str) -> ApiError:
+        return ApiError(503, "offline", message, cached_trips=self.resolver.cached_trips())
 
     def _vehicle_for(self, req: dict) -> PickedVehicle:
         """The demo fleet's simulated vehicle, or a real car from vehicles_india.csv (WP2); 404 lists every id."""
@@ -517,6 +539,8 @@ class EngineService(GraphEndpoints, FleetEndpoints):
         try:
             return self.resolver.resolve(req["origin"], req["destination"], req["departure_time"], req.get("start"))
         except RouteError as exc:
+            if exc.code == "offline":
+                raise self.offline_error(exc.message) from None
             raise ApiError(exc.status, exc.code, exc.message) from exc
 
     def _route_inputs(self, view: GraphView, resolved: ResolvedRoute) -> tuple[list[RouteCharger], dict, list[Report]]:
@@ -739,6 +763,8 @@ class EngineService(GraphEndpoints, FleetEndpoints):
         cached = self._ride_cache.get(key)
         if cached is not None:
             return cached
+        if self.offline:
+            raise self.offline_error("This ride is unavailable in offline mode. Choose a cached trip.")
         departure = datetime.fromisoformat(req["departure_time"]) if req.get("departure_time") else datetime.now(
             timezone.utc)
         bundle = fetch_bundle(departure, cur, pick, drop, candidates_near_drop(view.chargers, drop))

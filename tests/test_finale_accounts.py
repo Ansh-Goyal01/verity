@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -9,6 +8,7 @@ from psycopg.conninfo import conninfo_to_dict
 import pytest
 
 from api.main import app, get_service
+from scripts.migrate import migrate
 from test_auth import issue  # noqa: F401 - shares the ephemeral Supabase JWKS fixture
 
 
@@ -25,8 +25,8 @@ def database():
         db.execute("CREATE TABLE auth.users (id uuid PRIMARY KEY)")
         db.execute("CREATE ROLE anon NOLOGIN")
         db.execute("CREATE ROLE authenticated NOLOGIN")
-        path = Path(__file__).resolve().parents[1] / "migrations" / "001_accounts.sql"
-        db.execute(path.read_text(encoding="utf-8"))
+        assert migrate(db) == ["001_accounts.sql"]
+        assert migrate(db) == []
     return url
 
 

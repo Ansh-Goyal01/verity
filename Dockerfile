@@ -4,10 +4,12 @@
 FROM python:3.13-slim
 
 ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    VERITY_ENV=production \
     UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1
 
-RUN pip install --no-cache-dir uv
+RUN pip install --no-cache-dir uv==0.13.6
 
 WORKDIR /app
 
@@ -19,7 +21,6 @@ RUN uv sync --locked --no-dev
 
 COPY data ./data
 COPY results ./results
-COPY docs ./docs
 
 # Not root; data/cache is the one place the service writes (route and weather caches).
 RUN useradd --system --no-create-home verity \
@@ -32,4 +33,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s \
     CMD ["/app/.venv/bin/python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/api/health' % os.environ.get('PORT', '8000'), timeout=4)"]
 
 # Hosts that assign a port set $PORT; otherwise 8000.
-CMD ["sh", "-c", "exec /app/.venv/bin/uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "exec /app/.venv/bin/uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000} --no-server-header"]

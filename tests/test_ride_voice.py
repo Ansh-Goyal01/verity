@@ -177,7 +177,8 @@ def test_the_clarification_admits_a_place_it_does_not_know() -> None:
 def test_a_go_is_spoken_with_the_charger_the_minutes_and_the_rupees_flagged_as_an_example() -> None:
     en, hi = spoken_ride_answer(RIDE, "en-IN"), spoken_ride_answer(RIDE, "hi-IN")
     assert en.startswith("Take the ride.") and "95 percent or more" in en
-    assert "Radisson Blu Plaza Delhi Airport" in en and "79 minutes" in en and "80 rupees" in en
+    minutes = round(RIDE["after_drop"]["expected_lost_min"])
+    assert "Radisson Blu Plaza Delhi Airport" in en and f"{minutes} minutes" in en and "80 rupees" in en
     assert "example" in en  # the rupee figure uses an example earning rate and says so
     assert DEVANAGARI.search(hi) and "95 प्रतिशत या उससे अधिक" in hi and "80 रुपये" in hi and "उदाहरण" in hi
 

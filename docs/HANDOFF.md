@@ -37,14 +37,13 @@ The script creates `verity-demo-<role>@example.com` for each role and verifies t
 session through the API verifier. A retry checks existing accounts with the configured
 password. A collision with an unrelated account requires operator review.
 
-The local launcher in `start.py` serves the entire checkout on port 5500, including any
-root `.env`. Restrict its static file serving to public assets before storing credentials
-in the checkout or exposing the launcher through a tunnel. Use host settings for deployment.
+The launcher serves the root index and assets in `web/`, `logger/` and `design/` on
+localhost port 5500. Keep credentials in host settings or a private env file.
 
 ## Database and deployment
 
-Apply `migrations/001_accounts.sql` once to the isolated Supabase project using the
-chosen migration runner. The migration targets PostgreSQL 15 or newer and Supabase's
+Apply the checked-in migrations with `uv run --env-file <private-env-file> python scripts/migrate.py`.
+The migration targets PostgreSQL 15 or newer and Supabase's
 `auth.users`, `anon` and `authenticated`. The API uses `DATABASE_URL` from its process
 environment. Configure a TLS-verified connection for the deployed database. The API
 database role needs access to the private schema. Browser roles have no privileges there.

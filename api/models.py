@@ -53,6 +53,9 @@ class Health(Resp):
     graph: GraphInfo  # contract v3, additive (W0.7)
     bands: HealthBands  # WP5
     sarvam_key_present: bool  # whether voice can work; never the key itself
+    offline: bool
+    cached_route_count: int = Field(ge=0)
+    charger_count: int = Field(ge=0)
 
 
 class Place(Resp):

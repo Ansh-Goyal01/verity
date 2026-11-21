@@ -21,21 +21,24 @@ from .limits import RateLimiter, client_ip, rate_key
 log = logging.getLogger(__name__)
 JSON_LIMIT = 64 * 1024
 AUDIO_LIMIT = 1024 * 1024
-PLANNING = {"/api/dispatch", "/api/ride-check", "/api/forecast/update", "/api/trips", "/api/fleet/booking/check"}
+PLANNING = {"/api/plan", "/api/dispatch", "/api/ride-check", "/api/forecast/update", "/api/trips",
+            "/api/fleet/booking", "/api/fleet/booking/check"}
 REPORTING = {"/api/reports", "/api/reports/quick", "/api/voice/report/confirm"}
 DOCS = {"/docs", "/docs/oauth2-redirect", "/redoc", "/openapi.json"}
 
 
 def error_response(request: Request, status: int, code: str, message: str,
-                   headers: dict | None = None) -> JSONResponse:
+                   headers: dict | None = None, *, extra: dict | None = None) -> JSONResponse:
     request_id = getattr(request.state, "request_id", None) or uuid4().hex
     if getattr(request.state, "production", False):
         # Classify upstream failures and validation errors without echoing their input or exception text.
-        if status >= 500 or status == 422:
+        if (status >= 500 and code != "offline") or status == 422:
             message = HTTPStatus(status).phrase
         content = {"error": message, "id": request_id}
     else:
         content = {"error": code, "message": message}
+    if extra:
+        content.update(extra)
     return JSONResponse(content, status_code=status, headers=headers)
 
 

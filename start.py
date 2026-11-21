@@ -17,6 +17,7 @@ import time
 import urllib.request
 import webbrowser
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent
 API_PORT, WEB_PORT = 8000, 5500
@@ -31,8 +32,39 @@ def port_free(port: int) -> bool:
 
 
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
+    public_dirs = {"web", "logger", "design"}
+
     def log_message(self, *args: object) -> None:  # keep the terminal readable
         pass
+
+    def translate_path(self, path: str) -> str:
+        root = Path(self.directory).resolve()
+        try:
+            path = unquote(urlsplit(path).path, errors="strict")
+            parts = [part for part in path.split("/") if part]
+            if any(part.startswith(".") or any(c in part for c in "\\:\0") for part in parts):
+                return ""
+            if parts in ([], ["index.html"]):
+                candidate = root / "index.html"
+                return str(candidate) if candidate.resolve() == candidate and candidate.is_file() else ""
+            if parts[0] not in self.public_dirs:
+                return ""
+            public = root / parts[0]
+            if public.resolve() != public:
+                return ""
+            candidate = public.joinpath(*parts[1:])
+            if path.endswith("/"):
+                candidate /= "index.html"
+            resolved = candidate.resolve()
+            return str(resolved) if resolved.is_relative_to(public) and resolved.is_file() else ""
+        except (OSError, ValueError, RuntimeError):
+            return ""
+
+    def send_head(self):
+        if not self.translate_path(self.path):
+            self.send_error(404)
+            return None
+        return super().send_head()
 
 
 def serve_web() -> None:

@@ -75,11 +75,12 @@ def places_from_photon(payload: dict, limit: int) -> list[Place]:
     return out
 
 
-def geocode(client: CachedClient, q: str, limit: int = 5, near: tuple[float, float] | None = None) -> list[Place]:
+def geocode(client: CachedClient, q: str, limit: int = 5, near: tuple[float, float] | None = None,
+            *, cache_only: bool = False) -> list[Place]:
     """Up to ``limit`` Indian places for ``q``, optionally biased towards ``near`` (lat, lon)."""
     limit = max(1, min(int(limit), MAX_LIMIT))
     params: dict = {"q": normalise_query(q), "limit": limit, "countrycode": COUNTRY_CODE, "lang": "en"}
     if near is not None:
         params["lat"], params["lon"] = round(near[0], 3), round(near[1], 3)  # rounded: better cache reuse
-    payload, _ = client.get_json(PHOTON_URL, params)
+    payload = client.cached_json(PHOTON_URL, params) if cache_only else client.get_json(PHOTON_URL, params)[0]
     return places_from_photon(payload, limit)
