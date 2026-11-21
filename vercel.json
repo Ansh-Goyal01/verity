@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "app.py": {
-      "excludeFiles": "{tests/**,results/**,experiments/**,design/**,logger/**,web/**,docs/**,scripts/**,data/raw/**,data/cache/**,data/lab/**,data/private/**,data/splits/bmw_i3_split.json,.env,.env.*,**/__pycache__/**,.venv/**,graphify-out/**}"
+      "excludeFiles": "{tests/**,results/**,experiments/**,design/assets/**,design/*.html,design/*.md,docs/**,scripts/**,data/raw/**,data/cache/**,data/lab/**,data/private/**,data/splits/bmw_i3_split.json,.env,.env.*,**/__pycache__/**,.venv/**,graphify-out/**}"
     }
   }
 }

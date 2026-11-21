@@ -82,10 +82,10 @@ judges arrive: the address is different every time, so a QR code printed earlier
 Checked against Vercel's FastAPI and Python runtime docs on 2026-11-21 (vercel.com/docs/frameworks/backend/fastapi,
 /functions/runtimes/python).
 
-- Entrypoint: root `app.py` re-exports `app` from `api/main.py`. Vercel accepts `app.py` at the root, and once the
+- Entrypoint: root `app.py` serves the website and mounts the existing `api/main.py` application. Vercel accepts `app.py` at the root, and once the
   FastAPI preset is detected it does NOT turn the other `api/*.py` files into separate functions ("A Python framework
   preset takes precedence over file-based functions").
-- `vercel.json` keeps `tests/`, `results/`, `experiments/`, `design/`, `logger/`, `web/`, `docs/`, `scripts/`, the raw
+- `vercel.json` keeps `tests/`, `results/`, `experiments/`, design previews, `docs/`, `scripts/`, the raw
   data, the HTTP cache and the BMW held-out split (`data/splits/bmw_i3_split.json`) out of the function bundle
   (`functions["app.py"].excludeFiles`). `.vercelignore` is an extra guard for CLI uploads.
 - With `VERCEL` set (Vercel sets it), every write goes under `/tmp/verity/...`: the route, elevation, weather and
@@ -94,7 +94,10 @@ Checked against Vercel's FastAPI and Python runtime docs on 2026-11-21 (vercel.c
 - Python: Vercel's default is 3.12 (the code needs 3.11+). Dependencies come from `pyproject.toml` / `uv.lock`.
 - Environment (project settings, never the repo): `NEO4J_*` or `VERITY_GRAPH=memory`, `SARVAM_API_KEY`,
   `VERITY_CORS_ORIGINS` (the frontend's exact origin), `VERITY_ENV=production`, `SUPABASE_URL`, `DATABASE_URL`.
-- Frontend: deploy `web/` as a separate static site and set `apiBaseUrl` in `web/js/config.js` to the API's URL.
+- Frontend: deploy from the repository root with the FastAPI preset. Open `/` to reach `/web/home.html`.
+  The deployed browser config uses the current origin for API calls. The standalone pages still support their saved
+  snapshot and the existing `?api=` override. Verify that the homepage renders, that `/web/drive/styles.css` returns CSS,
+  and that `/api/health` returns JSON with `status` set to `ok`.
 
 What does not work, or works worse, on serverless:
 - Cold starts build the whole engine (demo fleet calibration, trust, Neo4j sync: 48 s against

@@ -1,10 +1,11 @@
-"""Vercel deploy: writes go to /tmp/verity when VERCEL is set, read-only data stays in the repo, app.py exposes the app."""
+"""Vercel runtime paths and production website routing."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
 from verity import paths
 from verity.audio_cache import AUDIO_CACHE_DIR, AudioCache
@@ -41,9 +42,27 @@ def test_on_vercel_audio_is_read_from_the_repo_and_written_to_tmp(monkeypatch: p
     assert fresh.lookup(entry["text"], entry["language"]) is not None  # committed clips still served
 
 
-def test_the_vercel_entrypoint_exposes_the_fastapi_app() -> None:
-    import app as entry
+def test_vercel_serves_homepage_assets_and_api() -> None:
+    from app import app
 
-    from api.main import app
+    client = TestClient(app)
+    landing = client.get("/?source=demo")
+    assert landing.url.path == "/web/home.html" and landing.url.query == b"source=demo"
+    assert landing.status_code == 200 and "<title>Verity" in landing.text
+    assert "default-src 'none'" not in landing.headers.get("content-security-policy", "")
 
-    assert entry.app is app
+    for path, content_type in [
+        ("/web/drive/styles.css", "text/css"),
+        ("/design/tokens.css", "text/css"),
+        ("/logger/index.html", "text/html"),
+        ("/web/drive/assets/arrival.webp", "image/webp"),
+        ("/data/audio_cache/" + AudioCache().entries()[0]["file"], "audio/"),
+    ]:
+        response = client.get(path)
+        assert response.status_code == 200 and response.headers["content-type"].startswith(content_type)
+
+    assert "window.location.origin" in client.get("/web/js/config.js").text
+    health = client.get("/api/health")
+    assert health.status_code == 200 and health.json()["status"] == "ok"
+    assert "default-src 'none'" in health.headers["content-security-policy"]
+    assert client.get("/api/missing").status_code == 404
