@@ -38,7 +38,7 @@ export function nodeText(node, byId, ctx = {}) {
   }
   if (node.label === 'Operator') return `Operator: ${k}`;
   if (node.label === 'Site') { const home = byId.get('Charger:' + k); return home ? `Site of ${nodeText(home, byId)}` : 'Physical site'; }
-  if (node.label === 'Substation') return ctx.km?.get(node.id) != null ? `Nearest substation · ${ctx.km.get(node.id)} km` : 'Nearest substation';
+  if (node.label === 'Substation') return ctx.km?.get(node.id) != null ? `Nearest substation · ${Math.round(Number(ctx.km.get(node.id)) * 10) / 10} km` : 'Nearest substation';
   if (node.label === 'Plan') {
     const role = ctx.role?.get(node.id);
     return `${DECISION[p.decision] || 'Plan'} for ${p.vehicle_id || k}${role ? ` · ${role}` : ''}`;
@@ -130,7 +130,8 @@ export function labels(data, nodes = data.nodes) {
   for (const [id, label] of text) seen.set(label, (seen.get(label) || []).concat(id));
   for (const [label, ids] of seen) {
     if (ids.length < 2) continue;
-    ids.forEach((id, i) => text.set(id, id.startsWith('Charger:') ? `${label} · ${key(id)}` : `${label} (${i + 1})`));
+    ids.forEach((id, i) => text.set(id, id.startsWith('Charger:') || id.startsWith('Plan:') ? `${label} · ${key(id)}`
+      : id.startsWith('Source:user-') ? `${label} ${key(id).slice(5, 9)}` : `${label} (${i + 1})`));
   }
   for (const n of nodes) if (n.label === 'More') text.set(n.id, `+${n.props.count} more (see the tables below)`);
   return text;

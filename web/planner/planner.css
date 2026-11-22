@@ -115,5 +115,5 @@
 .graph-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .graph-scroll:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
 .graph-scroll .graph-view { border: 0; border-radius: 0; display: block; }
-.graph-view .col-head { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; fill: #8a94a3; }
+.graph-view .col-head { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; fill: currentColor; opacity: .7; }
 .graph-view .edge { fill: none; }
