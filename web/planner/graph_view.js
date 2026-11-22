@@ -90,7 +90,7 @@ export function graphSvg(data) {
     const [x, y] = at.get(n.id), text = nodeText(n, byId), sim = isSimulated(n), isFocal = n.id === focal, r = isFocal ? 22 : 15;
     const action = n.label === 'Charger' && !isFocal ? ` tabindex="0" role="button" data-charger="${esc(key(n.id))}" aria-label="Inspect ${esc(text)}"` : '';
     return `<g class="node node-${n.label.toLowerCase()}${sim ? ' sim' : ''}${isFocal ? ' focal' : ''}" transform="translate(${x} ${y})"${action}>
-      <circle r="${r}"/><text y="${r + 14}" text-anchor="middle">${esc(short(text))}</text>
+      <circle r="${r}"/><text y="${r + 14}" text-anchor="middle">${esc(short(sim ? `${text} · simulated` : text, 30))}</text>
       <title>${esc(KIND[n.label] || n.label)}: ${esc(text)}${sim ? ' (simulated)' : ''}</title></g>`;
   }).join('');
   const s = summary(data);

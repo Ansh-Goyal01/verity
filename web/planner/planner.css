@@ -111,3 +111,4 @@
 .graph-note { margin: 0; padding-left: 1.1rem; }
 .graph-hint { margin: 0; color: #5b6472; }
 .chips { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.graph-view .edge-label { paint-order: stroke; stroke: var(--surface, #fff); stroke-width: 3px; }
