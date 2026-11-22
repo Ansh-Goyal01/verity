@@ -86,3 +86,28 @@
 .mic-row { display: flex; flex-wrap: wrap; gap: .75rem; }
 .mic-note { margin: 0; min-height: 1.4em; }
 .planning audio[data-preview] { width: 100%; }
+.graph-view { width: 100%; height: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.graph-view .edge { stroke: #8a94a3; stroke-width: 1.4; }
+.graph-view .edge.sim { stroke-dasharray: 5 4; }
+.graph-view .edge-label { font-size: 10px; fill: #5b6472; text-anchor: middle; }
+.graph-view .node circle { stroke-width: 2; stroke: #1f2937; }
+.graph-view .node text { font-size: 12px; fill: var(--ink, #111827); paint-order: stroke; stroke: var(--surface, #fff); stroke-width: 3px; }
+.graph-view .node.focal circle { stroke-width: 4; }
+.graph-view .node.sim circle { stroke-dasharray: 4 3; fill-opacity: .45; }
+.graph-view [data-charger] { cursor: pointer; }
+.graph-view [data-charger]:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+.node-charger circle, .swatch.node-charger { fill: #2563eb; background: #2563eb; }
+.node-site circle, .swatch.node-site { fill: #7c3aed; background: #7c3aed; }
+.node-operator circle, .swatch.node-operator { fill: #0d9488; background: #0d9488; }
+.node-substation circle, .swatch.node-substation { fill: #d97706; background: #d97706; }
+.node-plan circle, .swatch.node-plan { fill: #16a34a; background: #16a34a; }
+.node-source circle, .swatch.node-source { fill: #dc2626; background: #dc2626; }
+.node-channel circle, .swatch.node-channel { fill: #6b7280; background: #6b7280; }
+.node-ring circle, .swatch.node-ring { fill: #be185d; background: #be185d; }
+.graph-legend { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; list-style: none; margin: 0; padding: 0; }
+.graph-legend li { display: flex; align-items: center; gap: .4rem; }
+.swatch { display: inline-block; width: .9rem; height: .9rem; border-radius: 50%; border: 2px solid #1f2937; }
+.swatch-sim { background: transparent; border-style: dashed; }
+.graph-note { margin: 0; padding-left: 1.1rem; }
+.graph-hint { margin: 0; color: #5b6472; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }

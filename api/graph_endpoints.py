@@ -99,6 +99,14 @@ class GraphEndpoints:
                                   "props": {"distance_km": d}})
             queries += ["MATCH (s:Source) WHERE s.ring_id IS NOT NULL RETURN s.id, s.ring_id",
                         "MATCH (c:Charger)-[r:NEAREST_SUBSTATION]->(s:Substation) RETURN c.id, s.id, r.distance_km"]
+        # Neighbouring chargers (same site, same substation) come back from the graph as bare ids; give them their
+        # directory name and operator so a screen can show "Statiq" and not "CH-0046". Directory facts only.
+        directory = {c.id: c for c in self.chargers}
+        for node in nodes.values():
+            record = directory.get(node["id"].split(":", 1)[1]) if node["label"] == "Charger" else None
+            if record is not None and not node["props"]:
+                node["props"] = {"name": record.name, "lat": record.lat, "lon": record.lon,
+                                 "operator": record.operator or "", "site_type": record.site_type or "unknown"}
         return {**out, "charger_id": charger_id, "depth": depth,
                 "nodes": sorted(nodes.values(), key=lambda n: n["id"]), "edges": edges, "cypher": "\n;\n".join(queries)}
 
