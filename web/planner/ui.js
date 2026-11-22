@@ -79,7 +79,7 @@ export function records(rows, empty) {
     if (typeof value === 'object') return Object.entries(value).map(([k,v])=>`${k.replaceAll('_',' ')}: ${valueText(v)}`).join(' · ');
     return String(value);
   };
-  return rows.map(row=>`<dl class="record">${Object.entries(row).map(([key,v])=>
+  return rows.map(row=>`<dl class="record">${row.is_simulated || row.includes_simulated_reports ? '<div><dt>Evidence</dt><dd>Includes reports (simulated)</dd></div>' : ''}${Object.entries(row).filter(([key])=> !['is_simulated','includes_simulated_reports'].includes(key)).map(([key,v])=>
     `<div><dt>${esc(key.replaceAll('_',' '))}</dt><dd>${esc(valueText(v))}</dd></div>`).join('')}</dl>`).join('');
 }
 export function paginate(root, load, draw, size = 25) {
