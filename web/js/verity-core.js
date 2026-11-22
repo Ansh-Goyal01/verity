@@ -132,7 +132,23 @@
     return { events: out, next: i };
   }
 
-  const api = { pct, confidenceText, hindiStrings, decisionLabel, decisionClass, escapeHtml, fmtClock, fmtDuration, bingoAt, nearestPoint, haversineKm, cumulativeKm, pointAtKm, waterfall, chargerStats, dueEvents, isNum };
+  function illustrativeBlocks(data) {
+    const output = [];
+    const a = data.assured;
+    if (a) {
+      const notes = [a.reason || (a.eligible ? 'Eligible for illustrative cover.' : ''), a.note];
+      if (Number.isInteger(data.n_runs) && data.n_runs > 0 && isNum(a.p_strand))
+        notes.push('Stranding upper bound: ' + pct(a.p_strand) + ' · ' + data.n_runs + ' runs. ' + (a.p_strand_basis || ''));
+      if (a.eligible && isNum(a.price_rs) && /^https?:\/\//i.test(a.tow_cost_source || ''))
+        notes.push('Estimated price ₹' + a.price_rs + ' · Tow cost source: ' + a.tow_cost_source);
+      output.push('<section><h3>Illustrative cover</h3>' + notes.filter(Boolean).map(s=>'<p>' + escapeHtml(s) + '</p>').join('') + '</section>');
+    }
+    const reward = data.reward;
+    if (reward) output.push('<section><h3>Illustrative report reward</h3><p>' +
+      escapeHtml(reward.withheld_reason || (reward.eligible ? 'Eligible under the demo rules.' : 'Withheld.')) + '</p></section>');
+    return output.join('');
+  }
+  const api = { illustrativeBlocks, pct, confidenceText, hindiStrings, decisionLabel, decisionClass, escapeHtml, fmtClock, fmtDuration, bingoAt, nearestPoint, haversineKm, cumulativeKm, pointAtKm, waterfall, chargerStats, dueEvents, isNum };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.VerityCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -470,7 +470,7 @@
       save: 'Update', distance: 'km travelled', airport: 'Delhi airport ride', pickup: 'Pickup', drop: 'Drop-off',
       rideInput: 'Starting battery', checkRide: 'Check this ride', takeRide: 'Take the ride', confidence: 'trip confidence',
       charge: 'Charge after drop-off', lostTime: 'Expected time lost', lostValue: 'Expected earnings lost',
-      rate: 'Based on a sample earning rate of ₹60 per hour.', alternatives: 'Why skip the nearer charger?',
+      rate: 'Based on an example earning rate.', alternatives: 'Why skip the nearer charger?',
       nearer: 'A failure was reported at the nearer charger one day before this simulation.',
       logger: 'Open trip logger'
     },
@@ -484,7 +484,7 @@
       save: 'अपडेट करें', distance: 'किमी तय किए', airport: 'दिल्ली एयरपोर्ट की राइड', pickup: 'पिकअप', drop: 'ड्रॉप',
       rideInput: 'शुरुआती बैटरी', checkRide: 'यह राइड जाँचें', takeRide: 'राइड लें', confidence: 'सफ़र का अनुमानित भरोसा',
       charge: 'ड्रॉप के बाद चार्ज करें', lostTime: 'समय का अनुमानित नुकसान', lostValue: 'कमाई का अनुमानित नुकसान',
-      rate: '₹60 प्रति घंटे की उदाहरण दर पर आधारित।', alternatives: 'नज़दीकी चार्जर क्यों छोड़ा?',
+      rate: 'कमाई की एक उदाहरण दर पर आधारित।', alternatives: 'नज़दीकी चार्जर क्यों छोड़ा?',
       nearer: 'सिमुलेशन से एक दिन पहले नज़दीकी चार्जर में खराबी की रिपोर्ट थी।',
       logger: 'ट्रिप लॉगर खोलें'
     }

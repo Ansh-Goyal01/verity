@@ -38,7 +38,7 @@ export function ringResult(data) {
     ${table('Charger trust',['Stage','Chance charger works','Reports','Trust'],[
       ['Before',...trust(data.trust_before)],['After detection',...trust(data.trust_after)],
       ['Without detection',...trust(data.trust_without_ring_detection)]],true)}
-    <p>${esc(data.limit.text)}</p>`;
+    <p>${esc(data.limit.text)}</p>${window.VerityCore.illustrativeBlocks(data)}`;
 }
 function reportForm() {
   return hasSession()

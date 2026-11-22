@@ -48,7 +48,7 @@
     return `<div class="report-receipt"><h3>${answer.is_simulated ? 'Practice result' : 'Observation recorded'}</h3>
       <p>Reports ${esc(before.n_reports)} to ${esc(after.n_reports)} · Trust ${esc(before.trust_level)} to ${esc(after.trust_level)}</p>
       <p>Plans checked ${esc(answer.plans_checked)} · Pending ${esc(answer.plans_pending)}.</p>
-      ${answer.plans.map(p => `<p>${esc(p.vehicle_id)} · ${esc(p.decision_before)} (${esc(p.confidence_before)}) to ${esc(p.decision_after)} (${esc(p.confidence_after)})${p.changed?.length ? ' · ' + esc(p.changed.join(', ')) + ' changed' : ''}</p>`).join('')}
+      ${window.VerityCore.illustrativeBlocks(answer.report)}${answer.plans.map(p => `<p>${esc(p.vehicle_id)} · ${esc(p.decision_before)} to ${esc(p.decision_after)}${p.changed?.length ? ' · ' + esc(p.changed.join(', ')) + ' changed' : ''}</p>`).join('')}
       ${answer.replan_failed ? '<p>The report was stored. A plan recheck failed and needs another attempt.</p>' : ''}</div>`;
   }
   function reports(root, row) {
