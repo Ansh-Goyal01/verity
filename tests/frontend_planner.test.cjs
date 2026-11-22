@@ -121,3 +121,20 @@ test('an uncertain report or repair retries with its original request key', asyn
     assert.equal(values.size,1);
   } finally { delete global.sessionStorage; }
 });
+
+test('microphone recordings become a named audio file and an empty recording is refused', async () => {
+  const {recordedFile, micSupported, MAX_RECORDING_SECONDS} = await import('../web/planner/voice.js');
+  const webm = recordedFile([new Blob(['abc'])], 'audio/webm;codecs=opus');
+  assert.equal(webm.name, 'trip.webm');
+  assert.equal(webm.type, 'audio/webm');
+  assert.equal(webm.size, 3);
+  assert.equal(recordedFile([new Blob(['x'])], 'audio/mp4').name, 'trip.mp4');
+  assert.equal(recordedFile([new Blob(['x'])], 'audio/ogg;codecs=opus').name, 'trip.ogg');
+  assert.equal(recordedFile([new Blob(['x'])], '').name, 'trip.webm');
+  assert.equal(recordedFile([], 'audio/webm'), null);
+  assert.equal(recordedFile([new Blob([])], 'audio/webm'), null);
+  assert.equal(micSupported({navigator: {}}), false);
+  assert.equal(micSupported({navigator: {mediaDevices: {getUserMedia() {}}}}), false);
+  assert.equal(micSupported({navigator: {mediaDevices: {getUserMedia() {}}}, MediaRecorder: class {}}), true);
+  assert.ok(MAX_RECORDING_SECONDS > 0 && MAX_RECORDING_SECONDS <= 60);
+});
