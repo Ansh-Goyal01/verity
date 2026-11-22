@@ -60,14 +60,15 @@ export function stopsAndThresholds(data) {
     `<li><strong>${esc(s.name)}</strong><span>${esc(s.km_along_route)} km · ${esc(s.charge_minutes)} min${s.if_needed ? ' · if needed' : ''}</span></li>`).join('')}</ol>` :
     '<p class="muted">No charging stops listed.</p>'}${data.bingo_line?.length ? thresholdTable(data.bingo_line) : ''}`;
 }
-export function release(plan, title) {
+export const releaseLink = id => id ? `<a class="text-link" href="#release/${idPath(id)}">Open release and driver message</a>` : '';
+export function release(plan, title, showLink = true) {
   const labels = {fastest:'Fastest', fewest_stops:'Fewest stops', safest:'Safest'};
   const name = title || (plan.labels || []).map(label=>labels[label] || label).join(' / ') || 'Trip decision';
   return `<article class="release-card"><div class="card-head"><h3>${esc(name)}</h3>${verdict(plan.decision)}</div>
     <p>${esc(plan.reason)}</p>${plan.meets_target === false ? '<p class="warning">Below the requested confidence target.</p>' : ''}
     ${facts([['Trip confidence',window.VerityCore.confidenceText(plan)],['Trip time',`${plan.route.duration_min} min`],['Distance',`${plan.route.distance_km} km`],['Median arrival battery',`${plan.arrival_soc.p50}%`],['Arrival band (p10–p90)',`${plan.arrival_soc.p10}–${plan.arrival_soc.p90}%`]])}
     ${plan.is_simulated ? '<p class="source-note">Includes simulated inputs.</p>' : ''}
-    ${bandMethod(plan.band_method)}${stopsAndThresholds(plan)}</article>`;
+    ${bandMethod(plan.band_method)}${stopsAndThresholds(plan)}${showLink ? releaseLink(plan.plan_id) : ''}</article>`;
 }
 // Keep rows as label/value pairs so long charger IDs and report notes wrap on narrow screens.
 export function records(rows, empty) {

@@ -1,5 +1,5 @@
 import {api, accountApi} from './client.js';
-import {button, esc, facts, numberInput, onSubmit, option, release, section, statusBox, verdict} from './ui.js';
+import {button, esc, facts, numberInput, onSubmit, option, release, releaseLink, section, statusBox, verdict} from './ui.js';
 
 const corridor = {
   origin: {name:'Noida', lat:28.5355, lon:77.391},
@@ -100,6 +100,13 @@ export async function planner(root, cars = null, onCreated = null) {
     ${numberInput('soc','Starting battery (%)',75,0,100)}${conditions()}</fieldset></div>
     <div class="form-actions">${button(privateTrip ? 'Plan with my car' : 'Compare plans',true)}${statusBox()}</div></form><div class="results"></div>`;
   const form = root.querySelector('form'), results = root.querySelector('.results'), journey = journeyInputs(form);
+  if (!privateTrip) {
+    const health = document.createElement('small');
+    form.append(health);
+    api('/health').then(data => {
+      health.textContent = 'Service status · ' + data.status + (data.is_simulated ? ' (simulated)' : '');
+    }).catch(() => { health.textContent = 'Service status unavailable.'; });
+  }
   if (!privateTrip && cachedSelection) {
     journey.selectTrip(cachedSelection.trip);
     for (const [name,value] of Object.entries(cachedSelection.conditions)) {
@@ -216,7 +223,7 @@ export async function fleetBooking(root, managedVehicles = null) {
       results.innerHTML = `<h2 tabindex="-1">Fleet ranking${result.is_simulated ? ' (simulated)' : ''}</h2>${result.recommended_plan_id ? '' : '<p>No vehicle is recommended for this booking.</p>'}
         ${result.rows.map(r=>`<article class="release-card"><div class="card-head"><h3>${esc(r.rank)}. ${esc(r.label)}</h3>${verdict(r.decision)}</div>
         ${r.recommended ? '<p class="recommend">Recommended by the engine</p>' : ''}${r.why_not ? `<p>${esc(r.why_not)}</p>` : ''}
-        ${facts([['Confidence',window.VerityCore.confidenceText(r)],['Starting battery',`${r.soc_pct}%`],['Distance to pickup',r.start == null ? 'At pickup' : r.deadhead_km == null ? null : `${r.deadhead_km} km`],['Trip time',`${r.total_minutes} min`],['Charging',`${r.charging_minutes} min`],['Median arrival battery',`${r.arrival_soc.p50}%`]])}</article>`).join('')}`;
+        ${facts([['Confidence',window.VerityCore.confidenceText(r)],['Starting battery',`${r.soc_pct}%`],['Distance to pickup',r.start == null ? 'At pickup' : r.deadhead_km == null ? null : `${r.deadhead_km} km`],['Trip time',`${r.total_minutes} min`],['Charging',`${r.charging_minutes} min`],['Median arrival battery',`${r.arrival_soc.p50}%`]])}${releaseLink(r.plan_id)}</article>`).join('')}`;
     }
     results.querySelector('h2')?.focus();
   },'Checking the booking…', (error,status) => {

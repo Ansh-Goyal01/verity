@@ -1,3 +1,4 @@
+import {publicRelease} from './release.js';
 import {voice} from './voice.js';
 import {graph} from './graph.js';
 import {planner} from './journey.js';
@@ -13,6 +14,7 @@ const views = {
   graph: ['Charger graph','Inspect charger relationships or test how simulated reports affect trust.',graph],
   account: ['Garage & trips','Manage your cars, plan with your battery health, and keep your trip history.',account],
   operators: ['Charger operations','Manage operator claims, review charger reports, and record repairs.',operators],
+  release: ['Trip release','Review a plan and get the driver message.',publicRelease],
   share: ['Shared trip','View the decision and charging plan shared with you.',sharedTrip],
 };
 const host = document.querySelector('#view');

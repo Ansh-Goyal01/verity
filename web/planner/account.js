@@ -85,7 +85,7 @@ export async function garage(root, {fleet, cars, reload}) {
 
 function tripDetail(root, trip, changed, user) {
   const path = '/trips/' + idPath(trip.id);
-  root.innerHTML = `<h2 tabindex="-1">Trip details</h2>${release(trip.plan,'Trip decision')}
+  root.innerHTML = `<h2 tabindex="-1">Trip details</h2>${release(trip.plan,'Trip decision',false)}
     <div class="trip-tools">${section('Trip record',`<form class="save-trip">${button(trip.saved ? 'Trip saved' : 'Keep this trip')}${statusBox()}</form>
       <form class="arrival">${numberInput('arrival','Actual arrival battery (%)',trip.arrival_pct ?? '',0,100,'any')}${button('Record arrival')}${statusBox()}</form>`)}
     ${section('Share this trip',`<p>Anyone with the link can view the decision, charging stops, and battery thresholds for 48 hours.</p>
@@ -96,9 +96,18 @@ function tripDetail(root, trip, changed, user) {
     form.className = 'sheet';
     form.innerHTML = `<h3>Report a charger</h3><label>Charging stop<select name="charger">${stops.map(s=>option(s.charger_id,s.name)).join('')}</select></label>
       <div class="form-actions"><button type="submit" value="working">Working</button><button type="submit" value="not_working">Not working</button></div>${statusBox()}`;
-    root.append(form);
+    const receipt = document.createElement('div');
+    root.append(form, receipt);
     onSubmit(form, async (data,submit) => {
       const saved = await keyedWrite(user,'/reports/quick',{charger_id:data.get('charger'),status:submit.value});
+      receipt.innerHTML = '<button type="button" class="button button-outline">View my report receipt</button><p role="status"></p>';
+      receipt.querySelector('button').onclick = async () => {
+        const output = receipt.querySelector('p');
+        try {
+          const row = await accountApi('/reports/' + idPath(saved.id));
+          output.textContent = [row.charger_id, row.status.replaceAll('_',' '), dateText(row.created_at)].join(' · ');
+        } catch (error) { output.textContent = error.message; }
+      };
       return 'Report recorded ' + dateText(saved.created_at) + '.';
     },'Recording report…');
   }
