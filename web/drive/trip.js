@@ -108,12 +108,12 @@
   function showRide(result, ride) {
     const after = ride.after_drop;
     const rate = ride.earning_rate;
-    const sourced = rate?.source && !rate.is_example && Number.isFinite(rate.rs_per_hour) && Number.isFinite(after?.expected_lost_rs);
+    const sourced = rate?.source && (!rate.is_example || /https?:\/\//i.test(rate.source)) && Number.isFinite(rate.rs_per_hour) && Number.isFinite(after?.expected_lost_rs);
     result.innerHTML = slipHeader(ride, true) + `<dl class="ticket-facts">${fact('Ride confidence', window.VerityCore.confidenceText(ride))}
       ${fact('Arrival at drop', ride.ride.drop_soc.p50 + '%')}${fact('Ride distance', ride.ride.distance_km + ' km')}</dl>` +
       (after?.charger ? `<section class="ticket-section"><h3>Charge after drop-off</h3>${chargerLink(after.charger.charger_id, after.charger.name)}
       <dl class="ticket-facts paired">${fact('Expected time lost', after.expected_lost_min + ' min')}${sourced ? fact('Earnings opportunity', '₹' + after.expected_lost_rs) : ''}</dl>
-      ${sourced ? `<p class="ticket-note">Rate ₹${esc(rate.rs_per_hour)}/hour · ${esc(rate.source)}</p>` : ''}
+      ${sourced ? `<p class="ticket-note">${rate.is_example ? 'Illustrative rate' : 'Rate'} ₹${esc(rate.rs_per_hour)}/hour · ${esc(rate.source)}</p>` : ''}
       ${after.backups?.length ? `<details class="audit-fold"><summary>Backup chargers</summary><ul>${after.backups.map(c => `<li>${chargerLink(c.charger_id, c.name)}</li>`).join('')}</ul></details>` : ''}</section>` : '')
       + (ride.considered?.length ? `<details class="audit-fold"><summary>Compare nearby chargers</summary><ul>${ride.considered.map(c =>
         `<li>${chargerLink(c.charger_id, c.name)} · ${esc(c.road_km)} km<p>${esc(c.note)}</p></li>`).join('')}</ul></details>` : '')
@@ -134,7 +134,8 @@
         `<label>Vehicle<select name="vehicle">${['V12', 'V07', 'V19'].map(v => option(v, v, v === car.vehicle_id)).join('')}</select></label>`}
       <label>Starting battery (%)${batteryField(cab ? [15,25,45,70] : [40,62,70,85], cab ? base.soc_pct : car.soc_pct)}</label>
       ${cab ? `<label>Earnings (₹/hour)${service.live ? numberField('rate', '', { min: 1, max: 10000, step: 'any', required: false }) :
-        '<select name="rate"><option value="">Default example</option><option value="120">120</option></select>'}</label>` : ''}</div>
+        `<select name="rate"><option value="">Default example</option>${[...new Set(Object.values(cases.rides).map(r=>r.earning_rate)
+          .filter(r=>r && !r.is_example && r.source && Number.isFinite(r.rs_per_hour)).map(r=>r.rs_per_hour))].map(v=>option(v,v,false)).join('')}</select>`}</label>` : ''}</div>
       ${cab && service.live ? `<details class="route-inputs"><summary>Edit Delhi NCR coordinates</summary>${['current','pickup','drop'].map((key, i) =>
         `<fieldset><legend>${['Current position','Pickup','Drop-off'][i]}</legend><div class="input-pair">${['lat','lon'].map(axis =>
           `<label>${axis === 'lat' ? 'Latitude' : 'Longitude'}${numberField(key + '_' + axis, base[key][axis], { min: axis === 'lat' ? -90 : -180, max: axis === 'lat' ? 90 : 180, step: 'any' })}</label>`).join('')}</div></fieldset>`).join('')}</details>` : ''}
