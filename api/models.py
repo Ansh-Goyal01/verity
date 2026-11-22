@@ -269,6 +269,29 @@ class BandMethod(Resp):
     note: str
 
 
+class AssuredBlock(Resp):
+    """WP9: an ILLUSTRATIVE stranding-cover price. No rupee figure without a sourced tow cost in config/assured.json."""
+    eligible: bool
+    reason: str | None
+    p_strand: float = Field(ge=0, le=1)  # rounded to 5 %
+    p_strand_basis: str
+    tow_cost_rs: float | None
+    tow_cost_source: str | None
+    margin: float | None
+    price_rs: int | None
+    formula: str
+    is_illustrative: Literal[True]
+    note: str
+
+
+class RewardBlock(Resp):
+    """WP9: whether a charger report earns the ILLUSTRATIVE reward, and why not when it is withheld."""
+    eligible: bool
+    amount_rs: float | None
+    withheld_reason: str | None
+    is_illustrative: Literal[True]
+
+
 class DispatchResponse(Resp):
     plan_id: str
     vehicle_id: str
@@ -294,6 +317,7 @@ class DispatchResponse(Resp):
     vehicle: ReleaseVehicle  # WP2
     calibration: Calibration  # WP2
     band_method: BandMethod  # WP5
+    assured: AssuredBlock | None = None  # WP9 (illustrative cover price)
     is_simulated: bool
 
 
@@ -456,6 +480,7 @@ class RingAttackResponse(Resp):
     plans: dict
     limit: RingLimit
     is_simulated: bool
+    reward: RewardBlock | None = None  # WP9: the ring's reports earn nothing
 
 
 class RingResetResponse(Resp):
@@ -926,6 +951,7 @@ class ReportResponse(Resp):
     trust_after: TrustBlock
     backend: Literal["neo4j", "memory"]
     is_simulated: bool
+    reward: RewardBlock | None = None  # WP9 (illustrative reward)
 
 
 # --- spoken charger report (contract v5, additive; W3.3) -------------------------------------------------------------

@@ -377,7 +377,7 @@ def post_report(req: ReportRequest, request: Request, svc: EngineService = Depen
         if retry_after is not None:
             raise RateLimited(retry_after, code="already_reported",
                               message=f"This address already reported on this charger; try again in {math.ceil(retry_after)} s.")
-    return svc.add_report(req.model_dump())
+    return svc.add_report(req.model_dump(), reporter=rate_key(client_ip(request, TRUST_PROXY)))
 
 
 @app.get("/api/demo/replay/{plan_id}", response_model=ReplayResponse)

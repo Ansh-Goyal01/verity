@@ -61,6 +61,7 @@ from verity.vehicles import get_prior
 from verity.ride_voice import spoken_ride_answer
 from verity.voice_loop import SPEECH_LANGUAGES, spoken_answers
 
+from .assured import assured_block, load_config as load_assured_config
 from .bands import load_band_calibration
 from .data_sources import DEMO_FLEET_LABEL, any_simulated, build_data_sources
 from .fleet import FleetEndpoints, load_demo_fleet
@@ -643,6 +644,7 @@ class EngineService(GraphEndpoints, FleetEndpoints):
                                                    if picked.vehicle["calibration_basis"] == "class prior" else None),
                                      n_real_reports=len(near_reports) - n_sim, n_simulated_reports=n_sim,
                                      state_source=req.get("state_source", "entered"))
+        band = self.bands.block(vehicle_simulated=picked.vehicle["is_simulated"])
         response = {
             "plan_id": plan_id, "vehicle_id": result.vehicle_id, "decision": result.decision,
             "confidence": result.confidence, "confidence_display": confidence_display(result.confidence),
@@ -661,7 +663,10 @@ class EngineService(GraphEndpoints, FleetEndpoints):
             "verify_chargers": result.verify_chargers,
             "compute_ms": result.compute_ms, "n_runs": n_runs or self.cfg.n_runs, "data_sources": sources,
             "vehicle": picked.vehicle, "calibration": picked.calibration,
-            "band_method": self.bands.block(vehicle_simulated=picked.vehicle["is_simulated"]),
+            "band_method": band,
+            "assured": assured_block(decision=result.decision, confidence=result.confidence,
+                                     confidence_raw=result.confidence_raw, band_method=band["name"],
+                                     cfg=load_assured_config()),
             "is_simulated": any_simulated(sources),
         }
         return response

@@ -15,5 +15,8 @@
   "k_applied": 1.0,
   "calibrated_at": "2026-11-20T20:45:32+00:00"
  },
- "sarvam_key_present": true
+ "sarvam_key_present": true,
+ "offline": false,
+ "cached_route_count": 6,
+ "charger_count": 2349
 }

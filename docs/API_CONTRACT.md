@@ -547,6 +547,21 @@ the public machine-readable `code` (`route_unavailable` or `route_too_long`), as
 already does for `offline`. Currently 503 and 422 have other causes, so the frontend
 can only offer general retry or input guidance when the code is absent.
 
+### 2026-11-22 — v20: `assured` on releases and `reward` on reports (WP9, additive, illustrative)
+
+- **Releases** (`POST /api/dispatch`, each option of `POST /api/plan`, `GET /api/release/{id}`) gain
+  `assured: {eligible, reason, p_strand, p_strand_basis, tow_cost_rs, tow_cost_source, margin, price_rs, formula,
+  is_illustrative: true, note}`. `eligible` only for a GO at or above `min_confidence` (default 0.95) when
+  `band_method.name` is not "model only". `p_strand` is `1 - confidence`, rounded to 5 %, labelled an upper bound.
+  `price_rs` = p_strand x tow cost x margin rounded to the nearest Rs 5, and is `null` unless `config/assured.json`
+  supplies a `tow_cost_rs` with a `tow_cost_source_url` and a `margin` (none is committed: no rupee figure is shown).
+  A NO-GO or INSUFFICIENT_EVIDENCE release is never eligible and has no price.
+- **`POST /api/reports`** (and the ring-attack response) gain `reward: {eligible, amount_rs, withheld_reason,
+  is_illustrative: true}`. Withheld, first reason that applies: simulated report, source in a flagged ring, a report
+  contradicting strong recent evidence (charger at 80 % or more one way with 3 or more reports), or more than the
+  daily cap per reporter address (default 5 per UTC day). `amount_rs` comes only from `report_reward_rs` in the config.
+- Every block is marked illustrative: a real cover or payout would go through a licensed partner.
+
 ### 2026-11-22 — v19: `POST /api/trips/{trip_id}/observation` calibration capture (additive)
 
 Signed-in owner of the trip records what a drive measured so it can later feed battery calibration. Request:

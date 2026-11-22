@@ -19,7 +19,10 @@
     "k_applied": 1.0,
     "calibrated_at": "2026-11-20T20:45:32+00:00"
    },
-   "sarvam_key_present": true
+   "sarvam_key_present": true,
+   "offline": false,
+   "cached_route_count": 6,
+   "charger_count": 2349
   },
   "scenario": {
    "booking": {
@@ -7495,7 +7498,7 @@
     ],
     "refusal_reason": null,
     "verify_chargers": [],
-    "compute_ms": 8223,
+    "compute_ms": 15075,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -7551,6 +7554,19 @@
      "k_applied": 1.0,
      "sources": [],
      "note": "Simulated demo vehicle: its bands come from the simulator and are not calibrated on real trips."
+    },
+    "assured": {
+     "eligible": false,
+     "reason": "bands not yet calibrated on real data",
+     "p_strand": 0.05,
+     "p_strand_basis": "upper bound: 1 - confidence, which also counts runs that arrived below the reserve",
+     "tow_cost_rs": null,
+     "tow_cost_source": null,
+     "margin": null,
+     "price_rs": null,
+     "formula": "price = p_strand x tow cost x margin, rounded to the nearest Rs 5",
+     "is_illustrative": true,
+     "note": "Illustrative. A real cover would be sold through a licensed insurance or roadside partner."
     },
     "is_simulated": true
    },
@@ -14947,7 +14963,7 @@
     ],
     "refusal_reason": null,
     "verify_chargers": [],
-    "compute_ms": 7512,
+    "compute_ms": 13109,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -15003,6 +15019,19 @@
      "k_applied": 1.0,
      "sources": [],
      "note": "Simulated demo vehicle: its bands come from the simulator and are not calibrated on real trips."
+    },
+    "assured": {
+     "eligible": false,
+     "reason": "bands not yet calibrated on real data",
+     "p_strand": 0.05,
+     "p_strand_basis": "upper bound: 1 - confidence, which also counts runs that arrived below the reserve",
+     "tow_cost_rs": null,
+     "tow_cost_source": null,
+     "margin": null,
+     "price_rs": null,
+     "formula": "price = p_strand x tow cost x margin, rounded to the nearest Rs 5",
+     "is_illustrative": true,
+     "note": "Illustrative. A real cover would be sold through a licensed insurance or roadside partner."
     },
     "is_simulated": true
    },
@@ -22437,7 +22466,7 @@
       }
      }
     ],
-    "compute_ms": 6975,
+    "compute_ms": 12335,
     "n_runs": 1500,
     "data_sources": {
      "route": {
@@ -22493,6 +22522,19 @@
      "k_applied": 1.0,
      "sources": [],
      "note": "Simulated demo vehicle: its bands come from the simulator and are not calibrated on real trips."
+    },
+    "assured": {
+     "eligible": false,
+     "reason": "Cover is offered on GO releases only.",
+     "p_strand": 0.05,
+     "p_strand_basis": "upper bound: 1 - confidence, which also counts runs that arrived below the reserve",
+     "tow_cost_rs": null,
+     "tow_cost_source": null,
+     "margin": null,
+     "price_rs": null,
+     "formula": "price = p_strand x tow cost x margin, rounded to the nearest Rs 5",
+     "is_illustrative": true,
+     "note": "Illustrative. A real cover would be sold through a licensed insurance or roadside partner."
     },
     "is_simulated": true
    }
@@ -26274,7 +26316,7 @@
    ],
    "levers": [],
    "earning_rs_per_hour": 60.0,
-   "compute_ms": 961,
+   "compute_ms": 1522,
    "n_runs": 1500,
    "speech": {
     "en-IN": "Take the ride. The chance of completing it and reaching a working charger is 95 percent or more. After the drop, charge at Radisson Blu Plaza Delhi Airport: about 81 minutes, roughly 80 rupees at an example earning rate.",

@@ -7410,7 +7410,7 @@
  ],
  "refusal_reason": null,
  "verify_chargers": [],
- "compute_ms": 8223,
+ "compute_ms": 15075,
  "n_runs": 1500,
  "data_sources": {
   "route": {
@@ -7466,6 +7466,19 @@
   "k_applied": 1.0,
   "sources": [],
   "note": "Simulated demo vehicle: its bands come from the simulator and are not calibrated on real trips."
+ },
+ "assured": {
+  "eligible": false,
+  "reason": "bands not yet calibrated on real data",
+  "p_strand": 0.05,
+  "p_strand_basis": "upper bound: 1 - confidence, which also counts runs that arrived below the reserve",
+  "tow_cost_rs": null,
+  "tow_cost_source": null,
+  "margin": null,
+  "price_rs": null,
+  "formula": "price = p_strand x tow cost x margin, rounded to the nearest Rs 5",
+  "is_illustrative": true,
+  "note": "Illustrative. A real cover would be sold through a licensed insurance or roadside partner."
  },
  "is_simulated": true
 }
