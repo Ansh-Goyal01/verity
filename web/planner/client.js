@@ -21,6 +21,10 @@ async function jsonRequest(url, options = {}) {
     const message = data?.message || data?.msg || data?.error_description || data?.error || data?.detail;
     const error = new Error(typeof message === 'string' ? message : `Request failed (${response.status}).`);
     error.status = response.status;
+    if (error.status === 429) {
+      const seconds = response.headers.get('Retry-After');
+      error.message = /^\d+$/.test(seconds || '') ? 'Too many requests. Try again in ' + seconds + ' seconds.' : 'Too many requests. Wait a moment and try again.';
+    }
     error.code = data?.code || (!data?.id && data?.error);
     error.cachedTrips = Array.isArray(data?.cached_trips) ? data.cached_trips : [];
     throw error;
@@ -113,7 +117,7 @@ export async function api(path, {method = 'GET', body, private: authenticated = 
   } catch (error) {
     if (authenticated && error.status === 401 && session?.access_token === token) {
       setSession(null);
-      throw new Error('Your session expired. Open My account to sign in again.');
+      error.message = 'Your session expired. Open My account to sign in again.';
     }
     throw error;
   }

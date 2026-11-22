@@ -6,7 +6,12 @@ const API_URL = (((typeof location !== "undefined" && new URLSearchParams(locati
    Every offline response is simulated and the pages show a visible badge. */
 (function(){
 const S=()=>window.VERITY_SNAPSHOT?.api;
-const wait=x=>new Promise(r=>setTimeout(()=>r(x),300));async function req(path,opts){let res;try{res=await fetch(API_URL+path,opts);}catch(e){throw new Error('Network request failed. Check your connection and try again.');}let data;try{data=await res.json();}catch(e){throw new Error('The server returned an unreadable response.');}if(!res.ok){const error=new Error(data.message||data.error||`Request failed (${res.status}).`);error.code=data.code||(!data.id&&data.error);error.cachedTrips=data.cached_trips||[];error.status=res.status;throw error;}return data;}function fail(s){throw new Error(s);}
+const wait=x=>new Promise(r=>setTimeout(()=>r(x),300));async function req(path,opts){let res;try{res=await fetch(API_URL+path,opts);}catch(e){throw new Error('Network request failed. Check your connection and try again.');}let data;try{data=await res.json();}catch(e){throw new Error('The server returned an unreadable response.');}if(!res.ok){const error=new Error(data.message||data.error||`Request failed (${res.status}).`);error.code=data.code||(!data.id&&data.error);error.cachedTrips=data.cached_trips||[];error.status=res.status;
+    if(res.status===429){
+      const seconds=res.headers.get('Retry-After');
+      error.message=/^\d+$/.test(seconds||'')?'Too many requests. Try again in '+seconds+' seconds.':'Too many requests. Wait a moment and try again.';
+    }
+    throw error;}return data;}function fail(s){throw new Error(s);}
 function offlineReplay(planId){const s=S();if(s)return Object.values(s.replay||{}).find(r=>r.plan_id===planId);return null;}
 function connected(path, body) {
   if (!API_URL) return Promise.reject(new Error('Connect an engine to use this action.'));
