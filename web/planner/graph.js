@@ -1,6 +1,6 @@
 import {api, accountApi, hasSession, keyedWrite} from './client.js';
 import {esc, facts, idPath, numberInput, onSubmit, statusBox} from './ui.js';
-import {graphSvg, legend, nodeText, summary} from './graph_view.js';
+import {graphSvg, legend, nodeText, outageImpact, summary} from './graph_view.js';
 
 // Named chargers from the public directory (frozen Delhi-NCR ids), so the demo starts from real operators.
 const EXAMPLES = [['CH-0015', 'Tata'], ['CH-0045', 'Statiq'], ['CH-0021', 'Tesla Supercharger'],
@@ -21,16 +21,42 @@ export function provenance(data) {
   return `<ul class="graph-note">${lines.map(line => `<li>${esc(line)}</li>`).join('')}</ul>`;
 }
 
-export function neighborhood(data) {
-  const byId = new Map(data.nodes.map(n => [n.id, n])), home = byId.get('Charger:' + data.charger_id);
-  return `<section class="sheet"><h2>${esc(home ? nodeText(home, byId) : data.charger_id)} <small>${esc(data.charger_id)}</small></h2>
-    ${provenance(data)}${graphSvg(data)}${legend(data)}
+function chargerName(data) {
+  const home = data.nodes.find(node => node.id === 'Charger:' + data.charger_id);
+  return home ? nodeText(home) : data.charger_id;
+}
+
+export function neighborhood(data, vehicles) {
+  return `<section class="sheet"><h2>${esc(chargerName(data))} <small>${esc(data.charger_id)}</small></h2>
+    ${provenance(data)}
+    <div class="form-actions"><button type="button" class="button button-outline" data-outage>What if this charger goes down?</button></div>
+    <p class="status" role="status" data-impact></p><div data-neighborhood>${graphSvg(data, vehicles)}</div><div data-legend>${legend(data)}</div>
     <p class="graph-hint">Select another charger in the graph to explore from it.</p>
     ${facts([['Depth',data.depth],['Backend',data.backend],['Query time',`${data.query_ms} ms`]])}
     ${table('Nodes',['ID','Type','Name'],data.nodes.map(n=>[n.id,n.label,n.props?.name]))}
     ${table('Relationships',['From','Relationship','To'],data.edges.map(e=>[e.from,e.type,e.to]))}
     <details><summary>${data.executed ? 'Executed query' : 'Equivalent graph query'}</summary><pre>${esc(data.cypher)}</pre></details></section>`;
 }
+function bindOutage(root, data, vehicles) {
+  const button = root.querySelector('[data-outage]');
+  const sentence = root.querySelector('[data-impact]');
+  const drawing = root.querySelector('[data-neighborhood]');
+  const key = root.querySelector('[data-legend]');
+  const impact = outageImpact(data);
+  let active = false;
+  button.onclick = () => {
+    active = !active;
+    const scrollLeft = drawing.firstElementChild.scrollLeft;
+    drawing.innerHTML = graphSvg(data, vehicles, active ? impact : null);
+    drawing.firstElementChild.scrollLeft = scrollLeft;
+    key.innerHTML = legend(data, active ? impact : null);
+    sentence.textContent = active
+      ? `If ${chargerName(data)} goes down: ${impact.stops.size} trips lose their planned stop and ${impact.backups.size} lose their backup.`
+      : '';
+    button.textContent = active ? 'Restore' : 'What if this charger goes down?';
+  };
+}
+
 export function ringResult(data) {
   const trust = row => [window.VerityCore.pct(row.p_works),row.n_reports,row.trust_level];
   return `<h2>Ring detection (simulated)</h2><p>${esc(data.charger_name)} · ${esc(data.charger_id)}</p>
@@ -67,9 +93,20 @@ export function graph(root) {
     const node = event.target.closest?.('[data-charger]');
     if (node && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); open(node.dataset.charger); }
   });
+  let catalog;
+  function vehicleLabels() {
+    if (!catalog) catalog = api('/vehicle-models').then(models => new Map(models.map(vehicle => [
+      vehicle.vehicle_id, `${vehicle.make} ${vehicle.model} (${vehicle.battery_nominal_kwh} kWh)`,
+    ]))).catch(() => { catalog = null; return new Map(); });
+    return catalog;
+  }
   async function show(charger, depth) {
-    const data = await api('/graph/neighborhood/' + idPath(charger) + '?depth=' + encodeURIComponent(depth));
-    result.innerHTML = neighborhood(data) + reportForm();
+    const [data, vehicles] = await Promise.all([
+      api('/graph/neighborhood/' + idPath(charger) + '?depth=' + encodeURIComponent(depth)),
+      vehicleLabels(),
+    ]);
+    result.innerHTML = neighborhood(data, vehicles) + reportForm();
+    bindOutage(result, data, vehicles);
     const report = result.querySelector('form.live-report');
     if (report) onSubmit(report, async (_, submit) => {
       const me = await accountApi('/me');
@@ -87,8 +124,11 @@ export function graph(root) {
     if (submit.value !== 'inspect' && !hasSession()) throw new Error('Sign in as an administrator to use the simulation.');
     if (submit.value === 'run') {
       const answer = await accountApi('/demo/ring-attack',{method:'POST',body:{charger_id:charger,n_sources:Number(data.get('sources'))}});
-      const hood = await api('/graph/neighborhood/' + idPath(answer.charger_id) + '?depth=2');
-      result.innerHTML = ringResult(answer) + neighborhood(hood);
+      const [hood, vehicles] = await Promise.all([
+        api('/graph/neighborhood/' + idPath(answer.charger_id) + '?depth=2'), vehicleLabels(),
+      ]);
+      result.innerHTML = ringResult(answer) + neighborhood(hood, vehicles);
+      bindOutage(result, hood, vehicles);
     } else if (submit.value === 'reset') {
       const answer = await accountApi('/demo/ring-attack/reset',{method:'POST'});
       result.innerHTML = `<h2>Demo reset (simulated)</h2>${facts([['Reports removed',answer.reports_removed],['Demo reports left',answer.attack_reports_left],['Demo sources left',answer.attack_sources_left]])}`;
@@ -100,4 +140,5 @@ export function graph(root) {
       ? 'The simulation is switched off on this deployment.' : 'An administrator account is required.';
     if (error.status === 503) status.textContent = 'The graph or account service is unavailable. Use the deployed site and retry.';
   });
+  open(EXAMPLES[0][0]);
 }

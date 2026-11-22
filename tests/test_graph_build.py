@@ -77,17 +77,19 @@ def test_a_working_neo4j_is_used_and_synced_with_batches(monkeypatch: pytest.Mon
     assert [c.id for c in h.mirror.chargers()] == ["C1", "C2"]  # the mirror is always populated too
 
 
-def test_connection_failure_falls_back_and_never_echoes_the_error_text(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_connection_failure_falls_back_and_never_echoes_the_error_text(monkeypatch: pytest.MonkeyPatch, caplog) -> None:
     drv = fake_neo4j(monkeypatch, connectivity_error=RuntimeError("bolt://user:hunter2@host"))
     h = open_graph(CHARGERS, REPORTS)
     assert h.backend == "memory" and h.graph is h.mirror and drv.closed
-    assert "RuntimeError" in h.reason and "hunter2" not in h.reason and "bolt" not in h.reason
+    assert "Neo4j connectivity check failed: RuntimeError" in h.reason
+    assert h.reason in caplog.text
+    assert "hunter2" not in caplog.text and "bolt://" not in caplog.text
 
 
 def test_a_failure_halfway_through_the_sync_falls_back(monkeypatch: pytest.MonkeyPatch) -> None:
     drv = fake_neo4j(monkeypatch, fail_after=3)
     h = open_graph(CHARGERS, REPORTS)
-    assert h.backend == "memory" and drv.closed and "ConnectionError" in h.reason
+    assert h.backend == "memory" and drv.closed and "startup sync failed: ConnectionError" in h.reason
 
 
 def test_a_malformed_uri_that_raises_while_building_the_driver_falls_back_without_echoing_it(

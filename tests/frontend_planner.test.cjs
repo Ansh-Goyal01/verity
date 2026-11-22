@@ -143,7 +143,7 @@ test('the charger graph is layered, names are readable and unique, and nothing o
   globalThis.window = globalThis.window || {};
   window.VerityCore = window.VerityCore || {escapeHtml: v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))};
   const g = await import('../web/planner/graph_view.js');
-  const {provenance} = await import('../web/planner/graph.js');
+  const {neighborhood, provenance} = await import('../web/planner/graph.js');
   const node = (id, label, props = {}) => ({id, label, props});
   const edge = (from, to, type, props = {}) => ({from, to, type, props});
   const data = {
@@ -153,7 +153,9 @@ test('the charger graph is layered, names are readable and unique, and nothing o
       node('Charger:CH-0004', 'Charger', {name: 'Tata'}), node('Charger:CH-0005', 'Charger', {name: 'Tata'}),
       node('Charger:CH-0006', 'Charger', {name: '<img src=x onerror=alert(1)>'}),
       node('Site:CH-0003', 'Site'), node('Operator:Tata', 'Operator'), node('Substation:way/9', 'Substation'),
-      node('Plan:PL-1', 'Plan', {decision: 'GO', vehicle_id: 'V19'}), node('Plan:PL-2', 'Plan', {decision: 'INSUFFICIENT_EVIDENCE', vehicle_id: 'V07'}),
+      node('Plan:PL-1', 'Plan', {decision: 'GO', vehicle_id: 'tata-tiago-ev-24'}), node('Plan:PL-2', 'Plan', {decision: 'INSUFFICIENT_EVIDENCE', vehicle_id: 'V07'}),
+      node('Plan:PL-3', 'Plan', {decision: 'NO_GO', vehicle_id: 'V12'}),
+      node('Source:demo-user-0', 'Source', {is_simulated: true}),
       node('Source:ring-attack-5', 'Source', {is_simulated: true}), node('Source:user-abc', 'Source'),
       node('Channel:app_user', 'Channel'), node('Ring:r1', 'Ring'),
     ],
@@ -162,16 +164,20 @@ test('the charger graph is layered, names are readable and unique, and nothing o
       edge('Charger:CH-0003', 'Substation:way/9', 'NEAREST_SUBSTATION', {distance_km: 1.2}),
       edge('Charger:CH-0004', 'Substation:way/9', 'NEAREST_SUBSTATION', {distance_km: 2}),
       edge('Plan:PL-1', 'Charger:CH-0003', 'BACKUP_FOR'), edge('Plan:PL-2', 'Charger:CH-0003', 'STOPS_AT'),
+      edge('Plan:PL-1', 'Charger:CH-0003', 'BACKUP_FOR'), edge('Plan:PL-3', 'Charger:CH-0004', 'STOPS_AT'),
+      edge('Plan:PL-3', 'Charger:CH-0003', 'AVOIDED'),
       edge('Source:ring-attack-5', 'Charger:CH-0003', 'REPORTED', {is_simulated: true}), edge('Source:user-abc', 'Charger:CH-0003', 'REPORTED'),
       edge('Source:ring-attack-5', 'Channel:app_user', 'VIA'), edge('Source:ring-attack-5', 'Ring:r1', 'MEMBER_OF'),
     ],
   };
-  const text = g.labels(data);
+  const vehicles = new Map([['tata-tiago-ev-24', 'Tata Tiago EV (24 kWh)']]);
+  const text = g.labels(data, data.nodes, vehicles);
   assert.equal(text.get('Charger:CH-0003'), 'EV charging station · CH-0003');  // the generic OSM name gets its id
   assert.equal(text.get('Operator:Tata'), 'Operator: Tata');
-  assert.equal(text.get('Site:CH-0003'), 'Site of EV charging station · CH-0003');
+  assert.equal(text.get('Site:CH-0003'), 'Charging site');
   assert.equal(text.get('Substation:way/9'), 'Nearest substation · 1.2 km');
-  assert.equal(text.get('Plan:PL-1'), 'GO for V19 · backup stop');
+  assert.equal(text.get('Plan:PL-1'), 'GO for Tata Tiago EV (24 kWh) · backup stop');
+  assert.equal(text.get('Source:demo-user-0'), 'Demo driver (simulated)');
   assert.equal(text.get('Plan:PL-2'), 'Not enough evidence for V07 · stops here');
   assert.equal(text.get('Source:ring-attack-5'), 'Ring source 5');
   assert.equal(text.get('Source:user-abc'), 'Signed-in driver');
@@ -184,8 +190,10 @@ test('the charger graph is layered, names are readable and unique, and nothing o
   assert.ok(g.wrap('word '.repeat(30)).every(line => line.length <= 31));
   // Layout: columns left to right, fixed row spacing, inside the drawing, identical on every call.
   const view = g.layout(data), x = id => view.pos.get(id)[0], y = id => view.pos.get(id)[1];
-  assert.ok(x('Source:user-abc') < x('Charger:CH-0003') && x('Charger:CH-0003') < x('Site:CH-0003') && x('Site:CH-0003') < x('Charger:CH-0004'));
-  assert.ok(x('Channel:app_user') < x('Source:user-abc'));
+  assert.ok(x('Source:user-abc') < x('Plan:PL-1') && x('Plan:PL-1') < x('Charger:CH-0003') && x('Charger:CH-0003') < x('Site:CH-0003'));
+  assert.equal(x('Channel:app_user'), x('Source:user-abc'));
+  assert.equal(x('Site:CH-0003'), x('Charger:CH-0004'));
+  assert.deepEqual(view.headings.map(h=>h.text), ['Who reported it', 'Trips that use it', 'This charger', 'Where it is & who runs it']);
   assert.deepEqual([...g.layout(data).pos], [...view.pos]);
   const byColumn = new Map();
   for (const [id, [px, py]] of view.pos) {
@@ -193,9 +201,20 @@ test('the charger graph is layered, names are readable and unique, and nothing o
     byColumn.set(px, (byColumn.get(px) || []).concat(py).sort((a, b) => a - b));
   }
   for (const ys of byColumn.values()) ys.slice(1).forEach((value, i) => assert.ok(value - ys[i] >= g.ROW_GAP, 'rows keep their spacing'));
-  const svg = g.graphSvg(data);
-  assert.equal((svg.match(/node-source/g) || []).length, 2);
-  assert.equal((svg.match(/node-source sim/g) || []).length, 1);
+  const impact = g.outageImpact(data);
+  assert.deepEqual([...impact.stops], ['Plan:PL-2']);
+  assert.deepEqual([...impact.backups], ['Plan:PL-1']);
+  const svg = g.graphSvg(data, vehicles);
+  assert.match(svg, /node-plan plan-go/);
+  assert.match(svg, /node-plan plan-no-go/);
+  assert.match(svg, /node-plan plan-uncertain/);
+  assert.doesNotMatch(svg, /outage-(stop|backup)/);
+  assert.match(g.graphSvg(data, vehicles, impact), /plan-uncertain outage-stop/);
+  assert.match(g.graphSvg(data, vehicles, impact), /plan-go outage-backup/);
+  assert.match(neighborhood(data, vehicles), /<details><summary>Nodes/);
+  assert.match(neighborhood(data, vehicles), /<details><summary>Relationships/);
+  assert.equal((svg.match(/node-source/g) || []).length, 3);
+  assert.equal((svg.match(/node-source sim/g) || []).length, 2);
   assert.match(svg, /data-charger="CH-0004"/);
   assert.doesNotMatch(svg, /data-charger="CH-0003"/);  // the focal charger is not a link to itself
   assert.doesNotMatch(svg, /<img/);  // names are escaped
@@ -216,8 +235,8 @@ test('a crowded neighbourhood stays inside twelve rows per column and says how m
   }
   const view = g.layout({charger_id: 'CH-1', nodes, edges});
   assert.ok(view.height <= 64 + 40 + g.MAX_ROWS * g.ROW_GAP);
-  assert.equal(view.hidden.get(4), 40 - (g.MAX_ROWS - 1));
-  assert.match(g.graphSvg({charger_id: 'CH-1', nodes, edges}), /\+29 more \(see the tables below\)/);
+  assert.equal(view.hidden.get(3), 41 - (g.MAX_ROWS - 1));
+  assert.match(g.graphSvg({charger_id: 'CH-1', nodes, edges}), /\+30 more \(see the tables below\)/);
 });
 
 test('charger voice reports require a concrete read-back and first-person consent', async () => {

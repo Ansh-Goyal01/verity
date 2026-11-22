@@ -2,7 +2,7 @@
 
 ``open_graph`` loads chargers and reports into Neo4j when credentials exist and the connection works, and into an
 in-memory mirror always. Any failure (no credentials, unreachable, auth, a query erroring mid-sync) leaves the
-mirror in use and records why; the reason holds exception CLASS names only, never messages or credentials.
+mirror in use and records the failing operation and safe driver diagnostics, without messages or credentials.
 ``GraphHandle.call`` is how the API reads: on Neo4j, and if the link drops mid-request, once more on the mirror.
 """
 
@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import re
 import threading
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -51,6 +52,15 @@ BACKEND_FAILURES = (Neo4jError, DriverError, OSError)
 
 class GraphUnavailable(RuntimeError):
     """``prefer="neo4j"`` was requested but Neo4j cannot be used."""
+
+
+def _failure_reason(operation: str, exc: Exception) -> str:
+    reason = f"{operation}: {type(exc).__name__}"
+    code = exc.code if isinstance(exc, Neo4jError) else None
+    # Driver messages can include credentials. Only log codes in the documented Neo4j status format.
+    if isinstance(code, str) and re.fullmatch(r"Neo\.(ClientError|TransientError|DatabaseError)\.[A-Za-z]+\.[A-Za-z]+", code):
+        reason += f" ({code})"
+    return reason
 
 
 def _close_quietly(graph: Neo4jGraph) -> None:
@@ -142,7 +152,7 @@ class GraphHandle:
             try:
                 return fn(self.graph)
             except BACKEND_FAILURES as exc:
-                self.fall_back(f"{type(exc).__name__} during a request")
+                self.fall_back(_failure_reason("Neo4j request failed", exc))
         return fn(self.mirror)
 
     def populate(self, fn: Callable[[ChargerGraph], None]) -> None:
@@ -152,7 +162,7 @@ class GraphHandle:
             try:
                 fn(self.graph)
             except BACKEND_FAILURES as exc:
-                self.fall_back(f"{type(exc).__name__} while syncing")
+                self.fall_back(_failure_reason("Neo4j write failed", exc))
 
     def close(self) -> None:
         if self.neo4j is not None:
@@ -160,7 +170,6 @@ class GraphHandle:
 
 
 def _sync_neo4j(graph: Neo4jGraph, chargers: Sequence[ChargerRecord], reports: Sequence[Report]) -> None:
-    graph.verify_connectivity()
     graph.ensure_constraints()
     graph.add_chargers(chargers)
     graph.sync_sites()
@@ -181,17 +190,21 @@ def open_graph(chargers: Sequence[ChargerRecord], reports: Sequence[Report], *, 
     mirror.add_aliases(derive_aliases(chargers))
     if prefer == "memory":
         return GraphHandle(mirror, "memory", mirror, "VERITY_GRAPH=memory")
-    reason, graph = "no NEO4J_URI / NEO4J_USERNAME / NEO4J_PASSWORD", None
+    reason, graph = "missing Neo4j settings (NEO4J_URI / NEO4J_USERNAME / NEO4J_PASSWORD)", None
+    operation = "Neo4j driver setup failed"
     try:
         graph = Neo4jGraph.from_env()  # inside the try: a malformed URI raises here and its message can hold the URI
         if graph is not None:
+            operation = "Neo4j connectivity check failed"
+            graph.verify_connectivity()
+            operation = "Neo4j startup sync failed"
             _sync_neo4j(graph, chargers, reports)
             known = {c.id for c in chargers}  # real reports written in an earlier run: the mirror must hold them too,
             mirror.add_reports([r for r in graph.reports() if not r.is_simulated and r.charger_id in known])  # or a fallback loses them
             log.info("graph backend: neo4j (%d chargers, %d reports synced)", len(chargers), len(reports))
             return GraphHandle(graph, "neo4j", mirror, "connected")
-    except Exception as exc:  # noqa: BLE001 - class name only: messages may echo the connection string
-        reason = f"Neo4j unavailable ({type(exc).__name__})"
+    except Exception as exc:  # noqa: BLE001 - preserve the startup mirror if the driver or sync fails
+        reason = _failure_reason(operation, exc)
         if graph is not None:
             try:
                 graph.close()

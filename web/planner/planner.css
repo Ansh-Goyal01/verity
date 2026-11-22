@@ -101,8 +101,16 @@
 .node-site circle, .swatch.node-site { fill: #7c3aed; background: #7c3aed; }
 .node-operator circle, .swatch.node-operator { fill: #0d9488; background: #0d9488; }
 .node-substation circle, .swatch.node-substation { fill: #d97706; background: #d97706; }
-.node-plan circle, .swatch.node-plan { fill: #16a34a; background: #16a34a; }
-.node-source circle, .swatch.node-source { fill: #dc2626; background: #dc2626; }
+.node-plan circle, .node-source circle, .swatch.node-source { fill: #64748b; background: #64748b; }
+.graph-view .plan-go circle, .swatch.plan-go { fill: #16a34a; background: #16a34a; }
+.graph-view .plan-no-go circle, .swatch.plan-no-go { fill: #dc2626; background: #dc2626; }
+.graph-view .plan-uncertain circle, .swatch.plan-uncertain { fill: #d97706; background: #d97706; }
+.graph-view .outage-unaffected circle { fill: #64748b; }
+.graph-view .outage-stop circle { fill: #dc2626; stroke: #991b1b; stroke-width: 4; }
+.graph-view .outage-backup circle { fill: #d97706; stroke: #92400e; stroke-width: 4; }
+.graph-view .outage-stop.outage-backup circle, .swatch.swatch-outage-both {
+  fill: #dc2626; background: #dc2626; stroke: #d97706; border-color: #d97706;
+}
 .node-channel circle, .swatch.node-channel { fill: #6b7280; background: #6b7280; }
 .node-ring circle, .swatch.node-ring { fill: #be185d; background: #be185d; }
 .graph-legend { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; list-style: none; margin: 0; padding: 0; }
@@ -116,5 +124,5 @@
 .graph-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .graph-scroll:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
 .graph-scroll .graph-view { border: 0; border-radius: 0; display: block; }
-.graph-view .col-head { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; fill: currentColor; opacity: .7; }
+.graph-view .col-head { font-size: 12px; letter-spacing: .04em; fill: currentColor; }
 .graph-view .edge { fill: none; }
