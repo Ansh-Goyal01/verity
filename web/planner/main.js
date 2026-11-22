@@ -10,7 +10,7 @@ import {esc, heading} from './ui.js';
 const views = {
   plan: ['Plan a trip','Choose your route and vehicle to compare charging plans.',planner],
   fleet: ['Fleet bookings','Check which vehicles can take a booking and inspect the engine’s recommendation.',fleet],
-  voice: ['Spoken trip','Review the route, vehicle and battery level before confirming your plan.',voice],
+  voice: ['Voice','Review and confirm a trip or a charger observation in English or Hindi.',voice],
   graph: ['Charger graph','Inspect charger relationships or test how simulated reports affect trust.',graph],
   account: ['Garage & trips','Manage your cars, plan with your battery health, and keep your trip history.',account],
   operators: ['Charger operations','Manage operator claims, review charger reports, and record repairs.',operators],

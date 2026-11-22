@@ -219,3 +219,25 @@ test('a crowded neighbourhood stays inside twelve rows per column and says how m
   assert.equal(view.hidden.get(4), 40 - (g.MAX_ROWS - 1));
   assert.match(g.graphSvg({charger_id: 'CH-1', nodes, edges}), /\+29 more \(see the tables below\)/);
 });
+
+test('charger voice reports require a concrete read-back and first-person consent', async () => {
+  const {reportConfirmation} = await import('../web/planner/voice.js');
+  const heard = {stage:'confirm',needs_confirmation:true,charger:{charger_id:'CH-1'},status:'working',
+    transcript:'charger working',reply_language:'en-IN'};
+  for (const incomplete of [{stage:'clarify'},{needs_confirmation:false},{charger:null},{status:null}])
+    assert.throws(()=>reportConfirmation({...heard,...incomplete},true,false));
+  assert.throws(()=>reportConfirmation(heard,false,false));
+  assert.deepEqual(reportConfirmation(heard,true,false),{confirmed:true,consent:true,from_real_person:true,
+    charger_id:'CH-1',status:'working',transcript:'charger working',language:'en-IN',speak:false});
+});
+
+test('illustrative prices require a source and probabilities require a sample size', () => {
+  assert.equal(core.illustrativeBlocks({}), '');
+  const assured = {eligible:true,price_rs:15,p_strand:0.16};
+  assert.doesNotMatch(core.illustrativeBlocks({assured}), /₹|15%/);
+  const text = core.illustrativeBlocks({assured:{...assured,tow_cost_source:'https://example.org/quote'},n_runs:35});
+  assert.match(text,/Illustrative cover/);
+  assert.match(text,/₹15/);
+  assert.match(text,/15% · 35 runs/);
+  assert.doesNotMatch(core.illustrativeBlocks({reward:{eligible:true,amount_rs:10}}), /₹/);
+});
