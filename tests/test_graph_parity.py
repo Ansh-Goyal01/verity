@@ -218,7 +218,15 @@ def test_why_and_charger_views_are_identical_through_either_graph(services) -> N
     assert (a["backend"], a["executed"], b["backend"], b["executed"]) == ("memory", False, "neo4j", True)
     assert views_equal(a, b) and a["cypher"] == b["cypher"] and b["query_ms"] > 0
     cid = memory.dispatch(request("V12"))["stops"][0]["charger_id"]
-    assert views_equal(memory.graph_charger(cid), neo4j.graph_charger(cid))
+    mine = memory.graph_charger(cid)
+    # The Aura database is shared with the live site and other runs, which also store plans on this charger.
+    # Compare only the plans this memory run created.
+    ours = {n["id"] for n in mine["nodes"] if n["label"] == "Plan"}
+    theirs = neo4j.graph_charger(cid)
+    theirs = {**theirs,
+              "nodes": [n for n in theirs["nodes"] if n["label"] != "Plan" or n["id"] in ours],
+              "edges": [e for e in theirs["edges"] if not e["from"].startswith("Plan:") or e["from"] in ours]}
+    assert views_equal(mine, theirs)
 
 
 @pytest.mark.parametrize("spoken", ["Yuma", "Tata Power Mathura", "Haldiram wala charger", "Sector 62 wala charger",

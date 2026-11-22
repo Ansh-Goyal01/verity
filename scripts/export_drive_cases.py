@@ -14,11 +14,16 @@ Carried over unchanged from the current file (they do not depend on the planner)
 from __future__ import annotations
 
 import json
+import os
 import sys
 import warnings
 from pathlib import Path
 
 warnings.filterwarnings("ignore")  # starlette's httpx deprecation notice is irrelevant here
+# The script asks for 101 live updates per case from one client: lift the per-IP planning limit (CX-3) and keep the
+# graph in memory, before the API is imported.
+os.environ.setdefault("VERITY_GRAPH", "memory")
+os.environ.setdefault("VERITY_PLANNING_RATE_PER_MIN", "100000")
 
 from fastapi.testclient import TestClient  # noqa: E402
 

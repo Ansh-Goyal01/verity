@@ -121,3 +121,101 @@ test('an uncertain report or repair retries with its original request key', asyn
     assert.equal(values.size,1);
   } finally { delete global.sessionStorage; }
 });
+
+test('microphone recordings become a named audio file and an empty recording is refused', async () => {
+  const {recordedFile, micSupported, MAX_RECORDING_SECONDS} = await import('../web/planner/voice.js');
+  const webm = recordedFile([new Blob(['abc'])], 'audio/webm;codecs=opus');
+  assert.equal(webm.name, 'trip.webm');
+  assert.equal(webm.type, 'audio/webm');
+  assert.equal(webm.size, 3);
+  assert.equal(recordedFile([new Blob(['x'])], 'audio/mp4').name, 'trip.mp4');
+  assert.equal(recordedFile([new Blob(['x'])], 'audio/ogg;codecs=opus').name, 'trip.ogg');
+  assert.equal(recordedFile([new Blob(['x'])], '').name, 'trip.webm');
+  assert.equal(recordedFile([], 'audio/webm'), null);
+  assert.equal(recordedFile([new Blob([])], 'audio/webm'), null);
+  assert.equal(micSupported({navigator: {}}), false);
+  assert.equal(micSupported({navigator: {mediaDevices: {getUserMedia() {}}}}), false);
+  assert.equal(micSupported({navigator: {mediaDevices: {getUserMedia() {}}}, MediaRecorder: class {}}), true);
+  assert.ok(MAX_RECORDING_SECONDS > 0 && MAX_RECORDING_SECONDS <= 60);
+});
+
+test('the charger graph is layered, names are readable and unique, and nothing overlaps', async () => {
+  globalThis.window = globalThis.window || {};
+  window.VerityCore = window.VerityCore || {escapeHtml: v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))};
+  const g = await import('../web/planner/graph_view.js');
+  const {provenance} = await import('../web/planner/graph.js');
+  const node = (id, label, props = {}) => ({id, label, props});
+  const edge = (from, to, type, props = {}) => ({from, to, type, props});
+  const data = {
+    charger_id: 'CH-0003', depth: 2,
+    nodes: [
+      node('Charger:CH-0003', 'Charger', {name: 'EV charging station (OpenStreetMap)', operator: ''}),
+      node('Charger:CH-0004', 'Charger', {name: 'Tata'}), node('Charger:CH-0005', 'Charger', {name: 'Tata'}),
+      node('Charger:CH-0006', 'Charger', {name: '<img src=x onerror=alert(1)>'}),
+      node('Site:CH-0003', 'Site'), node('Operator:Tata', 'Operator'), node('Substation:way/9', 'Substation'),
+      node('Plan:PL-1', 'Plan', {decision: 'GO', vehicle_id: 'V19'}), node('Plan:PL-2', 'Plan', {decision: 'INSUFFICIENT_EVIDENCE', vehicle_id: 'V07'}),
+      node('Source:ring-attack-5', 'Source', {is_simulated: true}), node('Source:user-abc', 'Source'),
+      node('Channel:app_user', 'Channel'), node('Ring:r1', 'Ring'),
+    ],
+    edges: [
+      edge('Charger:CH-0003', 'Site:CH-0003', 'AT'), edge('Charger:CH-0003', 'Operator:Tata', 'RUN_BY'),
+      edge('Charger:CH-0003', 'Substation:way/9', 'NEAREST_SUBSTATION', {distance_km: 1.2}),
+      edge('Charger:CH-0004', 'Substation:way/9', 'NEAREST_SUBSTATION', {distance_km: 2}),
+      edge('Plan:PL-1', 'Charger:CH-0003', 'BACKUP_FOR'), edge('Plan:PL-2', 'Charger:CH-0003', 'STOPS_AT'),
+      edge('Source:ring-attack-5', 'Charger:CH-0003', 'REPORTED', {is_simulated: true}), edge('Source:user-abc', 'Charger:CH-0003', 'REPORTED'),
+      edge('Source:ring-attack-5', 'Channel:app_user', 'VIA'), edge('Source:ring-attack-5', 'Ring:r1', 'MEMBER_OF'),
+    ],
+  };
+  const text = g.labels(data);
+  assert.equal(text.get('Charger:CH-0003'), 'EV charging station · CH-0003');  // the generic OSM name gets its id
+  assert.equal(text.get('Operator:Tata'), 'Operator: Tata');
+  assert.equal(text.get('Site:CH-0003'), 'Site of EV charging station · CH-0003');
+  assert.equal(text.get('Substation:way/9'), 'Nearest substation · 1.2 km');
+  assert.equal(text.get('Plan:PL-1'), 'GO for V19 · backup stop');
+  assert.equal(text.get('Plan:PL-2'), 'Not enough evidence for V07 · stops here');
+  assert.equal(text.get('Source:ring-attack-5'), 'Ring source 5');
+  assert.equal(text.get('Source:user-abc'), 'Signed-in driver');
+  assert.equal(text.get('Charger:CH-0004'), 'Tata · CH-0004');  // two chargers named Tata: each gets its id
+  assert.equal(text.get('Charger:CH-0005'), 'Tata · CH-0005');
+  assert.equal(new Set(text.values()).size, text.size);  // every label on screen is unique
+  assert.deepEqual(g.wrap('EV charging station · CH-0003'), ['EV charging station · CH-0003']);  // fits on one line
+  assert.deepEqual(g.wrap('Site of EV charging station · CH-0003'), ['Site of EV charging station ·', 'CH-0003']);
+  assert.equal(g.wrap('x'.repeat(80)).length, 1);
+  assert.ok(g.wrap('word '.repeat(30)).every(line => line.length <= 31));
+  // Layout: columns left to right, fixed row spacing, inside the drawing, identical on every call.
+  const view = g.layout(data), x = id => view.pos.get(id)[0], y = id => view.pos.get(id)[1];
+  assert.ok(x('Source:user-abc') < x('Charger:CH-0003') && x('Charger:CH-0003') < x('Site:CH-0003') && x('Site:CH-0003') < x('Charger:CH-0004'));
+  assert.ok(x('Channel:app_user') < x('Source:user-abc'));
+  assert.deepEqual([...g.layout(data).pos], [...view.pos]);
+  const byColumn = new Map();
+  for (const [id, [px, py]] of view.pos) {
+    assert.ok(px >= 0 && px <= view.width && py >= 0 && py <= view.height, id);
+    byColumn.set(px, (byColumn.get(px) || []).concat(py).sort((a, b) => a - b));
+  }
+  for (const ys of byColumn.values()) ys.slice(1).forEach((value, i) => assert.ok(value - ys[i] >= g.ROW_GAP, 'rows keep their spacing'));
+  const svg = g.graphSvg(data);
+  assert.equal((svg.match(/node-source/g) || []).length, 2);
+  assert.equal((svg.match(/node-source sim/g) || []).length, 1);
+  assert.match(svg, /data-charger="CH-0004"/);
+  assert.doesNotMatch(svg, /data-charger="CH-0003"/);  // the focal charger is not a link to itself
+  assert.doesNotMatch(svg, /<img/);  // names are escaped
+  assert.match(svg, /overflow|graph-scroll/);
+  assert.deepEqual(g.summary(data).reports, {real: 1, simulated: 1});
+  assert.match(provenance(data), /1 real, 1 simulated/);
+});
+
+test('a crowded neighbourhood stays inside twelve rows per column and says how many it left out', async () => {
+  globalThis.window = globalThis.window || {};
+  window.VerityCore = window.VerityCore || {escapeHtml: v => String(v)};
+  const g = await import('../web/planner/graph_view.js');
+  const nodes = [{id: 'Charger:CH-1', label: 'Charger', props: {name: 'Focal'}}, {id: 'Substation:s', label: 'Substation', props: {}}];
+  const edges = [{from: 'Charger:CH-1', to: 'Substation:s', type: 'NEAREST_SUBSTATION', props: {distance_km: 1}}];
+  for (let i = 0; i < 40; i++) {
+    nodes.push({id: 'Charger:CH-9' + i, label: 'Charger', props: {name: 'Neighbour ' + i}});
+    edges.push({from: 'Charger:CH-9' + i, to: 'Substation:s', type: 'NEAREST_SUBSTATION', props: {distance_km: 2}});
+  }
+  const view = g.layout({charger_id: 'CH-1', nodes, edges});
+  assert.ok(view.height <= 64 + 40 + g.MAX_ROWS * g.ROW_GAP);
+  assert.equal(view.hidden.get(4), 40 - (g.MAX_ROWS - 1));
+  assert.match(g.graphSvg({charger_id: 'CH-1', nodes, edges}), /\+29 more \(see the tables below\)/);
+});

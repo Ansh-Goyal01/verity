@@ -93,3 +93,13 @@ def test_ring_attack_endpoints_need_an_admin_sign_in(svc: EngineService, monkeyp
         assert not any(r.source_id.startswith(ATTACK_PREFIX) for r in svc.graph.mirror.reports())
     finally:
         main.app.dependency_overrides.clear()
+
+
+def test_neighbouring_chargers_in_the_graph_carry_their_directory_names(svc: EngineService) -> None:
+    view = svc.graph_neighbourhood("CH-0003", 2)
+    chargers = [n for n in view["nodes"] if n["label"] == "Charger"]
+    assert len(chargers) >= 2  # the focal charger and at least one neighbour at its site or substation
+    known = {c.id: c for c in svc.chargers}
+    for node in chargers:
+        record = known[node["id"].split(":", 1)[1]]
+        assert node["props"].get("name") == record.name and node["props"].get("operator", "") == (record.operator or "")

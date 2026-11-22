@@ -79,7 +79,8 @@ class OperatorGraph:
             for ring in communities(graph.agreement_edges()):
                 affected = [r for source in ring.sources for r in by_source.get(source, ())]
                 if affected:
-                    rows.append({"sources_in_ring": len(ring.sources),
+                    # Count only sources that reported this operator's chargers; the rest are out of scope.
+                    rows.append({"sources_in_ring": sum(1 for source in ring.sources if source in by_source),
                                  "charger_ids": sorted({r.charger_id for r in affected}),
                                  "includes_simulated_reports": any(r.is_simulated for r in affected)})
             return rows

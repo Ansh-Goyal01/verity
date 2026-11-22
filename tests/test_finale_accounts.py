@@ -25,7 +25,7 @@ def database():
         db.execute("CREATE TABLE auth.users (id uuid PRIMARY KEY)")
         db.execute("CREATE ROLE anon NOLOGIN")
         db.execute("CREATE ROLE authenticated NOLOGIN")
-        assert migrate(db) == ["001_accounts.sql"]
+        assert migrate(db) == ["001_accounts.sql", "002_trip_observations.sql"]
         assert migrate(db) == []
     return url
 
@@ -56,7 +56,7 @@ def test_database_roles_have_no_access(database):
             SELECT relrowsecurity FROM pg_class JOIN pg_namespace n ON n.oid = relnamespace
             WHERE nspname = 'verity_private' AND relkind = 'r'
         """).fetchall()
-        assert tables == [(True,)] * 8
+        assert tables == [(True,)] * 9
         for role in ("anon", "authenticated"):
             assert db.execute("SELECT has_schema_privilege(%s, 'verity_private', 'USAGE')", (role,)).fetchone() == (False,)
 
@@ -187,3 +187,29 @@ def test_real_operator_graph_recovers_reports_and_repairs(account_client, monkey
     assert any(r.evidence == "operator_repair" for r in service.graph.mirror.reports(charger.id))
     for path in ("suspected-rings", "shared-grid-risk", "critical-chargers?corridor_id=noida-agra&usable_range_km=90"):
         assert isinstance(client.get("/api/cpo/" + path, headers=operator).json(), list)
+
+
+def test_observation_capture_screens_charging_and_is_owner_scoped(account_client):
+    client, make_account = account_client
+    first, other = make_account("owner"), make_account("owner")
+    sample = client.get("/api/sample-trip").json()
+    car = client.post("/api/me/cars", json={"model_id": sample["model_id"], "nickname": "Obs", "battery_health_pct": 90},
+                      headers=first).json()
+    body = {**sample["request"], "car_id": car["id"]}
+    trip, second = (client.post("/api/trips", json=body, headers=first).json()["id"] for _ in range(2))
+    segment = {"length_m": 1000, "v_mps": 20, "accel_mps2": 0, "grade_rad": 0, "dt_s": 50, "temp_c": 25}
+    drive = {"soc": [{"t_s": 0, "pct": 80}, {"t_s": 3000, "pct": 70}], "segments": [segment],
+             "charged_during_trip": False}
+    stored = client.post(f"/api/trips/{trip}/observation", json=drive, headers=first)
+    assert stored.status_code == 201, stored.text
+    assert stored.json()["eligible_for_calibration"] is True and stored.json()["calibration_applied"] is False
+    assert "eligible" not in stored.json()
+    # The first record wins: a retry, even with a different payload, returns it and adds nothing.
+    again = client.post(f"/api/trips/{trip}/observation", json={**drive, "charged_during_trip": True}, headers=first)
+    assert again.json()["eligible_for_calibration"] is True
+    assert client.post(f"/api/trips/{trip}/observation", json=drive, headers=other).status_code == 404
+    charged = {**drive, "soc": [{"t_s": 0, "pct": 40}, {"t_s": 1500, "pct": 75}, {"t_s": 3000, "pct": 60}]}
+    out = client.post(f"/api/trips/{second}/observation", json=charged, headers=first).json()
+    assert out["eligible_for_calibration"] is False and out["intermediate_charging"] is True
+    assert client.post(f"/api/trips/{trip}/observation", json={**drive, "soc": drive["soc"][:1]},
+                       headers=first).status_code == 422

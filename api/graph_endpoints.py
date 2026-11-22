@@ -17,6 +17,8 @@ from verity.trust.clock import rebase_real_reports
 from verity.trust.graph_types import AuditView
 from verity.trust.reports_sim import NOW
 
+from .assured import contradicts_strong_evidence, load_config as load_assured_config, reward_block
+
 REPORT_CHANNELS = {"driver_voice": "driver:driver_voice"}  # channel -> source id (one source per channel, as for public evidence)
 SCRIPTED_SOURCE_ID = "driver:driver_voice_scripted"  # a demo voice note: its own source, so it never lends a real driver's reputation
 MAX_NOTE_CHARS = 200
@@ -51,7 +53,8 @@ class GraphEndpoints:
             self._record_plan(plan_id, stored.response, self._view)
             view = self.graph.call(lambda g: g.why(plan_id))
         if view is None:
-            raise _api_error(404, "unknown_plan", f"No plan {plan_id!r} in the graph; call POST /api/dispatch first")
+            raise _api_error(404, "unknown_plan", f"No plan {plan_id!r} in the graph (plans are kept for 24 h and the newest 300, "
+                                   "and may live on another instance); plan again with POST /api/plan or /api/dispatch")
         return {"plan_id": plan_id, **view_response(view)}
 
     def graph_charger(self, charger_id: str) -> dict:
@@ -96,10 +99,19 @@ class GraphEndpoints:
                                   "props": {"distance_km": d}})
             queries += ["MATCH (s:Source) WHERE s.ring_id IS NOT NULL RETURN s.id, s.ring_id",
                         "MATCH (c:Charger)-[r:NEAREST_SUBSTATION]->(s:Substation) RETURN c.id, s.id, r.distance_km"]
+        # Neighbouring chargers (same site, same substation) come back from the graph as bare ids; give them their
+        # directory name and operator so a screen can show "Statiq" and not "CH-0046". Directory facts only.
+        directory = {c.id: c for c in self.chargers}
+        for node in nodes.values():
+            record = directory.get(node["id"].split(":", 1)[1]) if node["label"] == "Charger" else None
+            if record is not None and not node["props"]:
+                node["props"] = {"name": record.name, "lat": record.lat, "lon": record.lon,
+                                 "operator": record.operator or "", "site_type": record.site_type or "unknown"}
         return {**out, "charger_id": charger_id, "depth": depth,
                 "nodes": sorted(nodes.values(), key=lambda n: n["id"]), "edges": edges, "cypher": "\n;\n".join(queries)}
 
-    def add_report(self, req: dict, now: datetime | None = None, *, is_simulated: bool = False) -> dict:
+    def add_report(self, req: dict, now: datetime | None = None, *, is_simulated: bool = False,
+                   reporter: str | None = None) -> dict:
         """One REPORTED edge, with the charger's trust before and after. Trust is evaluated the way dispatch does it:
         simulated reports on the frozen simulation clock, real ones aged by real time (``trust/clock.py``).
         ``is_simulated`` is true only for a scripted report (a demo voice note), never for a person."""
@@ -123,6 +135,23 @@ class GraphEndpoints:
         self.graph.populate(lambda g: g.add_report(rep))
         after = self.graph.call(trust_now)
         self._adopt(self.graph.call(self._read_view))
+        trust_before = trust_block(before)
         return {"charger_id": cid, "status": rep.status, "source_id": rep.source_id, "t": when.isoformat(),
-                "trust_before": trust_block(before), "trust_after": trust_block(after),
-                "backend": self.graph.backend, "is_simulated": is_simulated}
+                "trust_before": trust_before, "trust_after": trust_block(after),
+                "backend": self.graph.backend, "is_simulated": is_simulated,
+                "reward": self._report_reward(rep, trust_before, reporter, when)}
+
+    def _report_reward(self, rep: Report, trust_before: dict, reporter: str | None, when: datetime) -> dict:
+        """WP9: the trust engine's own signals decide the reward (ring membership, contradiction); no second fraud system.
+        The daily cap counts every report from one reporter key (the caller's address), per UTC day, in memory."""
+        cfg = load_assured_config()
+        over_cap = False
+        if reporter is not None:
+            counts = self.__dict__.setdefault("_report_counts", {})
+            day = when.date().isoformat()
+            for stale in [k for k in counts if k[1] != day]:
+                del counts[stale]
+            over_cap = counts.get((reporter, day), 0) >= cfg["report_daily_cap"]
+            counts[(reporter, day)] = counts.get((reporter, day), 0) + 1
+        return reward_block(is_simulated=rep.is_simulated, in_ring=rep.source_id in self.graph.call(lambda g: g.ring_ids()),
+                            contradicts=contradicts_strong_evidence(trust_before, rep.status), over_cap=over_cap, cfg=cfg)

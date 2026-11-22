@@ -1,0 +1,9 @@
+{
+  "_comment": "Copy to config/assured.json and fill in. A rupee figure is shown only when tow_cost_rs has a tow_cost_source_url. Nothing here is a real offer.",
+  "tow_cost_rs": null,
+  "tow_cost_source_url": null,
+  "margin": null,
+  "min_confidence": 0.95,
+  "report_reward_rs": null,
+  "report_daily_cap": 5
+}

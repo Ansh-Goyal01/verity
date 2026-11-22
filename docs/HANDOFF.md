@@ -66,3 +66,19 @@ writes the file only after every translation succeeds. [Sarvam translation API](
   and `/reset`. Send the signed-in admin's bearer token and show a plain message on 401 (sign in) and 403 (admin
   account needed, or demo switched off with code `demo_disabled`). Local runs without Supabase get 503, so
   the attack button should say it needs the deployed site and an admin sign-in.
+
+- **Calibration capture (contract v19).** `POST /api/trips/{trip_id}/observation` takes the SoC readings, the
+  measured segments and `charged_during_trip`. If the logger can supply them, send them after arrival; the
+  response says whether the session is eligible and why not. Nothing changes the estimates yet.
+- **Ansh: run the migration.** `uv run --env-file <private-env-file> python scripts/migrate.py` applies
+  `002_trip_observations.sql` to the production database. Until then the new endpoint returns a server error
+  (the table is missing); no existing route uses it.
+- **Scoping fix in `api/operator_graph.py`.** `suspected_rings` now counts only ring sources that reported the
+  operator's own chargers (it counted every source in the ring). Tested in `tests/test_operator_graph.py`.
+
+- **WP9 (contract v20).** Releases carry `assured`, reports and the ring attack carry `reward`; all
+  `is_illustrative: true`. Render them only if present and always label them "Illustrative". Show a rupee price only
+  when `price_rs` is not null (it is null until Ansh adds a sourced tow cost); otherwise show `formula`.
+- **Ansh: `config/assured.json`.** Copy `config/assured.example.json` and fill `tow_cost_rs` with its
+  `tow_cost_source_url`, `margin` and `report_reward_rs`. Without a sourced tow cost no price is ever shown.
+  Do not commit unsourced numbers.

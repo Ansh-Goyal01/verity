@@ -50,3 +50,23 @@ def test_open_reports_and_grid_risk_stay_with_operator(monkeypatch):
     assert [r["charger_id"] for r in ops.cpo_open_reports("mine")] == ["b"]
     monkeypatch.setattr(graph, "substation_links", lambda: {"a": ("s", 1.0), "b": ("s", 1.5), "c": ("s", 2.0)})
     assert [c["charger_id"] for c in ops.shared_grid_risk("mine")[0]["chargers"]] == ["a","b"]
+
+
+def test_suspected_rings_count_only_sources_that_reported_this_operators_chargers(monkeypatch):
+    graph = InMemoryGraph()
+    cars = [ChargerRecord(id=c, name=c, lat=28, lon=77, operator=op)
+            for c, op in (("a", "mine"), ("b", "mine"), ("c", "other"))]
+    graph.add_chargers(cars)
+    handle = GraphHandle(graph, "memory", graph, "test")
+    ops = OperatorGraph(SimpleNamespace(graph=handle, chargers=cars))
+    monkeypatch.setattr("api.operator_graph.restore_reports", lambda svc: None)
+    now = datetime.now(timezone.utc)
+    reports = [account_report("u1", "a", "not_working", now), account_report("u2", "b", "not_working", now),
+               account_report("u3", "c", "not_working", now)]
+    graph.add_reports(reports)
+    ring = SimpleNamespace(sources=tuple(r.source_id for r in reports))  # u3 only reported another operator's charger
+    monkeypatch.setattr(graph, "agreement_edges", lambda: [])
+    monkeypatch.setattr("api.operator_graph.communities", lambda edges: [ring])
+    rows = ops.suspected_rings(["a", "b"])
+    assert rows == [{"sources_in_ring": 2, "charger_ids": ["a", "b"], "includes_simulated_reports": False}]
+    assert ops.suspected_rings(["zzz"]) == []

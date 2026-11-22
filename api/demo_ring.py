@@ -24,6 +24,7 @@ from verity.trust.engine import TrustEngine
 from verity.trust.graph import AGREEMENT_CYPHER, TEST_PREFIX, ChargerGraph, communities, report_key
 from verity.trust.reports_sim import NOW
 
+from .assured import load_config as load_assured_config, reward_block
 from .graph_endpoints import trust_block
 
 ATTACK_PREFIX = "ring-attack-"
@@ -101,7 +102,10 @@ def ring_attack(svc, charger_id: str | None = None, n_sources: int = 6) -> dict:
             "trust_before": trust_block(before), "trust_after": trust_block(after_view.trust.get(target_id)),
             "trust_without_ring_detection": trust_block(naive),
             "plans": {"changes": changes, "pending": pending},
-            "limit": slow_ring_limit(), "is_simulated": True}
+            "limit": slow_ring_limit(), "is_simulated": True,
+            # WP9: every injected report is simulated and its sources form the flagged ring, so none earns the reward.
+            "reward": reward_block(is_simulated=True, in_ring=True, contradicts=False, over_cap=False,
+                                   cfg=load_assured_config())}
 
 
 def ring_reset(svc) -> dict:
