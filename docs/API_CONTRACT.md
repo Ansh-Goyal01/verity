@@ -547,6 +547,12 @@ the public machine-readable `code` (`route_unavailable` or `route_too_long`), as
 already does for `offline`. Currently 503 and 422 have other causes, so the frontend
 can only offer general retry or input guidance when the code is absent.
 
+### Proposed — reward amount provenance
+
+An eligible reward can include a configured amount. To display the amount alongside its
+source, include a public provenance field in the reward response. Until that field is
+defined, the UI shows eligibility or the returned withholding reason.
+
 ### 2026-11-22 — v21: neighbouring chargers in `GET /api/graph/neighborhood` carry their directory name (additive)
 
 Chargers that appear only as a neighbour (same site, same nearest substation) used to come back with empty `props`. They now carry `name`, `lat`, `lon`, `operator` and `site_type` from the charger directory, the same fields the focal charger already had, so a screen can show "Statiq" and not "CH-0046". Node ids, edges and the response shape are unchanged.

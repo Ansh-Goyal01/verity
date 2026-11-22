@@ -2,6 +2,38 @@
 
 These pages use plain HTML, CSS and JavaScript. No install or build step is needed.
 
+## Two-minute demo
+
+1. Open the [live home page](https://verity-three-pi.vercel.app/web/home.html). Select **Try a charger outage** to see the Noida–Agra replay for V12. The Bingo Line is the battery threshold for diverting to a backup. Open Trip Check to compare V12 with V19 and read the release or refusal reason.
+2. Open the [trip planner](https://verity-three-pi.vercel.app/web/planner.html#plan). Keep Noida and Agra, choose the vehicle and press **Compare plans**. An option may carry several objectives. Expand its arrival band and battery thresholds. **Open release and driver message** retrieves the stored release. If it expired, use **Re-plan this trip**.
+3. Open **Charger graph**, select an operator example and inspect its charger and report links. An isolated demo administrator can run the ring simulation, read the before/after report counts and reset the simulated reports. Visitors can explore the graph signed out.
+4. Open **Spoken trip**. Type or record your origin, destination, car and starting battery in English or Hindi. For example, type “from Noida to Agra tomorrow at 8 am, Nexon 45, 70 percent, AC on, 3 people”. Review the read-back, correct any missing detail and confirm. **Report a charger** also reads the observation back. For a rehearsal, cancel there. For a real observation, confirm first-hand knowledge and consent to storing the transcript.
+
+During a local offline run (`VERITY_OFFLINE=1`), an uncached route offers the six corridors packaged with the engine, including Noida–Agra. Choose one to fill in the route and departure, then submit. The live planner does not promise every route is cached.
+
+### Frontend endpoint audit
+
+Paths below are relative to `/api`. The garage and operator screens use the signed-in account.
+
+| Endpoint or family | Where to find it |
+|---|---|
+| POST `/plan`, GET `/vehicles`, `/geocode` and `/health` | Trip planner, model selector, place search and service status |
+| POST `/dispatch` | Home → Trip Check → Check this trip, or Mission Control → Dispatch |
+| POST `/fleet/booking` | Fleet → Public booking, vehicles at pickup or simulated depots |
+| GET `/release/{id}` and `/release/{id}/share` | Public plan options and fleet rows → Open release and driver message |
+| POST `/voice/plan` and `/voice/ride-check` | Spoken trip for journey planning, Trip Check → cab mode for ride checks |
+| POST `/voice/report` and `/voice/report/confirm` | Spoken trip → Report a charger → review → consent and confirm |
+| GET `/graph/neighborhood/{id}`, POST `/demo/ring-attack` and `/demo/ring-attack/reset` | Charger graph → inspect, run simulation or reset |
+| GET `/graph/why/{id}` and `/evidence/ledger` | Trip Check → Why this plan? and the home workspace Evidence screen |
+| GET `/auth/config`, `/me` and `/vehicle-models`, writes under `/me/cars` | My account → sign in, garage, add/edit/remove a car |
+| `/trips`, `/trips/{id}` and its `/save`, `/arrival` and `/share` actions, GET `/share/{token}` | Plan with my car → trip history → trip details, recorded arrival and private share |
+| POST `/reports/quick` and GET `/reports/{id}` | Trip details → report a charging stop → view receipt. Charger graph also accepts a signed-in observation |
+| `/fleet/vehicles` and POST `/fleet/booking/check` | Fleet manager → managed vehicles and private booking check |
+| `/cpo/directory`, `/cpo/claims`, `/admin/cpo-claims` and its approval action | Operators → claims. Administrators see the approval queue |
+| `/cpo/chargers` and its repair action, `/cpo/critical-chargers`, `/cpo/suspected-rings` and `/cpo/shared-grid-risk` | Operators → Chargers & reports and Risk analysis |
+
+The deployment verifier uses `/sample-trip` and individual garage reads. The newer calibration observation endpoint needs measured segments including temperature and grade. The phone logger captures GPS and battery readings only, so the arrival screen records actual battery percentage without manufacturing calibration measurements.
+
 ## Open the project
 
 1. Right-click the downloaded ZIP and choose **Extract All**.
@@ -12,7 +44,7 @@ These pages use plain HTML, CSS and JavaScript. No install or build step is need
 
 Easiest way, with the live engine: from the repository root run `uv run start.py` (API on :8000, these pages on :5500).
 
-Without `?api=` the pages run offline on the saved engine snapshot (`js/snapshot.js`), or on illustrative mocks if the snapshot is missing. Every offline response is simulated and the pages show a visible badge.
+Without `?api=` the pages run offline on the saved engine snapshot (`js/snapshot.js`), with an unavailable state if the snapshot is missing. Every offline response is simulated and the pages show a visible badge.
 
 ## Product site (start here)
 
@@ -20,7 +52,7 @@ Open `web/home.html`; the repository root `index.html` redirects to it. Its code
 
 ## Mission Control
 
-Open `web/index.html` (or the repository root `index.html`, which redirects to it). Six tabs, switchable with keys 1–6 or the Ctrl/⌘ K command palette:
+Open `web/index.html`. Six tabs, switchable with keys 1–6 or the Ctrl/⌘ K command palette:
 
 1. **Mission**: the pitch in one screen. A rotating dispatch release for each vehicle, the three different answers for one booking, headline experiment numbers, and the INSUFFICIENT EVIDENCE refusal.
 2. **Dispatch**: confidence gauge against the target, arrival band, map, charging plan with backups, interactive Bingo Line (hover to read any km), energy waterfall, levers and risk sources.

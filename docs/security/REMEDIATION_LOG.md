@@ -58,3 +58,22 @@ To be added after Ansh runs the final ArgosX scan on the latest main.
 - Calibration capture (`POST /api/trips/{id}/observation`, migration 002): ownership enforced in the INSERT, first record wins, RLS on with no browser grants. The endpoint and migration were not executed on this machine (no local Postgres).
 - `suspected_rings` counted every source in a ring, including sources that reported only other operators' chargers; it now counts only sources that reported the operator's own chargers.
 - WP9 `assured` and `reward` blocks are illustrative and need `config/assured.json` for any rupee figure.
+
+## Frontend measurements from the release rehearsal
+
+Mobile Lighthouse ran in fresh headless Chrome sessions against the local production-mode app. Each score is from one run. Largest Contentful Paint (LCP) is distinct from ArgosX's overall page-load timing.
+
+| Page | Accessibility before → after | Performance before → after | LCP before → after |
+|---|---|---|---|
+| Home | 97 → 100 | 76 → 82 | 7.1 → 4.9 s |
+| Planner | 100 → 100 | 98 → 98 | 2.3 → 2.4 s |
+| Driver | 96 → 100 | 79 → 80 | 3.9 → 3.8 s |
+| Fleet console | 100 → 100 | 56 → 56 | 5.9 → 5.9 s |
+| Logger | 100 → 100 | 100 → 100 | 1.2 → 1.2 s |
+| Mission Control | 100 → 100 | 58 → 58 | 7.9 → 7.9 s |
+
+The owner sign-in, saved decision, arrival and private share passed on Vercel. The authenticated browser found a trip-detail rendering error on routes with a charging stop. Commit `3bea20d` fixed it and the same account opened its saved trip on a fresh phone-width browser. Commit `1b0a5df` fixed horizontal overflow for long names in the offline route list. The six buttons now fit 390 px.
+
+Both keyed account writes, including repairs, take `pg_advisory_xact_lock` on the user before inspecting or writing the receipt. A disposable PostgreSQL database passed all six account integration tests. Production migration and the final ArgosX rescan remain operator-run.
+
+The full local pytest run passed 953 tests and skipped 27 (26 need Neo4j credentials and one needs the raw BMW dataset). The serverless suite passed all 12. All 34 frontend tests passed with the local API enabled. The live root redirect, HTML, stylesheet, application 404 and API returned the required headers. Both modes of the deployment verifier passed. Vercel reported Neo4j and six cached corridors.

@@ -5,16 +5,14 @@
 CX-1 supplies `api.auth.current_user` and `api.auth.require_role`. Apply the relevant
 dependency to each protected router or handler and use the returned user ID for access checks.
 
-The CX-4 and CX-6 API routes call the query names from the task brief. The graph module
-still needs to supply them. CPO charger, report and critical-charger rows use
-`charger_id`. Keep the full results of operator and ring queries scoped to their
-arguments, including nested rows, and omit report author identifiers from CPO output.
-Quick reports send `working` or `not_working` as specified. Make writes idempotent by
-user, charger and timestamp so retries after an uncertain write do not inflate evidence.
+The operator graph adapter now answers the CX-4/CX-6 account queries. Charger and
+risk views are scoped to approved operators. Keyed quick reports and repairs hold a
+per-user database lock and reuse their stored receipt across retries. The current UI
+uses these keys on both writes.
 
-The arrival endpoint persists the reading. The current calibration API requires
-measured trip segments and a SoC window. Add a way to capture those observations and
-exclude sessions with intermediate charging before enabling learned battery estimates.
+Arrival records are available in trip history. Contract v19 separately accepts genuine
+measured segments for calibration screening. The existing phone logger lacks temperature
+and grade measurements. Its GPS and battery export alone cannot populate that contract.
 
 ## For Ansh
 
@@ -82,3 +80,10 @@ writes the file only after every translation succeeds. [Sarvam translation API](
 - **Ansh: `config/assured.json`.** Copy `config/assured.example.json` and fill `tow_cost_rs` with its
   `tow_cost_source_url`, `margin` and `report_reward_rs`. Without a sourced tow cost no price is ever shown.
   Do not commit unsourced numbers.
+
+## Release rehearsal, 22 November
+
+- The Vercel owner account completed password sign-in, garage read/write, saved trip, sample arrival and anonymous share read. On a fresh phone-width browser the garage, saved trip and sign-out worked after fixing a missing select-option import (`3bea20d`). Google is disabled in the project's public provider settings.
+- V12 dispatch, public plan/release lookup, charger graph, signed-out admin guard, trip/report read-backs and report cancellation were exercised on the live site. Six public pages fit a 390 px emulated phone viewport, including driver mode in Hindi. Typed voice read-back and denied microphone permission were checked. Physical microphone pickup and synthesized speech quality still need a device rehearsal. The offline rehearsal selected a returned cached corridor and produced a release. Long cached names wrap after `1b0a5df`.
+- Admin ring simulation/reset, the driver, fleet manager, CPO and admin live role checks, the production observation migration and the final ArgosX scan are assigned to Ansh. The owner test account already existed. No new production identity was created. A new local database exercised all six account integration tests, including role scoping, graph restoration and the observation migration.
+- The public verifier checks the observable production error policy, health and exact allowed CORS origin. The production dashboard environment values require operator access. See the remediation log for the independent scan and the local measurements.

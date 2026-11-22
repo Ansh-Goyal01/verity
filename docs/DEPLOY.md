@@ -122,3 +122,7 @@ To check the deployed production error policy, health and CORS without account c
 run `uv run python scripts/verify_deployed_api.py https://verity-three-pi.vercel.app --public-only`.
 Supply `--frontend-origin` if the UI uses a different origin. The Vercel HTML policy permits
 the same-origin API and the exact HTTPS `SUPABASE_URL` used for browser sign-in.
+
+For optional Google sign-in, allow the exact HTTPS return URL ending in `/web/planner.html`
+in Supabase Auth and configure the Google provider there. The account page checks the
+project's public provider settings. Password sign-in works independently.
