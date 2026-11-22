@@ -40,6 +40,7 @@ spoken trip planning and reports need the microphone and the trip check uses loc
 | Account ids in public graph views | Low risk, accepted | Sources appear as `user-<sha256(user id)>`. User ids are random UUIDs so the hash cannot be reversed, but an unsalted hash lets someone who already knows a UUID confirm a report. Hardening later: HMAC with a server secret. |
 | Plan ids held in memory on serverless | Mitigated | A `plan_id` made on one instance can 404 on another. Error code `unknown_plan` unchanged; the message now says plans are in memory, expire and may live on another instance, and to plan again. The driver view already handles the code. Not persisted. |
 | Unauthenticated writes to the trust graph | Open, accepted for the demo | `POST /api/reports` and `POST /api/voice/report/confirm` accept consented reports without sign-in, rate-limited by IP and per charger. Account reports (`/api/reports/quick`) are the authenticated path. Anyone behind many IPs could still stuff evidence; the ring detector and trust weights are the control. Revisit before any real use. |
+| Idempotency receipts (Astra, 64f5815) | Reviewed, low risk | Keys are scoped per user and reusing a key for a different operation returns 409; replays return the stored result. Gap: `audit_log` has no unique index on `(user_id, action)`, so two concurrent first requests with the same key could both write a receipt (quick reports are protected by an advisory lock; other keyed writes are not). Suggested fix for Astra: a partial unique index on `(user_id, action) WHERE action LIKE 'write:%'` in a new migration, with `ON CONFLICT DO NOTHING`. Not blocking. |
 | Database-backed account tests | Not run on this machine | tests/test_finale_accounts.py needs `VERITY_TEST_DATABASE_URL` (a local `verity_test_*` Postgres). Role isolation and CPO scoping are asserted there but were skipped here. Codex reported them passing against PostgreSQL. |
 | Live sign-in configuration | Partially verified | `/api/auth/config` available, a fake bearer gives 401 (so `SUPABASE_URL` is valid). `DATABASE_URL` and the account screens need a signed-in check (`scripts/verify_deployed_api.py` with Ansh's private env file). |
 
@@ -51,3 +52,9 @@ nothing in this work re-ran it. The India held-out split is scored once per expe
 ## Final scan
 
 To be added after Ansh runs the final ArgosX scan on the latest main.
+
+## Later changes (Claude Code, 2026-11-22)
+
+- Calibration capture (`POST /api/trips/{id}/observation`, migration 002): ownership enforced in the INSERT, first record wins, RLS on with no browser grants. The endpoint and migration were not executed on this machine (no local Postgres).
+- `suspected_rings` counted every source in a ring, including sources that reported only other operators' chargers; it now counts only sources that reported the operator's own chargers.
+- WP9 `assured` and `reward` blocks are illustrative and need `config/assured.json` for any rupee figure.
