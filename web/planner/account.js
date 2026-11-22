@@ -1,6 +1,6 @@
 import {api, accountApi, keyedWrite, configuration, googleAvailable, googleSignIn, hasSession, signIn, signOut} from './client.js';
 import {modelOptions, planner} from './journey.js';
-import {button, dateText, esc, idPath, numberInput, onSubmit, paginate, release, section, setStatus, statusBox, stopsAndThresholds, verdict} from './ui.js';
+import {button, dateText, esc, idPath, numberInput, onSubmit, option, paginate, release, section, setStatus, statusBox, stopsAndThresholds, verdict} from './ui.js';
 
 export async function login(root, description, reopen) {
   root.innerHTML = section('Sign in', `<p>${esc(description)}</p>
