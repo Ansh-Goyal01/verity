@@ -141,6 +141,7 @@
         notes.push('Stranding upper bound: ' + pct(a.p_strand) + ' · ' + data.n_runs + ' runs. ' + (a.p_strand_basis || ''));
       if (a.eligible && isNum(a.price_rs) && /^https?:\/\//i.test(a.tow_cost_source || ''))
         notes.push('Estimated price ₹' + a.price_rs + ' · Tow cost source: ' + a.tow_cost_source);
+      else if (a.formula) notes.push(a.formula);
       output.push('<section><h3>Illustrative cover</h3>' + notes.filter(Boolean).map(s=>'<p>' + escapeHtml(s) + '</p>').join('') + '</section>');
     }
     const reward = data.reward;
